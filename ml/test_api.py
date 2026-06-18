@@ -107,7 +107,7 @@ def main():
         # ----------------------------------------------------
         print("\n[+] STEP 3: Verifying Attacker Reputation System...")
         # Check Russia IP reputation
-        res = client.get(f"/api/threat-intel/ip/{russia_ip}")
+        res = client.get(f"/api/threat-intel/{russia_ip}")
         print(f"[*] Reputation for {russia_ip} (Russia): status {res.status_code}")
         rep_data = res.json()
         print(f"    -> Calculated Reputation Score: {rep_data['overall_score']}")

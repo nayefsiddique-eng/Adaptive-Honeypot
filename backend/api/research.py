@@ -1,3 +1,5 @@
+import os
+import json
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -54,6 +56,26 @@ def get_research_metrics(db: Session = Depends(get_db)):
     if total_attacks > 0:
         detection_rate = round((classified_attacks / total_attacks) * 100.0, 2)
 
+    # 6. Load Model Comparison (loaded from evaluation results JSON)
+    model_comparison = {}
+    eval_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "ml", "models", "evaluation_results.json"))
+    if os.path.exists(eval_path):
+        try:
+            with open(eval_path, "r") as f:
+                model_comparison = json.load(f)
+        except Exception:
+            pass
+
+    # 7. Get Top Attack Type
+    top_type_res = db.query(
+        AttackLog.attack_type, 
+        func.count(AttackLog.id)
+    ).group_by(AttackLog.attack_type).order_by(func.count(AttackLog.id).desc()).first()
+    top_attack_type = top_type_res[0] if top_type_res else "None"
+
+    # 8. Get Total Unique IPs
+    total_unique_ips = db.query(func.count(func.distinct(AttackLog.ip_address))).scalar() or 0
+
     return {
         "total_attacks": total_attacks,
         "total_sessions": total_sessions,
@@ -63,5 +85,8 @@ def get_research_metrics(db: Session = Depends(get_db)):
         "average_response_time_ms": avg_response_time,
         "active_deception_sessions": active_deception_sessions,
         "adaptation_effectiveness_pct": adaptation_effectiveness,
-        "detection_rate_pct": detection_rate
+        "detection_rate_pct": detection_rate,
+        "model_comparison": model_comparison,
+        "top_attack_type": top_attack_type,
+        "total_unique_ips": total_unique_ips
     }

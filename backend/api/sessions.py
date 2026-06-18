@@ -4,6 +4,7 @@ from backend.database import get_db
 from backend.models.session import AttackerSession
 from backend.models.attack import AttackLog
 from backend.services.llm_summarizer import generate_attack_summary
+from backend.services.cluster_engine import cluster_attacker_ips
 
 router = APIRouter(prefix="/api/sessions", tags=["Session Recording"])
 
@@ -14,6 +15,13 @@ def list_sessions(limit: int = 50, db: Session = Depends(get_db)):
     """
     sessions = db.query(AttackerSession).order_by(AttackerSession.last_seen.desc()).limit(limit).all()
     return sessions
+
+@router.get("/clusters")
+def get_attacker_clusters(db: Session = Depends(get_db)):
+    """
+    K-Means attacker clustering endpoint.
+    """
+    return cluster_attacker_ips(db)
 
 @router.get("/{session_id}")
 def get_session(session_id: str, db: Session = Depends(get_db)):
@@ -70,7 +78,7 @@ def get_session_recording(session_id: str, db: Session = Depends(get_db)):
     }
 
 @router.get("/{session_id}/summary")
-def get_session_llm_summary(session_id: str, db: Session = Depends(get_db)):
+async def get_session_llm_summary(session_id: str, db: Session = Depends(get_db)):
     """
     Generates an LLM threat summary for the entire session.
     """
@@ -97,7 +105,7 @@ def get_session_llm_summary(session_id: str, db: Session = Depends(get_db)):
         sum(e.confidence for e in events) / len(events) if events else 0.0
     )
 
-    summary = generate_attack_summary(
+    summary = await generate_attack_summary(
         attack_type=primary_attack,
         confidence=avg_confidence,
         risk_score=session.risk_score,

@@ -42,7 +42,7 @@ def calculate_risk_score(features: dict, attack_type: str, confidence: float) ->
     return min(round(score, 2), 100.0)
 
 @router.post("/ingest")
-def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
+async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
     start_time = time.time()
     
     # 1. Log Raw Traffic
@@ -69,7 +69,7 @@ def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
     geo = enrich_ip(req.ip_address)
 
     # 4. Threat Intel Evaluation
-    intel = evaluate_ip_threat(req.ip_address)
+    intel = await evaluate_ip_threat(req.ip_address)
 
     # 5. Maintain Attacker Reputation Profile
     reputation = db.query(AttackerReputation).filter(AttackerReputation.ip_address == req.ip_address).first()

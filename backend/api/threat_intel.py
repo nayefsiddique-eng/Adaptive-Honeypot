@@ -6,16 +6,24 @@ from backend.core.threat_intel import evaluate_ip_threat
 
 router = APIRouter(prefix="/api/threat-intel", tags=["Threat Intelligence"])
 
-@router.get("/ip/{ip_address}")
-def get_ip_reputation(ip_address: str, db: Session = Depends(get_db)):
+@router.get("/top-threats")
+def get_top_threats(limit: int = 10, db: Session = Depends(get_db)):
+    """
+    List worst attackers by lowest reputation score.
+    """
+    threats = db.query(AttackerReputation).order_by(AttackerReputation.reputation_score.asc()).limit(limit).all()
+    return threats
+
+@router.get("/{ip_address}")
+async def get_ip_reputation(ip_address: str, db: Session = Depends(get_db)):
     """
     Look up local threat intelligence and external source data for an IP address.
     """
     # 1. Fetch from database first to see if profile exists
     reputation = db.query(AttackerReputation).filter(AttackerReputation.ip_address == ip_address).first()
     
-    # 2. Query external/mock indicators
-    intel = evaluate_ip_threat(ip_address)
+    # 2. Query external/mock indicators (async await)
+    intel = await evaluate_ip_threat(ip_address)
     
     # 3. Combine details
     local_details = {}
@@ -50,11 +58,3 @@ def get_ip_reputation(ip_address: str, db: Session = Depends(get_db)):
         "local_history": local_details,
         "overall_score": reputation.reputation_score if reputation else (100.0 - intel["reputation_score"])
     }
-
-@router.get("/top-threats")
-def get_top_threats(limit: int = 10, db: Session = Depends(get_db)):
-    """
-    List worst attackers by lowest reputation score.
-    """
-    threats = db.query(AttackerReputation).order_by(AttackerReputation.reputation_score.asc()).limit(limit).all()
-    return threats

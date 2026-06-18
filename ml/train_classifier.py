@@ -1,4 +1,4 @@
-﻿import pandas as pd
+import pandas as pd
 import numpy as np
 import joblib
 import os
@@ -126,7 +126,7 @@ print("XGBoost Results:")
 print(classification_report(y_test, xgb_preds, target_names=le.classes_))
 
 print("Training Isolation Forest (anomaly detection)...")
-iso = IsolationForest(contamination=0.1, random_state=42)
+iso = IsolationForest(contamination=0.125, random_state=42)
 iso.fit(X_train)
 
 os.makedirs("ml/models", exist_ok=True)

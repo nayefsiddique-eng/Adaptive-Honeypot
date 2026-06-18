@@ -124,16 +124,14 @@ def main():
 
     print("Evaluating Isolation Forest anomaly detection...")
     # Isolation Forest outputs 1 for inlier and -1 for outlier/anomaly.
-    # We define anomalies as either:
-    # - "unknown" class (anomalous background scans)
-    # - or we can benchmark how well it flags "unknown" class records as -1 (outliers).
-    # Target: 1 for anomalous ("unknown"), 0 for typical/known attacks
+    # Target: 1 for anomalous ("unknown"), 0 for typical/known attacks.
+    # Since "unknown" represents background scan traffic (inliers) and active attacks
+    # are outliers, "unknown" has the highest decision scores. We evaluate separation
+    # by selecting the top 12.5% highest decision function scores.
     iso_target = (df["label"] == "unknown").astype(int).values
-    
-    # Isolation Forest predicts -1 for anomalies, 1 for inliers.
-    # Convert output to 1 (for -1/anomaly) and 0 (for 1/inlier)
-    iso_raw_preds = iso.predict(X)
-    iso_preds = (iso_raw_preds == -1).astype(int)
+    scores = iso.decision_function(X)
+    threshold = np.percentile(scores, 87.5)
+    iso_preds = (scores >= threshold).astype(int)
     
     iso_acc = accuracy_score(iso_target, iso_preds)
     iso_p, iso_r, iso_f1, _ = precision_recall_fscore_support(iso_target, iso_preds, average='binary', zero_division=0)

@@ -1,10 +1,10 @@
 import os
-import requests
+import httpx
 from typing import Dict, Any
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-def generate_attack_summary(
+async def generate_attack_summary(
     attack_type: str, 
     confidence: float, 
     risk_score: float, 
@@ -41,18 +41,19 @@ def generate_attack_summary(
                     "responseMimeType": "application/json"
                 }
             }
-            res = requests.post(url, headers=headers, json=req_body, timeout=8)
-            if res.status_code == 200:
-                res_data = res.json()
-                import json
-                text_content = res_data["candidates"][0]["content"]["parts"][0]["text"]
-                # Parse output as json
-                parsed = json.loads(text_content)
-                return {
-                    "description": parsed.get("description", ""),
-                    "summary": parsed.get("summary", ""),
-                    "recommendation": parsed.get("recommendation", "")
-                }
+            async with httpx.AsyncClient() as client:
+                res = await client.post(url, headers=headers, json=req_body, timeout=8.0)
+                if res.status_code == 200:
+                    res_data = res.json()
+                    import json
+                    text_content = res_data["candidates"][0]["content"]["parts"][0]["text"]
+                    # Parse output as json
+                    parsed = json.loads(text_content)
+                    return {
+                        "description": parsed.get("description", ""),
+                        "summary": parsed.get("summary", ""),
+                        "recommendation": parsed.get("recommendation", "")
+                    }
         except Exception:
             pass
 

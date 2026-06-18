@@ -1,8 +1,8 @@
-﻿import joblib
+import joblib
 import numpy as np
 import os
 
-MODEL_DIR = "ml/models"
+MODEL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "ml", "models"))
 
 _rf = None
 _xgb = None
