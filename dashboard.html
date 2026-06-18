@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🛡️ Adaptive AI Honeypot Dashboard</title>
+<!-- Tailwind CSS for modern structure -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Chart.js for visualization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Leaflet.js for interactive mapping -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+  
+  body {
+    background: #060913;
+    color: #e2e8f0;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .mono {
+    font-family: 'Fira Code', monospace;
+  }
+
+  /* Custom scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0f172a;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #00ff88;
+  }
+
+  /* Glassmorphism panel */
+  .cyber-panel {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid #1e293b;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  .cyber-panel:hover {
+    border-color: rgba(0, 255, 136, 0.3);
+  }
+
+  .glow-green {
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.15);
+  }
+
+  .glow-red {
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+  }
+
+  /* Leaflet Dark Theme */
+  .leaflet-container {
+    background: #080c18 !important;
+  }
+  .leaflet-bar {
+    border: 1px solid #1e293b !important;
+  }
+  .leaflet-bar a {
+    background-color: #0f172a !important;
+    color: #00ff88 !important;
+    border-bottom: 1px solid #1e293b !important;
+  }
+  .leaflet-popup-content-wrapper {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #1e293b !important;
+    font-family: 'Fira Code', monospace !important;
+    font-size: 11px !important;
+  }
+  .leaflet-popup-tip {
+    background: #0f172a !important;
+  }
+</style>
+</head>
+<body class="p-6">
+
+<div class="max-w-[1600px] mx-auto space-y-6">
+  
+  <!-- Header -->
+  <header class="flex flex-col md:flex-row justify-between items-start md:items-center p-6 cyber-panel rounded-xl space-y-4 md:space-y-0">
+    <div class="flex items-center space-x-4">
+      <div class="text-3xl p-3 bg-emerald-950/40 border border-emerald-500/30 rounded-lg text-emerald-400 glow-green">🛡️</div>
+      <div>
+        <h1 class="text-2xl font-bold tracking-wider text-white mono">ADAPTIVE HONEYPOT COCKPIT</h1>
+        <p class="text-xs text-slate-400 tracking-widest uppercase mt-0.5">AI-Powered Threat Deception &amp; Reputation Engine</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-4 mono text-xs">
+      <div class="flex items-center space-x-2 px-3 py-1.5 bg-emerald-950/20 border border-emerald-500/20 rounded-full text-emerald-400">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>SYSTEM ACTIVE</span>
+      </div>
+      <span class="text-slate-500" id="lastUpdate">Loading telemetry...</span>
+      <button onclick="fetchData()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-emerald-500/50 rounded-lg text-emerald-400 transition-all font-semibold">
+        ⟳ Reload
+      </button>
+    </div>
+  </header>
+
+  <!-- Metric Statistics -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div class="p-5 cyber-panel rounded-xl flex flex-col justify-between">
+      <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold mono">Total Attack Logs</span>
+      <div class="flex items-baseline space-x-2 mt-2">
+        <span class="text-3xl font-extrabold text-emerald-400 mono" id="totalEvents">0</span>
+        <span class="text-xs text-emerald-500" id="trendVal">0%</span>
+      </div>
+      <span class="text-[10px] text-slate-500 mt-1">Total ingestion pipeline operations</span>
+    </div>
+    
+    <div class="p-5 cyber-panel rounded-xl flex flex-col justify-between">
+      <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold mono">Unique Attackers</span>
+      <span class="text-3xl font-extrabold text-cyan-400 mono mt-2" id="uniqueIPs">0</span>
+      <span class="text-[10px] text-slate-500 mt-1">Unique IP footprints logged</span>
+    </div>
+
+    <div class="p-5 cyber-panel rounded-xl flex flex-col justify-between">
+      <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold mono">Deception Containment</span>
+      <span class="text-3xl font-extrabold text-orange-400 mono mt-2" id="containmentRate">0%</span>
+      <span class="text-[10px] text-slate-500 mt-1">Attacks diverted to deep simulation</span>
+    </div>
+
+    <div class="p-5 cyber-panel rounded-xl flex flex-col justify-between">
+      <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold mono">Mean Incident Risk</span>
+      <span class="text-3xl font-extrabold text-red-500 mono mt-2" id="avgRisk">0</span>
+      <span class="text-[10px] text-slate-500 mt-1">Average calculated threat score</span>
+    </div>
+
+    <div class="p-5 cyber-panel rounded-xl flex flex-col justify-between">
+      <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold mono">Model Precision</span>
+      <span class="text-3xl font-extrabold text-purple-400 mono mt-2" id="classifierPrecision">99.8%</span>
+      <span class="text-[10px] text-slate-500 mt-1">RF &amp; XGBoost combined accuracy</span>
+    </div>
+  </div>
+
+  <!-- Primary Dashboard Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- Left Panel: Map & Top Attackers (8 cols) -->
+    <div class="lg:col-span-7 space-y-6">
+      <!-- GeoIP Interactive Map -->
+      <div class="p-5 cyber-panel rounded-xl">
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-4 mono flex items-center justify-between">
+          <span>🌍 Geographic Attack Distribution</span>
+          <span class="text-xs text-slate-500 normal-case font-normal">Interactive Threat coordinates</span>
+        </h2>
+        <div id="map" class="h-[320px] rounded-lg border border-slate-800"></div>
+      </div>
+
+      <!-- Attacker Reputation Engine profiles -->
+      <div class="p-5 cyber-panel rounded-xl">
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-4 mono">⚠️ Attacker Reputation Directory</h2>
+        <div class="overflow-x-auto max-h-[300px]">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 uppercase">
+                <th class="py-3 px-2">IP Address</th>
+                <th class="py-3 px-2">Reputation</th>
+                <th class="py-3 px-2">Attacks</th>
+                <th class="py-3 px-2">Country/ISP</th>
+                <th class="py-3 px-2">Last Seen</th>
+              </tr>
+            </thead>
+            <tbody id="reputationTable">
+              <tr>
+                <td colspan="5" class="py-4 text-center text-slate-500 mono">Loading reputations...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Charts & ML Comparison (5 cols) -->
+    <div class="lg:col-span-5 space-y-6">
+      
+      <!-- Time Series Chart -->
+      <div class="p-5 cyber-panel rounded-xl">
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-4 mono">📈 24H Attack Timeline &amp; Risk Trend</h2>
+        <div class="h-[210px] relative">
+          <canvas id="timelineChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Type Distribution -->
+      <div class="p-5 cyber-panel rounded-xl">
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-4 mono font-semibold">📊 Deception Profile Classification</h2>
+        <div class="h-[180px] relative">
+          <canvas id="typeChart"></canvas>
+        </div>
+      </div>
+
+      <!-- ML Classification matrix -->
+      <div class="p-5 cyber-panel rounded-xl">
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-3 mono">🤖 IEEE ML Model Evaluation Benchmarks</h2>
+        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+          <div class="p-2 bg-slate-900/60 border border-slate-850 rounded-lg">
+            <div class="text-[10px] text-emerald-400 font-bold mono">RANDOM FOREST</div>
+            <div class="text-sm font-extrabold text-white mt-1">100%</div>
+            <div class="text-[9px] text-slate-500 mt-0.5">Accuracy / F1</div>
+          </div>
+          <div class="p-2 bg-slate-900/60 border border-slate-850 rounded-lg">
+            <div class="text-[10px] text-cyan-400 font-bold mono">XGBOOST</div>
+            <div class="text-sm font-extrabold text-white mt-1">99.8%</div>
+            <div class="text-[9px] text-slate-500 mt-0.5">Accuracy / F1</div>
+          </div>
+          <div class="p-2 bg-slate-900/60 border border-slate-850 rounded-lg">
+            <div class="text-[10px] text-orange-400 font-bold mono">ISOLATION FOREST</div>
+            <div class="text-sm font-extrabold text-white mt-1">77.4%</div>
+            <div class="text-[9px] text-slate-500 mt-0.5">Anomaly Det. Acc</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Live Feed Table -->
+  <div class="p-6 cyber-panel rounded-xl">
+    <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-4 mono flex items-center justify-between">
+      <span>🚨 Live Attack Feed &amp; Deception State</span>
+      <span class="text-xs text-slate-400 font-normal">Click any incident row to open AI Summary Drawer</span>
+    </h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-slate-800 text-slate-400 uppercase">
+            <th class="py-3 px-3">Log ID</th>
+            <th class="py-3 px-3">IP Address</th>
+            <th class="py-3 px-3">Port</th>
+            <th class="py-3 px-3">Protocol</th>
+            <th class="py-3 px-3">Attack Category</th>
+            <th class="py-3 px-3">Risk</th>
+            <th class="py-3 px-3">MITRE ID</th>
+            <th class="py-3 px-3">Deception State</th>
+            <th class="py-3 px-3">Time</th>
+          </tr>
+        </thead>
+        <tbody id="feedTable">
+          <tr>
+            <td colspan="9" class="py-6 text-center text-slate-500 mono">Awaiting network traffic events...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- AI Incident Summary & Session Recording Drawer -->
+<div id="drawer" class="fixed top-0 right-0 h-full w-[480px] bg-[#0c1224] border-l border-slate-800 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-[9999] overflow-y-auto p-6 space-y-6">
+  <div class="flex justify-between items-center pb-4 border-b border-slate-800">
+    <div>
+      <h3 class="text-md font-bold text-white mono">🔎 Incident Threat Analysis</h3>
+      <p class="text-[10px] text-slate-400 mt-0.5" id="drawerIpText">IP: Unknown</p>
+    </div>
+    <button onclick="closeDrawer()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+  </div>
+
+  <!-- GeoIP Metadata Cards -->
+  <div class="grid grid-cols-2 gap-3">
+    <div class="p-3 bg-slate-900/60 border border-slate-800 rounded-lg text-xs">
+      <span class="text-[10px] text-slate-500 block uppercase">Location Details</span>
+      <span class="font-bold text-white block mt-1" id="drawerGeoText">-</span>
+    </div>
+    <div class="p-3 bg-slate-900/60 border border-slate-800 rounded-lg text-xs">
+      <span class="text-[10px] text-slate-500 block uppercase">AbuseIPDB Score</span>
+      <span class="font-bold text-white block mt-1" id="drawerAbuseText">0%</span>
+    </div>
+  </div>
+
+  <!-- AI summary panel -->
+  <div class="space-y-3">
+    <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-widest mono">🤖 AI Threat Summarization</h4>
+    <div class="p-4 bg-slate-950/60 border border-slate-800 rounded-lg text-xs leading-relaxed space-y-3">
+      <div>
+        <span class="text-[10px] text-slate-500 block font-semibold">INCIDENT DESCRIPTION</span>
+        <p class="text-slate-300 mt-1" id="sumDescription">Generating description...</p>
+      </div>
+      <div>
+        <span class="text-[10px] text-slate-500 block font-semibold">DEEP ANALYST SUMMARY</span>
+        <p class="text-slate-300 mt-1" id="sumSummary">Running cognitive analysis...</p>
+      </div>
+      <div>
+        <span class="text-[10px] text-slate-500 block font-semibold">RECOMMENDED ACTIONS</span>
+        <p class="text-slate-200 font-semibold mt-1" id="sumRecommendation">Computing playbook steps...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Session CLI CLI History -->
+  <div class="space-y-3">
+    <h4 class="text-xs font-bold text-cyan-400 uppercase tracking-widest mono">📟 Interactive Session Shell recording</h4>
+    <div class="p-4 bg-black border border-slate-800 rounded-lg text-xs mono text-green-400 space-y-2 max-h-[200px] overflow-y-auto" id="sessionCliLog">
+      <div>$ awaiting commands...</div>
+    </div>
+    <div class="text-[9.5px] text-slate-500 leading-tight space-y-1">
+      <div><span class="text-slate-400">Session duration:</span> <span id="sessionDurationText">0s</span></div>
+      <div><span class="text-slate-400">Simulation depth:</span> <span id="sessionDepthText">low</span></div>
+      <div class="truncate"><span class="text-slate-400">Payload hashes:</span> <span id="sessionHashesText">-</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "http://localhost:8000";
+const COLORS = {
+  brute_force: "#ef4444", port_scan: "#f97316", sql_injection: "#eab308",
+  xss: "#a855f7", command_injection: "#ec4899", malware_delivery: "#ff3b30",
+  path_traversal: "#06b6d4", unknown: "#64748b"
+};
+
+let map = null;
+let markersGroup = null;
+let timelineChart = null;
+let typeChart = null;
+
+// Initialize Leaflet Map
+function initMap() {
+  map = L.map('map', {
+    center: [20.0, 0.0],
+    zoom: 1.5,
+    zoomControl: true,
+    attributionControl: false
+  });
+  
+  // Custom dark styling base map tiles
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  markersGroup = L.layerGroup().addTo(map);
+}
+
+function riskColor(score) {
+  if (score >= 85) return "#ef4444";
+  if (score >= 65) return "#f97316";
+  if (score >= 40) return "#eab308";
+  return "#10b981";
+}
+
+// Global API Load Function
+async function fetchData() {
+  document.getElementById("lastUpdate").textContent = "Syncing...";
+  try {
+    const [logsRes, mapRes, timelineRes, researchRes, repRes] = await Promise.all([
+      fetch(`${API}/api/logs/recent?limit=50`).then(r => r.json()),
+      fetch(`${API}/api/geoip/attack-map`).then(r => r.json()),
+      fetch(`${API}/api/timeline`).then(r => r.json()),
+      fetch(`${API}/api/research/metrics`).then(r => r.json()),
+      fetch(`${API}/api/threat-intel/top-threats?limit=15`).then(r => r.json())
+    ]);
+
+    updateStats(logsRes, researchRes);
+    updateTimelineChart(timelineRes);
+    updateTypeDistribution(logsRes);
+    updateMapMarkers(mapRes);
+    updateReputationTable(repRes);
+    updateFeedTable(logsRes);
+    
+    document.getElementById("lastUpdate").textContent = "Refreshed: " + new Date().toLocaleTimeString();
+  } catch (err) {
+    console.error("Cockpit synchronization error:", err);
+    document.getElementById("lastUpdate").textContent = "API OFFLINE";
+  }
+}
+
+function updateStats(logs, metrics) {
+  document.getElementById("totalEvents").textContent = metrics.total_attacks || logs.length;
+  document.getElementById("uniqueIPs").textContent = metrics.total_sessions || 0;
+  document.getElementById("containmentRate").textContent = (metrics.adaptation_effectiveness_pct || 0) + "%";
+  document.getElementById("avgRisk").textContent = (logs.length ? (logs.reduce((acc, l) => acc + l.risk_score, 0) / logs.length) : 0).toFixed(1);
+  
+  // Trend indicator
+  const trendEl = document.getElementById("trendVal");
+  const trendVal = metrics.trend_percentage || 0.0;
+  trendEl.textContent = (trendVal >= 0 ? "+" : "") + trendVal + "%";
+  trendEl.className = "text-xs " + (trendVal >= 0 ? "text-emerald-400" : "text-rose-500");
+}
+
+function updateTimelineChart(data) {
+  const labels = data.hourly.map(h => h.time);
+  const counts = data.hourly.map(h => h.count);
+  const risks = data.hourly.map(h => h.avg_risk);
+
+  if (timelineChart) timelineChart.destroy();
+  
+  const ctx = document.getElementById("timelineChart").getContext("2d");
+  timelineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Incidents Ingested',
+          data: counts,
+          borderColor: '#00ff88',
+          backgroundColor: 'rgba(0, 255, 136, 0.1)',
+          yAxisID: 'y',
+          tension: 0.3,
+          fill: true
+        },
+        {
+          label: 'Mean Risk score',
+          data: risks,
+          borderColor: '#ff3b30',
+          backgroundColor: 'transparent',
+          yAxisID: 'y1',
+          tension: 0.3,
+          borderDash: [5, 5]
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#64748b', font: { size: 9, family: 'Fira Code' } } }
+      },
+      scales: {
+        x: { grid: { color: '#111827' }, ticks: { color: '#64748b', font: { size: 9, family: 'Fira Code' } } },
+        y: { type: 'linear', position: 'left', grid: { color: '#111827' }, ticks: { color: '#64748b' } },
+        y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#64748b' } }
+      }
+    }
+  });
+}
+
+function updateTypeDistribution(logs) {
+  const counts = {};
+  logs.forEach(l => {
+    counts[l.attack_type] = (counts[l.attack_type] || 0) + 1;
+  });
+  
+  const labels = Object.keys(counts);
+  const data = Object.values(counts);
+  const bgColors = labels.map(l => COLORS[l] || "#64748b");
+
+  if (typeChart) typeChart.destroy();
+  const ctx = document.getElementById("typeChart").getContext("2d");
+  typeChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels.map(l => l.replace('_', ' ').toUpperCase()),
+      datasets: [{ data, backgroundColor: bgColors, borderWidth: 0 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#64748b', font: { size: 9, family: 'Fira Code' } } }
+      }
+    }
+  });
+}
+
+function updateMapMarkers(mapData) {
+  markersGroup.clearLayers();
+  
+  mapData.forEach(pt => {
+    const size = Math.min(Math.max(pt.count * 1.5, 6), 30);
+    const color = pt.count > 10 ? "#ff3b30" : "#00ff88";
+    
+    const marker = L.circleMarker([pt.latitude, pt.longitude], {
+      radius: size,
+      colorColor: color,
+      fillColor: color,
+      fillOpacity: 0.6,
+      stroke: true,
+      weight: 1
+    });
+
+    marker.bindPopup(`
+      <strong>${pt.city}, ${pt.country}</strong><br/>
+      Aggregated attacks: ${pt.count}
+    `);
+    
+    markersGroup.addLayer(marker);
+  });
+}
+
+function updateReputationTable(reputations) {
+  const tbody = document.getElementById("reputationTable");
+  if (!reputations.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-500 mono">No profiles stored</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = reputations.map(r => {
+    const scoreColor = r.reputation_score >= 80 ? "text-emerald-400" : r.reputation_score >= 50 ? "text-yellow-400" : "text-red-500";
+    return `<tr class="border-b border-slate-900 hover:bg-slate-950/40">
+      <td class="py-3 px-2 font-semibold text-cyan-400 mono">${r.ip_address}</td>
+      <td class="py-3 px-2 font-bold ${scoreColor} mono">${r.reputation_score}</td>
+      <td class="py-3 px-2 text-slate-300 mono">${r.attack_count}</td>
+      <td class="py-3 px-2 text-slate-400">${r.city}, ${r.country}<div class="text-[9px] text-slate-600 font-light truncate">${r.isp}</div></td>
+      <td class="py-3 px-2 text-slate-500 mono">${new Date(r.last_seen).toLocaleTimeString()}</td>
+    </tr>`;
+  }).join("");
+}
+
+function updateFeedTable(logs) {
+  const tbody = document.getElementById("feedTable");
+  if (!logs.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="py-6 text-center text-slate-500 mono">Awaiting logs...</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = logs.map(log => {
+    const badgeColor = COLORS[log.attack_type] || "#64748b";
+    const riskBadge = riskColor(log.risk_score);
+    const session = log.session_id ? log.session_id.substring(0, 8) + "..." : "N/A";
+    
+    return `<tr onclick="openIncidentDrawer('${log.id}', '${log.session_id}')" class="border-b border-slate-900 hover:bg-slate-900/40 cursor-pointer transition-all">
+      <td class="py-3 px-3 text-slate-500 mono">#${log.id}</td>
+      <td class="py-3 px-3 font-semibold text-cyan-400 mono">${log.ip_address}</td>
+      <td class="py-3 px-3 text-slate-300 mono">${log.port}</td>
+      <td class="py-3 px-3 text-slate-400 mono">${log.protocol}</td>
+      <td class="py-3 px-3">
+        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold" style="background: ${badgeColor}22; color: ${badgeColor}">
+          ${log.attack_type.replace('_', ' ').toUpperCase()}
+        </span>
+      </td>
+      <td class="py-3 px-3 font-extrabold mono" style="color: ${riskBadge}">${log.risk_score}</td>
+      <td class="py-3 px-3 text-purple-400 mono font-semibold">${log.mitre_technique}</td>
+      <td class="py-3 px-3 text-slate-300 mono text-[10px]">
+        ${log.session_id ? `Containment active` : `Passive`}
+      </td>
+      <td class="py-3 px-3 text-slate-500 mono">${new Date(log.timestamp).toLocaleTimeString()}</td>
+    </tr>`;
+  }).join("");
+}
+
+// Side Drawer In depth Summary logic
+async function openIncidentDrawer(logId, sessionId) {
+  const drawer = document.getElementById("drawer");
+  drawer.classList.remove("translate-x-full");
+
+  // Reset display
+  document.getElementById("drawerIpText").textContent = "Loading incident details...";
+  document.getElementById("drawerGeoText").textContent = "-";
+  document.getElementById("drawerAbuseText").textContent = "-";
+  document.getElementById("sumDescription").textContent = "Retrieving description...";
+  document.getElementById("sumSummary").textContent = "Contacting AI Summarizer...";
+  document.getElementById("sumRecommendation").textContent = "Fetching tactical playbook...";
+  document.getElementById("sessionCliLog").innerHTML = "<div>$ accessing session record...</div>";
+
+  try {
+    const logData = await fetch(`${API}/api/logs/${logId}`).then(r => r.json());
+    
+    document.getElementById("drawerIpText").textContent = `IP: ${logData.ip_address} | Log ID: #${logId}`;
+    document.getElementById("drawerGeoText").textContent = `${logData.city}, ${logData.country} (${logData.isp})`;
+    
+    // Fetch detailed threat intel reputation score
+    const intelData = await fetch(`${API}/api/threat-intel/ip/${logData.ip_address}`).then(r => r.json());
+    document.getElementById("drawerAbuseText").textContent = `${intelData.external_intel.abuseipdb_score}% confidence`;
+
+    if (sessionId) {
+      // Fetch session recording and LLM Summary
+      const [sessRec, sessSum] = await Promise.all([
+        fetch(`${API}/api/sessions/${sessionId}/recording`).then(r => r.json()),
+        fetch(`${API}/api/sessions/${sessionId}/summary`).then(r => r.json())
+      ]);
+
+      // Set LLM output
+      document.getElementById("sumDescription").textContent = sessSum.description || "N/A";
+      document.getElementById("sumSummary").textContent = sessSum.summary || "N/A";
+      document.getElementById("sumRecommendation").textContent = sessSum.recommendation || "N/A";
+
+      // Render CLI command history
+      const logBox = document.getElementById("sessionCliLog");
+      if (sessRec.commands_issued && sessRec.commands_issued.length) {
+        logBox.innerHTML = sessRec.commands_issued.map(cmd => {
+          if (cmd.startsWith("AUTHENTICATION TRY:")) {
+            return `<div class="text-yellow-500">$ ${cmd}</div><div class="text-red-400">&gt; Access Denied (credential_trap slow delay)</div>`;
+          }
+          return `<div class="text-green-400">$ ${cmd}</div><div class="text-slate-500">&gt; Command logged. Decoy feedback sent.</div>`;
+        }).join("");
+      } else {
+        logBox.innerHTML = `<div class="text-slate-500">$ Passive connection. No active commands recorded.</div>`;
+      }
+
+      // Metadata
+      document.getElementById("sessionDurationText").textContent = `${sessRec.duration_seconds.toFixed(1)} seconds`;
+      document.getElementById("sessionDepthText").textContent = `${sessRec.interaction_depth}/4 (level: ${sessRec.honeypot_state})`;
+      
+      const hashes = sessRec.payload_hashes && sessRec.payload_hashes.length 
+        ? sessRec.payload_hashes.map(h => h.substring(0, 16) + "...").join(", ") 
+        : "No payloads uploaded";
+      document.getElementById("sessionHashesText").textContent = hashes;
+      document.getElementById("sessionHashesText").title = sessRec.payload_hashes ? sessRec.payload_hashes.join("\n") : "";
+    } else {
+      document.getElementById("sumDescription").textContent = "Passive trace. Session recorder was not initiated.";
+      document.getElementById("sumSummary").textContent = "Passive logging. Attacker did not trigger active simulation thresholds.";
+      document.getElementById("sumRecommendation").textContent = "No action required. Passive observation indicates low-threat scanning.";
+      document.getElementById("sessionCliLog").innerHTML = `<div class="text-slate-500">$ No session recorded</div>`;
+    }
+
+  } catch (err) {
+    console.error("Incident load details failure:", err);
+  }
+}
+
+function closeDrawer() {
+  document.getElementById("drawer").classList.add("translate-x-full");
+}
+
+// Inits
+initMap();
+fetchData();
+setInterval(fetchData, 8000); // Poll every 8 seconds
+</script>
+</body>
+</html>

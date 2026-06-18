@@ -1,0 +1,72 @@
+<svg width="800" height="420" viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100%" height="100%" fill="#0a0f1d"/>
+    <text x="30" y="40" font-family="monospace" font-size="18" font-weight="bold" fill="#00ff88">ADAPTATION DECISION FLOW</text>
+    <text x="30" y="60" font-family="monospace" font-size="11" fill="#64748b">IEEE RESEARCH FIGURE - STATE MACHINE DECISION PATHS</text>
+
+    <!-- Root: Incoming Incident -->
+    <rect x="30" y="170" width="120" height="80" rx="6" fill="#131a35" stroke="#00f0ff" stroke-width="1.5"/>
+    <text x="90" y="200" font-family="monospace" font-size="10" font-weight="bold" fill="#e2e8f0" text-anchor="middle">INCOMING ATTACK</text>
+    <text x="90" y="220" font-family="monospace" font-size="9" fill="#64748b" text-anchor="middle">(Class, Conf, Risk)</text>
+
+    <path d="M 150 210 L 200 210" fill="none" stroke="#00f0ff" stroke-width="1.5" marker-end="url(#arrow-adaptive)"/>
+
+    <!-- Step 2: Confidence Check -->
+    <polygon points="200,210 250,170 300,210 250,250" fill="#131a35" stroke="#ff9900" stroke-width="1.5"/>
+    <text x="250" y="213" font-family="monospace" font-size="9" font-weight="bold" fill="#e2e8f0" text-anchor="middle">CONF &gt; 50%?</text>
+
+    <!-- No Branch -->
+    <path d="M 250 170 L 250 120 L 320 120" fill="none" stroke="#ff3b30" stroke-width="1.5" marker-end="url(#arrow-adaptive)"/>
+    <text x="235" y="145" font-family="monospace" font-size="8" fill="#ff3b30">NO</text>
+    <rect x="320" y="90" width="110" height="60" rx="4" fill="#131a35" stroke="#ff3b30" stroke-width="1"/>
+    <text x="375" y="115" font-family="monospace" font-size="10" fill="#e2e8f0" text-anchor="middle">PASSIVE MONITOR</text>
+    <text x="375" y="130" font-family="monospace" font-size="8" fill="#64748b" text-anchor="middle">Low interaction</text>
+
+    <!-- Yes Branch -->
+    <path d="M 250 250 L 250 300 L 320 300" fill="none" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrow-adaptive)"/>
+    <text x="235" y="280" font-family="monospace" font-size="8" fill="#00ff88">YES</text>
+
+    <!-- Step 3: Attack Profile Selector -->
+    <rect x="320" y="260" width="120" height="80" rx="6" fill="#131a35" stroke="#af52de" stroke-width="1.5"/>
+    <text x="380" y="290" font-family="monospace" font-size="9" font-weight="bold" fill="#e2e8f0" text-anchor="middle">IDENTIFY TYPE &amp;</text>
+    <text x="380" y="305" font-family="monospace" font-size="9" font-weight="bold" fill="#e2e8f0" text-anchor="middle">IP HISTORY</text>
+
+    <!-- Splits -->
+    <path d="M 440 300 L 500 300" fill="none" stroke="#af52de" stroke-width="1.5"/>
+    <path d="M 470 300 L 470 200 L 500 200" fill="none" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrow-adaptive)"/>
+    <path d="M 470 300 L 470 400 L 500 400" fill="none" stroke="#ffcc00" stroke-width="1.5" marker-end="url(#arrow-adaptive)"/>
+
+    <!-- Path A: Port scan -->
+    <rect x="500" y="170" width="140" height="60" rx="4" fill="#131a35" stroke="#00ff88" stroke-width="1"/>
+    <text x="570" y="195" font-family="monospace" font-size="10" font-weight="bold" fill="#e2e8f0" text-anchor="middle">PORT SCAN / RECON</text>
+    <text x="570" y="210" font-family="monospace" font-size="9" fill="#00ff88" text-anchor="middle">Dynamic Port Exposure</text>
+
+    <!-- Path B: Web / DB exploits -->
+    <rect x="500" y="270" width="140" height="60" rx="4" fill="#131a35" stroke="#00f0ff" stroke-width="1"/>
+    <text x="570" y="295" font-family="monospace" font-size="10" font-weight="bold" fill="#e2e8f0" text-anchor="middle">SQLi / XSS / TRAVERSAL</text>
+    <text x="570" y="310" font-family="monospace" font-size="9" fill="#00f0ff" text-anchor="middle">Deploy Database Decoy</text>
+
+    <!-- Path C: Auth / Malware -->
+    <rect x="500" y="370" width="140" height="60" rx="4" fill="#131a35" stroke="#ffcc00" stroke-width="1"/>
+    <text x="570" y="395" font-family="monospace" font-size="10" font-weight="bold" fill="#e2e8f0" text-anchor="middle">BRUTE FORCE / MALWARE</text>
+    <text x="570" y="410" font-family="monospace" font-size="9" fill="#ffcc00" text-anchor="middle">Credential Trap &amp; Sink</text>
+
+    <!-- All merge to Deception Output -->
+    <path d="M 640 200 L 670 200 L 670 280" fill="none" stroke="#00ff88" stroke-width="1.5"/>
+    <path d="M 640 300 L 670 300" fill="none" stroke="#00f0ff" stroke-width="1.5"/>
+    <path d="M 640 400 L 670 400 L 670 320" fill="none" stroke="#ffcc00" stroke-width="1.5"/>
+
+    <path d="M 670 300 L 690 300" fill="none" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrow-adaptive)"/>
+
+    <!-- Final State -->
+    <rect x="690" y="260" width="100" height="80" rx="6" fill="#131a35" stroke="#00ff88" stroke-width="1.5"/>
+    <text x="740" y="290" font-family="monospace" font-size="9" font-weight="bold" fill="#e2e8f0" text-anchor="middle">DECEPTION STATE</text>
+    <text x="740" y="305" font-family="monospace" font-size="9" fill="#00ff88" text-anchor="middle">Active engagement</text>
+    <text x="740" y="320" font-family="monospace" font-size="8" fill="#64748b" text-anchor="middle">rate limit attacker</text>
+
+    <!-- Markers definition -->
+    <defs>
+        <marker id="arrow-adaptive" markerWidth="6" markerHeight="6" refX="2" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 Z" fill="#00ff88"/>
+        </marker>
+    </defs>
+    </svg>
