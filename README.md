@@ -39,26 +39,30 @@
 ## Setup
 
 ### 1. Clone and create virtual environment
-\\ash
+```bash
 git clone https://github.com/nayefsiddique-eng/Adaptive-Honeypot.git
 cd Adaptive-Honeypot
 python -m venv venv
 .\venv\Scripts\activate   # Windows
 source venv/bin/activate    # Linux/macOS
-\
+```
+
 ### 2. Install dependencies
-\\ash
+```bash
 pip install -r requirements.txt
-\
+```
+
 ### 3. Train ML models
-\\ash
+```bash
 python ml/train_classifier.py
 python ml/evaluate_models.py
-\
+```
+
 ### 4. Start backend
-\\ash
+```bash
 python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
-\
+```
+
 ### 5. Open dashboard
 Open dashboard.html directly in any modern browser. No build step required.
 
@@ -99,7 +103,8 @@ Open dashboard.html directly in any modern browser. No build step required.
 
 ## Project Structure
 
-\adaptive-honeypot/
+```
+adaptive-honeypot/
 ├── backend/
 │   ├── api/          # FastAPI route handlers
 │   ├── core/         # Feature extractor, adaptive engine, decision engine
@@ -113,12 +118,13 @@ Open dashboard.html directly in any modern browser. No build step required.
 ├── docs/figures/     # Architecture and flow diagrams
 ├── dashboard.html    # Single-file SOC dashboard
 └── requirements.txt
-\
+```
+
 ---
 
 ## Citation
 
-\\ibtex
+```bibtex
 @ARTICLE{MIRAGE2026,
   author={Siddique, Nayef},
   journal={IEEE Transactions on Information Forensics and Security},
@@ -126,4 +132,4 @@ Open dashboard.html directly in any modern browser. No build step required.
   year={2026},
   note={Under Review}
 }
-\
+```
