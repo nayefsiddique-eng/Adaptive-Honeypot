@@ -114,12 +114,18 @@ adaptive-honeypot/
 │   ├── models/       # SQLAlchemy ORM models
 │   ├── services/     # ML classifier, GeoIP, threat intel, LLM, clustering
 │   └── main.py
+├── frontend/
+│   ├── css/          # Translucent glassmorphism stylesheets
+│   ├── js/           # Shared API client & poller
+│   ├── index.html    # Security Portal landing page
+│   ├── dashboard.html# SOC Cockpit (maps, Panel A, Panel B)
+│   ├── sessions.html # Attacker Profiles (Panel C, CLI player, AI briefs)
+│   └── intel.html    # Threat Intelligence lookup hub
 ├── ml/
 │   ├── train_classifier.py
 │   ├── evaluate_models.py
 │   └── models/       # Trained .pkl files + evaluation_results.json
 ├── docs/figures/     # Architecture and flow diagrams
-├── dashboard.html    # Single-file SOC dashboard
 └── requirements.txt
 ```
 
