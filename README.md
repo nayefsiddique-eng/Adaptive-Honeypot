@@ -64,7 +64,7 @@ python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### 5. Open dashboard
-Open dashboard.html directly in any modern browser. No build step required.
+Open `frontend/index.html` directly in any modern browser. No build step required.
 
 ---
 

