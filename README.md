@@ -74,19 +74,20 @@ Open dashboard.html directly in any modern browser. No build step required.
 |---|---|---|
 | GET | / | Health check |
 | POST | /api/logs/ingest | Ingest attack — runs full ML pipeline |
-| GET | /api/logs/recent | Last 100 attack logs |
+| GET | /api/logs/recent | Last 100 attack logs (enriched with `chain_name`) |
 | POST | /api/decisions/evaluate | Get deception profile for attack + IP |
 | GET | /api/decisions/profile/{type} | Static deception rules |
-| GET | /api/dashboard | Aggregated dashboard telemetry |
+| GET | /api/dashboard | Aggregated dashboard telemetry (includes `avg_deception_score`) |
 | GET | /api/attacks/summary | Attack type counts + MITRE breakdown |
 | GET | /api/attacks/top-ips | Top 10 IPs by attack volume |
 | GET | /api/threat-intel/{ip} | AbuseIPDB + OTX + reputation score |
 | GET | /api/timeline | Hourly and daily attack trends |
-| GET | /api/sessions | All attacker sessions |
+| GET | /api/sessions | All attacker sessions (enriched with `ttp_fingerprint` + `attack_chain`) |
 | GET | /api/sessions/clusters | K-Means attacker profiling |
 | GET | /api/sessions/{id}/recording | Full event timeline + commands |
-| GET | /api/sessions/{id}/summary | LLM threat brief |
-| GET | /api/research/metrics | IEEE evaluation metrics |
+| GET | /api/sessions/{id}/summary | LLM threat brief (cached in database) |
+| GET | /api/sessions/{id}/behavior_timeline | Attacker session behavior timeline with delta timing |
+| GET | /api/research/metrics | IEEE evaluation metrics (includes `new_metrics` dictionary) |
 
 ---
 
@@ -98,6 +99,8 @@ Open dashboard.html directly in any modern browser. No build step required.
 | False Positive Rate | % of low-confidence events flagged incorrectly |
 | Adaptation Effectiveness | % of sessions engaged in medium or high deception |
 | Mean Response Time | API handling latency in milliseconds |
+| Average Deception Score | Value (0.0-1.0) assessing overall honeypot response richness |
+| Chain Detection Rate | % of multi-step attacks matched to standardized kill chains |
 
 ---
 
