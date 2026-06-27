@@ -1,10 +1,17 @@
 import os
 import hashlib
 import httpx
+import time
 from typing import Dict, Any
 
 ABUSEIPDB_API_KEY = os.getenv("ABUSEIPDB_API_KEY")
 OTX_API_KEY = os.getenv("OTX_API_KEY")
+
+_intel_cache: Dict[str, tuple[Dict[str, Any], float]] = {}
+CACHE_TTL_SECONDS = 21600  # 6 hours
+
+intel_cache_hits = 0
+intel_cache_queries = 0
 
 async def get_abuseipdb_score(ip_address: str) -> float:
     """
@@ -69,7 +76,18 @@ async def get_alienvault_score(ip_address: str) -> float:
 async def evaluate_ip_threat(ip_address: str) -> Dict[str, Any]:
     """
     Combines intelligence sources to compute a threat intelligence summary.
+    Includes a 6-hour TTL in-memory cache to save API usage.
     """
+    global intel_cache_hits, intel_cache_queries
+    intel_cache_queries += 1
+
+    now = time.time()
+    if ip_address in _intel_cache:
+        result, ts = _intel_cache[ip_address]
+        if now - ts < CACHE_TTL_SECONDS:
+            intel_cache_hits += 1
+            return result
+
     abuse_score = await get_abuseipdb_score(ip_address)
     otx_score = await get_alienvault_score(ip_address)
     
@@ -80,7 +98,7 @@ async def evaluate_ip_threat(ip_address: str) -> Dict[str, Any]:
     ip_hash = int(hashlib.md5(ip_address.encode()).hexdigest(), 16)
     is_tor = bool(ip_hash % 12 == 0) if ip_address not in ("127.0.0.1", "localhost", "::1") else False
     
-    return {
+    result = {
         "ip_address": ip_address,
         "abuseipdb_score": abuse_score,
         "alienvault_score": otx_score,
@@ -88,3 +106,6 @@ async def evaluate_ip_threat(ip_address: str) -> Dict[str, Any]:
         "classification": "high_risk" if reputation_score >= 70 else "medium_risk" if reputation_score >= 30 else "low_risk",
         "is_tor": is_tor
     }
+
+    _intel_cache[ip_address] = (result, now)
+    return result

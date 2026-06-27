@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend.database import get_db
 from backend.models.attack import AttackLog
+from backend.models.session import AttackerSession
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard Telemetry"])
 
@@ -39,6 +40,10 @@ def get_dashboard_data(db: Session = Depends(get_db)):
     medium_count = db.query(AttackLog).filter(AttackLog.risk_score >= 40.0, AttackLog.risk_score < 60.0).count()
     low_count = db.query(AttackLog).filter(AttackLog.risk_score < 40.0).count()
 
+    # Feature 2 - Average Deception Score
+    avg_deception_score = db.query(func.avg(AttackerSession.deception_score_avg)).scalar() or 0.0
+    avg_deception_score = round(float(avg_deception_score), 2)
+
     return {
         "total_attacks": total_attacks,
         "unique_ips": unique_ips_count,
@@ -48,5 +53,6 @@ def get_dashboard_data(db: Session = Depends(get_db)):
         "critical_count": critical_count,
         "high_count": high_count,
         "medium_count": medium_count,
-        "low_count": low_count
+        "low_count": low_count,
+        "avg_deception_score": avg_deception_score
     }

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,6 +11,9 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
   <style>
     /* DESIGN TOKENS */
@@ -834,6 +837,33 @@
 
     </section>
 
+    <!-- NEW CHARTS & TRACKERS ROW (Panel A & Panel B) -->
+    <section class="charts-grid" style="grid-template-columns: repeat(2, 1fr);">
+      
+      <!-- Panel A: Attack Chain Tracker -->
+      <div class="card">
+        <h3>🔗 ATTACK CHAIN TRACKER</h3>
+        <div id="attackChainTrackerContainer" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+          <div class="loading-text">Loading chain telemetry...</div>
+        </div>
+      </div>
+
+      <!-- Panel B: Deception Score Gauge -->
+      <div class="card">
+        <h3>🎯 DECEPTION EFFECTIVENESS GAUGE</h3>
+        <div style="display: flex; align-items: center; justify-content: center; height: 220px; gap: 24px;">
+          <div class="chart-wrapper" style="width: 180px; height: 180px; position: relative;">
+            <canvas id="deceptionGaugeChart"></canvas>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Average Score</div>
+            <div id="avgDeceptionScoreText" style="font-size: 36px; font-weight: bold; color: var(--accent-green); margin-top: 4px;">0.00</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
     <!-- 4. GEOLOCATION MAP (full width) -->
     <section class="card">
       <h3>🗺️ REAL-TIME GEOLOCATION THREAT MAP</h3>
@@ -861,6 +891,29 @@
           <tbody id="sessionsTableBody">
             <tr>
               <td colspan="9" class="loading-text">Loading attacker sessions...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Panel C: TTP Fingerprint Table -->
+    <section class="card">
+      <h3>🧬 ATTACKER TTP FINGERPRINTS</h3>
+      <div class="table-responsive">
+        <table class="custom-table" style="min-width: 1000px;">
+          <thead>
+            <tr>
+              <th>IP Address</th>
+              <th>Tool Signature</th>
+              <th onclick="sortTtpTableByEvasion()" style="cursor: pointer; text-decoration: underline; color: var(--accent-blue);">Evasion Attempts ↕</th>
+              <th>Attack Chain Stage</th>
+              <th>Last Seen</th>
+            </tr>
+          </thead>
+          <tbody id="ttpTableBody">
+            <tr>
+              <td colspan="5" class="loading-text">Loading TTP fingerprints...</td>
             </tr>
           </tbody>
         </table>
@@ -931,6 +984,14 @@
           <div class="research-mini-card">
             <div class="label">Avg Response Time</div>
             <div id="metricsRespTime" class="value text-blue">0ms</div>
+          </div>
+          <div class="research-mini-card">
+            <div class="label">Avg Deception Score</div>
+            <div id="metricsAvgDeception" class="value text-purple">0.00</div>
+          </div>
+          <div class="research-mini-card">
+            <div class="label">Chain Detection Rate</div>
+            <div id="metricsChainDet" class="value text-yellow">0%</div>
           </div>
         </div>
       </div>
@@ -1067,6 +1128,8 @@
     let attackTypeBarChart = null;
     let attackTypeDoughnutChart = null;
     let timelineLineChart = null;
+    let deceptionGaugeChart = null;
+    let currentSessionsData = [];
     
     // UI state trackers for expand panels
     let openSessionId = null;
@@ -1090,7 +1153,7 @@
         maxZoom: 19
       }).addTo(map);
 
-      markersLayer = L.layerGroup().addTo(map);
+      markersLayer = L.markerClusterGroup().addTo(map);
     }
 
     function riskColor(score) {
@@ -1132,6 +1195,15 @@
       updateFeedTable(recentRes);
       updateResearchMetrics(researchRes);
       updateMLDecisionPipeline(recentRes);
+
+      currentSessionsData = sessionsRes;
+      updateAttackChainTracker(sessionsRes);
+      safeFetch(`${API}/api/dashboard`).then(dashRes => {
+        if (dashRes && !dashRes.error) {
+          updateDeceptionGauge(dashRes.avg_deception_score || 0.0);
+        }
+      });
+      renderTtpTable(sessionsRes);
 
       document.getElementById("lastUpdate").textContent = "Last update: " + new Date().toLocaleTimeString();
     }
@@ -1643,6 +1715,9 @@
         const confStr = log.confidence ? `${(log.confidence * 100).toFixed(0)}%` : "N/A";
         const deceptionStateStr = log.session_id ? "DECEPTION ENGAGED" : "MONITORING";
         const timeStr = new Date(log.timestamp).toLocaleTimeString();
+        const chainBadge = log.chain_name
+          ? `<span class="badge-custom" style="background-color: rgba(249, 115, 22, 0.15); color: var(--accent-orange); border: 1px solid var(--accent-orange); margin-left: 6px;">${log.chain_name.replace(/_/g, ' ').toUpperCase()}</span>`
+          : "";
 
         html += `
           <tr>
@@ -1660,6 +1735,7 @@
               <span class="badge-custom ${badgeColorClass}">
                 ${log.attack_type.replace('_', ' ').toUpperCase()}
               </span>
+              ${chainBadge}
             </td>
             <td><strong style="color: ${riskValColor};">${log.risk_score}</strong></td>
             <td class="text-purple" style="font-weight: bold;">${log.mitre_technique || 'None'}</td>
@@ -2012,6 +2088,145 @@
       } catch (err) {
         document.getElementById("flowStep5Text").innerHTML = `<span class="error-text">State: DECEPTION ACTIVE</span>`;
       }
+    }
+
+    function updateAttackChainTracker(sessions) {
+      const container = document.getElementById("attackChainTrackerContainer");
+      if (!container) return;
+      
+      const activeSessionsWithChains = sessions.filter(s => s.attack_chain && s.attack_chain.chain_name);
+      if (activeSessionsWithChains.length === 0) {
+        container.innerHTML = `<div style="font-size: 11px; color: var(--text-muted); font-style: italic; text-align: center; padding: 20px;">No active attack chains detected.</div>`;
+        return;
+      }
+      
+      let html = "";
+      activeSessionsWithChains.forEach(sess => {
+        const chain = sess.attack_chain;
+        const steps = {
+          recon_to_exploit: ["port_scan", "sql_injection"],
+          recon_to_brute: ["port_scan", "brute_force"],
+          recon_to_rce: ["port_scan", "command_injection"],
+          lateral_movement: ["brute_force", "command_injection"],
+          data_exfiltration: ["sql_injection", "path_traversal"],
+          full_kill_chain: ["port_scan", "brute_force", "command_injection", "malware_delivery"],
+        }[chain.chain_name] || [];
+        
+        let stepsHtml = "";
+        steps.forEach(step => {
+          const completed = sess.attack_types.includes(step);
+          const color = completed ? "var(--accent-orange)" : "#334155";
+          const border = completed ? "var(--accent-orange)" : "#475569";
+          stepsHtml += `
+            <div style="display: flex; flex-direction: column; align-items: center; flex: 1; position: relative;">
+              <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${color}; border: 2px solid ${border}; z-index: 2;"></div>
+              <span style="font-size: 8px; color: ${completed ? 'var(--text-primary)' : 'var(--text-muted)'}; margin-top: 4px; text-align: center; text-transform: uppercase;">${step.replace('_', ' ')}</span>
+            </div>
+          `;
+        });
+        
+        html += `
+          <div style="padding: 12px; background-color: #0d1526; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 6px;">
+              <span>Attacker IP: <strong class="text-blue">${sess.ip_address}</strong></span>
+              <span>Chain: <strong style="color: var(--accent-orange);">${chain.chain_name.replace(/_/g, ' ').toUpperCase()}</strong> (${chain.completion_pct}%)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; position: relative; padding: 0 10px; margin-top: 10px;">
+              <div style="position: absolute; top: 5px; left: 20px; right: 20px; height: 2px; background-color: #1e293b; z-index: 1;"></div>
+              ${stepsHtml}
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function updateDeceptionGauge(avgScore) {
+      const textEl = document.getElementById("avgDeceptionScoreText");
+      if (textEl) textEl.textContent = avgScore.toFixed(2);
+      
+      const canvas = document.getElementById("deceptionGaugeChart");
+      if (!canvas) return;
+      
+      if (deceptionGaugeChart) deceptionGaugeChart.destroy();
+      
+      const ctx = canvas.getContext("2d");
+      let color = "#ef4444"; // red
+      if (avgScore >= 0.67) color = "#00ff88"; // green
+      else if (avgScore >= 0.34) color = "#eab308"; // yellow
+      
+      deceptionGaugeChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Score', 'Remaining'],
+          datasets: [{
+            data: [avgScore, Math.max(0, 1.0 - avgScore)],
+            backgroundColor: [color, '#1e293b'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          circumference: 180,
+          rotation: 270,
+          cutout: '80%',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          }
+        }
+      });
+    }
+
+    function renderTtpTable(sessions) {
+      const tbody = document.getElementById("ttpTableBody");
+      if (!tbody) return;
+      
+      if (!sessions.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="loading-text" style="text-align: center;">No attacker TTP profiles recorded.</td></tr>`;
+        return;
+      }
+      
+      let html = "";
+      sessions.forEach(sess => {
+        const ttp = sess.ttp_fingerprint || {
+          tool_signature: "custom",
+          evasion_attempts: 0,
+          attack_chain_stage: "recon",
+          timing_pattern: "slow_drip"
+        };
+        
+        const stageColors = {
+          recon: "badge-unknown",
+          weaponize: "badge-port_scan",
+          exploit: "badge-sql_injection",
+          post_exploit: "badge-command_injection"
+        };
+        
+        const stageColorClass = stageColors[ttp.attack_chain_stage] || "badge-unknown";
+        
+        html += `
+          <tr>
+            <td><strong class="text-blue">${sess.ip_address}</strong></td>
+            <td><span class="badge-custom" style="background-color: rgba(6, 182, 212, 0.15); color: var(--accent-blue); border: 1px solid var(--accent-blue);">${ttp.tool_signature.toUpperCase()}</span></td>
+            <td style="font-weight: bold; color: var(--accent-red);">${ttp.evasion_attempts}</td>
+            <td><span class="badge-custom ${stageColorClass}">${ttp.attack_chain_stage.toUpperCase()}</span></td>
+            <td style="color: var(--text-muted);">${new Date(sess.last_seen || sess.first_seen).toLocaleTimeString()}</td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function sortTtpTableByEvasion() {
+      if (!currentSessionsData || !currentSessionsData.length) return;
+      currentSessionsData.sort((a, b) => {
+        const evasionA = a.ttp_fingerprint ? a.ttp_fingerprint.evasion_attempts : 0;
+        const evasionB = b.ttp_fingerprint ? b.ttp_fingerprint.evasion_attempts : 0;
+        return evasionB - evasionA;
+      });
+      renderTtpTable(currentSessionsData);
     }
 
     // Initialize Map & Start polling

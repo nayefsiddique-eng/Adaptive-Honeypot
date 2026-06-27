@@ -1,4 +1,4 @@
-﻿from typing import Dict, Any
+from typing import Dict, Any
 
 DECEPTION_PROFILES = {
     "brute_force": {
@@ -110,4 +110,51 @@ def decide_honeypot_action(attack_type: str, confidence: float, risk_score: floa
         "decoy_files": profile["decoy_files"],
         "description": profile["description"],
         "reasoning": f"Attack '{attack_type}' confidence {confidence:.0%} risk {risk_score} triggers '{action}'"
+    }
+
+
+KNOWN_CHAINS = {
+    "recon_to_exploit": ["port_scan", "sql_injection"],
+    "recon_to_brute": ["port_scan", "brute_force"],
+    "recon_to_rce": ["port_scan", "command_injection"],
+    "lateral_movement": ["brute_force", "command_injection"],
+    "data_exfiltration": ["sql_injection", "path_traversal"],
+    "full_kill_chain": ["port_scan", "brute_force", "command_injection", "malware_delivery"],
+}
+
+def detect_attack_chain(previous_attack_types: list) -> dict:
+    if not previous_attack_types:
+        return {
+            "chain_detected": False,
+            "chain_name": None,
+            "chain_progress": 0,
+            "chain_total": 0,
+            "completion_pct": 0.0
+        }
+    
+    best_chain = None
+    best_progress = 0
+    best_total = 0
+    best_pct = -1.0
+    
+    for chain_name, chain_steps in KNOWN_CHAINS.items():
+        matched = [step for step in chain_steps if step in previous_attack_types]
+        progress = len(matched)
+        total = len(chain_steps)
+        pct = progress / total if total > 0 else 0.0
+        
+        if progress > 0:
+            if (pct > best_pct) or (pct == best_pct and progress > best_progress):
+                best_pct = pct
+                best_chain = chain_name
+                best_progress = progress
+                best_total = total
+                
+    chain_detected = best_progress >= 2
+    return {
+        "chain_detected": chain_detected,
+        "chain_name": best_chain,
+        "chain_progress": best_progress,
+        "chain_total": best_total,
+        "completion_pct": round(best_pct * 100.0, 2) if best_chain else 0.0
     }

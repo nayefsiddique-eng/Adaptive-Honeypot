@@ -21,5 +21,6 @@ class AttackLog(Base):
     longitude = Column(Float)
     raw_payload = Column(String)
     features = Column(JSON)
+    ttp_fingerprint = Column(JSON, nullable=True)
     response_time_ms = Column(Float, default=0.0)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())

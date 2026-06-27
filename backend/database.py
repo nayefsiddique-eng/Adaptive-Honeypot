@@ -29,6 +29,8 @@ def migrate_db():
                 conn.execute(text("ALTER TABLE attack_logs ADD COLUMN longitude FLOAT"))
             if 'response_time_ms' not in columns:
                 conn.execute(text("ALTER TABLE attack_logs ADD COLUMN response_time_ms FLOAT DEFAULT 0.0"))
+            if 'ttp_fingerprint' not in columns:
+                conn.execute(text("ALTER TABLE attack_logs ADD COLUMN ttp_fingerprint JSON"))
                 
     if "attacker_sessions" in tables:
         columns = [c['name'] for c in inspector.get_columns('attacker_sessions')]
@@ -41,6 +43,14 @@ def migrate_db():
                 conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN payload_hashes JSON"))
             if 'interaction_depth' not in columns:
                 conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN interaction_depth INTEGER DEFAULT 0"))
+            if 'deception_score_avg' not in columns:
+                conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN deception_score_avg FLOAT DEFAULT 0.0"))
+            if 'attack_chain_name' not in columns:
+                conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN attack_chain_name VARCHAR"))
+            if 'attack_chain_progress' not in columns:
+                conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN attack_chain_progress INTEGER DEFAULT 0"))
+            if 'llm_summary' not in columns:
+                conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN llm_summary JSON"))
 
 def get_db():
     db = SessionLocal()

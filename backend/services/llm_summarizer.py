@@ -1,8 +1,15 @@
 import os
 import httpx
+import time
 from typing import Dict, Any
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+LAST_GEMINI_CALL = 0.0
+
+# Stats counters for cache metrics
+gemini_cache_hits = 0
+gemini_cache_queries = 0
 
 async def generate_attack_summary(
     attack_type: str, 
@@ -14,40 +21,39 @@ async def generate_attack_summary(
 ) -> Dict[str, str]:
     """
     Generates a security analyst threat summary for an attack log.
-    Calls Gemini API if available, else falls back to a highly realistic local templates engine.
+    Calls Gemini API if key is present, rate limit allows, and falls back to template engine.
     """
-    prompt = (
-        f"Analyze this security incident:\n"
-        f"- Attacker IP: {ip}\n"
-        f"- Incident Type: {attack_type}\n"
-        f"- Classifier Confidence: {confidence:.2%}\n"
-        f"- Risk Severity: {risk_score}/100\n"
-        f"- History: {history.get('attack_count', 0)} total attacks from this source\n"
-        f"- Payload snippet: {payload[:300]}\n"
-        f"Generate a professional JSON response with three keys:\n"
-        f"1. 'description': Brief explanation of what was detected.\n"
-        f"2. 'summary': Deep analysis of the attacker intent, sophistication, and patterns.\n"
-        f"3. 'recommendation': Specific tactical steps to mitigate or handle this interaction."
-    )
-
-    if GEMINI_API_KEY:
+    global LAST_GEMINI_CALL
+    now = time.time()
+    
+    # Try calling Gemini only if API key is present and rate limit (>2s since last call) is satisfied
+    if GEMINI_API_KEY and (now - LAST_GEMINI_CALL >= 2.0):
+        LAST_GEMINI_CALL = now
         try:
-            # Call Google Gemini API (using standard Gemini API format)
+            # Feature 4 - Compressed prompt
+            prompt = (
+                f"Security incident — respond ONLY in JSON with keys: description, summary, recommendation.\n"
+                f"IP:{ip} Type:{attack_type} Confidence:{confidence:.0%} Risk:{risk_score}/100 "
+                f"History:{history.get('attack_count',0)} attacks Chain:{history.get('chain_name','none')}\n"
+                f"Payload(truncated):{payload[:150]}"
+            )
+
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
             headers = {"Content-Type": "application/json"}
             req_body = {
                 "contents": [{"parts": [{"text": prompt}]}],
                 "generationConfig": {
-                    "responseMimeType": "application/json"
+                    "responseMimeType": "application/json",
+                    "maxOutputTokens": 300  # Cap output size
                 }
             }
+            
             async with httpx.AsyncClient() as client:
                 res = await client.post(url, headers=headers, json=req_body, timeout=8.0)
                 if res.status_code == 200:
                     res_data = res.json()
                     import json
                     text_content = res_data["candidates"][0]["content"]["parts"][0]["text"]
-                    # Parse output as json
                     parsed = json.loads(text_content)
                     return {
                         "description": parsed.get("description", ""),
@@ -115,6 +121,47 @@ async def generate_attack_summary(
         recommendation = (
             "Deploy filesystem decoy. Return fake file systems containing dummy user records and decoy tokens "
             "to study the attacker's search patterns."
+        )
+    elif attack_type == "ssrf":
+        summary = (
+            f"Server-Side Request Forgery (SSRF) attempt detected. The attacker tried to coerce the server to "
+            f"fetch local resources or loopback addresses. The confidence is {confidence:.0%}."
+        )
+        recommendation = (
+            "Restrict outgoing connections from the honeypot backend. Implement IP/domain blocklists and disable "
+            "unused URL protocols like file:// and dict://."
+        )
+    elif attack_type == "ldap_injection":
+        summary = (
+            f"LDAP Injection attempt detected. The attacker is using LDAP filter syntax to bypass authentication or "
+            f"query Active Directory objects. Risk score is {risk_score}/100."
+        )
+        recommendation = (
+            "Expose fake directory structures to study search queries. Ensure production LDAP calls sanitize input filters."
+        )
+    elif attack_type == "deserialization":
+        summary = (
+            f"Insecure Deserialization payload detected (Java/Python object serialization markers). The attacker is "
+            f"attempting remote code execution (RCE) via serialized payloads."
+        )
+        recommendation = (
+            "Reject raw serialization formats at endpoint entry. Ensure all external input uses safe serialization (e.g., JSON)."
+        )
+    elif attack_type == "dns_tunneling":
+        summary = (
+            f"DNS Tunneling traffic detected. The attacker is attempting data exfiltration or Command and Control (C2) "
+            f"channel establishment via DNS query payloads."
+        )
+        recommendation = (
+            "Monitor TXT/CNAME query lengths. Blacklist domains matching data exfiltration characteristics."
+        )
+    elif attack_type == "credential_stuffing":
+        summary = (
+            f"Credential Stuffing attack detected. The attacker is scanning authentication portals using large lists "
+            f"of leaked username-password pairs."
+        )
+        recommendation = (
+            "Enable multi-factor authentication (MFA) on critical portals. Implement intelligent account lockout policies."
         )
     else:
         summary = (

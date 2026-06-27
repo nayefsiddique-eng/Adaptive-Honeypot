@@ -141,4 +141,14 @@ def decide_behavior(
         f"interaction '{response['interaction_level']}'."
     )
 
+    interaction_level_map = {"low": 0, "medium": 1, "high": 2, "deep": 3}
+    interaction_level = response["interaction_level"]
+    deception_score = (
+        (interaction_level_map.get(interaction_level, 0) / 3.0) * 0.40 +
+        (len(response["fake_services"]) / 5.0) * 0.20 +
+        (len(response["decoy_files"]) / 6.0) * 0.20 +
+        (min(response["response_delay_ms"], 2000) / 2000.0) * 0.20
+    )
+    response["deception_score"] = min(round(deception_score, 4), 1.0)
+
     return response

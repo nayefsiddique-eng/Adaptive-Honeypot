@@ -16,6 +16,7 @@ from backend.services.classifier import predict, models_loaded
 from backend.services.geoip_enricher import enrich_ip
 from backend.core.threat_intel import evaluate_ip_threat
 from backend.core.adaptive_engine import decide_behavior
+from backend.core.decision_engine import detect_attack_chain
 
 router = APIRouter()
 
@@ -30,7 +31,10 @@ def calculate_risk_score(features: dict, attack_type: str, confidence: float) ->
     severity_map = {
         "brute_force": 60, "port_scan": 40, "sql_injection": 80,
         "xss": 70, "command_injection": 90, "malware_delivery": 95,
-        "path_traversal": 65, "unknown": 20
+        "path_traversal": 65, "unknown": 20,
+        # Feature 6 - Additional Attack Types
+        "ldap_injection": 85, "ssrf": 75, "deserialization": 90,
+        "dns_tunneling": 70, "credential_stuffing": 65
     }
     score = severity_map.get(attack_type, 20)
     score += min(features.get("login_attempts", 0) * 2, 20)
@@ -50,12 +54,14 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
     
     # 2. Extract Features & Predict Attack Class
     features = extract_features(req.ip_address, req.port, req.protocol, req.payload, req.metadata)
+    ttp_fingerprint = features.pop("ttp_fingerprint", None)
 
     if models_loaded():
         ml_result = predict(features)
         attack_type = ml_result["attack_type"]
         confidence = ml_result["confidence"]
         is_anomaly = ml_result["is_anomaly"]
+        ml_result = {}
     else:
         attack_type = classify_attack_heuristic(features)
         confidence = 0.0
@@ -136,7 +142,10 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
             is_active=True,
             session_duration=0.0,
             commands_issued=[],
-            payload_hashes=[]
+            payload_hashes=[],
+            deception_score_avg=0.0,
+            attack_chain_name=None,
+            attack_chain_progress=0
         )
         db.add(session)
         reputation.total_sessions += 1
@@ -195,6 +204,17 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
     session.interaction_depth = max(current_depth, depth_levels.get(deception["interaction_level"], 1))
     session.last_seen = now_dt
 
+    # Feature 2 - Update Deception Score Average
+    current_count = session.attack_count
+    prev_avg = session.deception_score_avg or 0.0
+    deception_score = deception.get("deception_score", 0.0)
+    session.deception_score_avg = round((prev_avg * (current_count - 1) + deception_score) / current_count, 4)
+
+    # Feature 3 - Attack Chain Detection
+    chain_result = detect_attack_chain(reputation.previous_attack_types)
+    session.attack_chain_name = chain_result["chain_name"]
+    session.attack_chain_progress = chain_result["chain_progress"]
+
     # Measure API Response Latency
     response_time_ms = round((time.time() - start_time) * 1000.0, 3)
 
@@ -215,6 +235,7 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
         longitude=geo["longitude"],
         raw_payload=req.payload,
         features=features,
+        ttp_fingerprint=ttp_fingerprint,
         response_time_ms=response_time_ms
     )
     db.add(log)
@@ -232,13 +253,41 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
         "mitre": mitre,
         "geoip": geo,
         "deception": deception,
+        "attack_chain": chain_result,
         "response_time_ms": response_time_ms
     }
 
 @router.get("/recent")
 def get_recent_logs(limit: int = 50, db: Session = Depends(get_db)):
     logs = db.query(AttackLog).order_by(AttackLog.timestamp.desc()).limit(limit).all()
-    return logs
+    res = []
+    for l in logs:
+        sess = db.query(AttackerSession).filter(AttackerSession.session_id == l.session_id).first() if l.session_id else None
+        chain_name = sess.attack_chain_name if sess else None
+        
+        res.append({
+            "id": l.id,
+            "session_id": l.session_id,
+            "ip_address": l.ip_address,
+            "port": l.port,
+            "protocol": l.protocol,
+            "attack_type": l.attack_type,
+            "confidence": l.confidence,
+            "risk_score": l.risk_score,
+            "mitre_technique": l.mitre_technique,
+            "country": l.country,
+            "city": l.city,
+            "isp": l.isp,
+            "latitude": l.latitude,
+            "longitude": l.longitude,
+            "raw_payload": l.raw_payload,
+            "features": l.features,
+            "ttp_fingerprint": l.ttp_fingerprint,
+            "response_time_ms": l.response_time_ms,
+            "timestamp": l.timestamp.isoformat() + "Z" if l.timestamp else None,
+            "chain_name": chain_name
+        })
+    return res
 
 @router.get("/{log_id}")
 def get_log(log_id: int, db: Session = Depends(get_db)):
