@@ -257,6 +257,40 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
         "response_time_ms": response_time_ms
     }
 
+@router.get("")
+def get_logs_by_ip(ip: Optional[str] = None, db: Session = Depends(get_db)):
+    if ip:
+        logs = db.query(AttackLog).filter(AttackLog.ip_address == ip).order_by(AttackLog.timestamp.desc()).all()
+    else:
+        logs = db.query(AttackLog).order_by(AttackLog.timestamp.desc()).limit(100).all()
+    res = []
+    for l in logs:
+        sess = db.query(AttackerSession).filter(AttackerSession.session_id == l.session_id).first() if l.session_id else None
+        chain_name = sess.attack_chain_name if sess else None
+        res.append({
+            "id": l.id,
+            "session_id": l.session_id,
+            "ip_address": l.ip_address,
+            "port": l.port,
+            "protocol": l.protocol,
+            "attack_type": l.attack_type,
+            "confidence": l.confidence,
+            "risk_score": l.risk_score,
+            "mitre_technique": l.mitre_technique,
+            "country": l.country,
+            "city": l.city,
+            "isp": l.isp,
+            "latitude": l.latitude,
+            "longitude": l.longitude,
+            "raw_payload": l.raw_payload,
+            "features": l.features,
+            "ttp_fingerprint": l.ttp_fingerprint,
+            "response_time_ms": l.response_time_ms,
+            "timestamp": l.timestamp.isoformat() + "Z" if l.timestamp else None,
+            "chain_name": chain_name
+        })
+    return res
+
 @router.get("/recent")
 def get_recent_logs(limit: int = 50, db: Session = Depends(get_db)):
     logs = db.query(AttackLog).order_by(AttackLog.timestamp.desc()).limit(limit).all()

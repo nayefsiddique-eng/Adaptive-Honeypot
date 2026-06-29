@@ -3,66 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MIRAGE — Attacker Sessions &amp; TTPs</title>
+  <title>MIRAGE — Sessions Database</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    /* Session specific styles */
-    .session-timeline-table {
-      font-size: 11px;
+    .timeline-container {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 20px;
+      border: 1px solid rgba(0, 245, 255, 0.1);
+      border-radius: 4px;
+      margin: 10px 0;
     }
     
-    .keystroke-block {
-      max-height: 250px;
-      overflow-y: auto;
-      padding-right: 8px;
+    .timeline-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      padding-left: 20px;
+    }
+    .timeline-list::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 5px;
+      bottom: 5px;
+      width: 2px;
+      background: rgba(0, 245, 255, 0.15);
     }
     
-    .ai-analysis-container {
-      margin-top: 20px;
-      border-top: 1px solid var(--card-border);
-      padding-top: 20px;
+    .timeline-item {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .timeline-item::after {
+      content: "";
+      position: absolute;
+      left: -18px;
+      top: 6px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 6px var(--accent-cyan);
     }
     
-    .ai-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 16px;
-      margin-top: 12px;
-    }
-    
-    @media (max-width: 900px) {
-      .ai-grid { grid-template-columns: 1fr; }
-    }
-    
-    .ai-bubble {
-      background: rgba(13, 21, 38, 0.6);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 16px;
-      border-left: 4px solid var(--accent-blue);
-    }
-    
-    .ai-bubble.description { border-left-color: var(--accent-blue); }
-    .ai-bubble.summary { border-left-color: var(--accent-yellow); }
-    .ai-bubble.recommendation { border-left-color: var(--accent-green); }
-    
-    .ai-bubble-title {
-      font-family: var(--font-mono);
+    .timeline-meta {
+      font-family: var(--font-hud);
       font-size: 10px;
-      text-transform: uppercase;
-      font-weight: bold;
-      margin-bottom: 6px;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
+      color: var(--text-muted);
     }
-    
-    .ai-bubble.description .ai-bubble-title { color: var(--accent-blue); }
-    .ai-bubble.summary .ai-bubble-title { color: var(--accent-yellow); }
-    .ai-bubble.recommendation .ai-bubble-title { color: var(--accent-green); }
-    
-    .ai-bubble-text {
-      font-size: 11px;
-      line-height: 1.45;
-      color: #e2e8f0;
+    .timeline-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+    }
+    .timeline-detail {
+      font-size: 12px;
+      color: #94a3b8;
     }
   </style>
 </head>
@@ -71,85 +70,47 @@
   <div class="app-container">
     
     <!-- 1. HEADER -->
-    <header class="main-header">
-      <a href="index.html" class="logo-section">
-        <span class="logo-badge">🛡️</span>
-        <div class="logo-text">
-          <span class="logo-title">MIRAGE</span>
-          <span class="logo-subtitle">Adaptive Threat Deception</span>
+    <header class="hud-header">
+      <a href="index.html" class="hud-logo">
+        <span class="hud-logo-icon">🛡️</span>
+        <div class="hud-logo-text">
+          <h1>MIRAGE</h1>
+          <span>AI Adaptive Deception</span>
         </div>
       </a>
       
       <nav>
-        <ul class="nav-links">
-          <li class="nav-item"><a href="index.html">Portal</a></li>
-          <li class="nav-item"><a href="dashboard.html">SOC Cockpit</a></li>
-          <li class="nav-item active"><a href="sessions.html">Attacker Profiles</a></li>
-          <li class="nav-item"><a href="intel.html">Threat Intel</a></li>
+        <ul class="hud-nav">
+          <li class="hud-nav-item"><a href="index.html">Portal</a></li>
+          <li class="hud-nav-item"><a href="dashboard.html">SOC Cockpit</a></li>
+          <li class="hud-nav-item active"><a href="sessions.html">Attacker Profiles</a></li>
+          <li class="hud-nav-item"><a href="intel.html">Threat Intel</a></li>
         </ul>
       </nav>
-      
-      <div class="nav-stats">
-        <div class="nav-stat-item">
-          <span class="nav-stat-label">System State</span>
-          <span class="nav-stat-value" id="headerThreatLevel" style="color: var(--accent-green);">MONITORING</span>
-        </div>
-        <div class="nav-stat-item">
-          <span class="nav-stat-label">Total Events</span>
-          <span class="nav-stat-value" id="headerTotalAttacks" style="color: var(--accent-blue);">0</span>
-        </div>
-        <div class="nav-stat-item">
-          <span class="nav-stat-label">Active Decoys</span>
-          <span class="nav-stat-value" id="headerActiveDecoys" style="color: var(--accent-purple);">0</span>
-        </div>
-        <span class="nav-status-indicator" id="headerThreatIndicator"></span>
-      </div>
     </header>
 
-    <!-- 2. ATTACKER SESSIONS & COMMAND RECORDER -->
+    <!-- 2. SESSIONS DATABASE -->
     <section class="glass-card">
-      <h3>📟 ACTIVE ATTACKER SESSIONS &amp; RECORDINGS</h3>
+      <h3>📟 COCKPIT SESSION DB</h3>
       <div class="table-wrapper">
-        <table class="cyber-table" style="min-width: 1000px;">
+        <table class="cyber-table">
           <thead>
             <tr>
               <th>Session ID</th>
               <th>IP Address</th>
+              <th>Country</th>
               <th>Attack Count</th>
-              <th>Interaction Depth</th>
-              <th>Honeypot State</th>
               <th>Risk Score</th>
-              <th>Duration</th>
+              <th>Deception Score</th>
+              <th>Chain Name</th>
+              <th>Depth</th>
               <th>Last Seen</th>
-              <th>Actions</th>
+              <th>Status</th>
             </tr>
           </thead>
-          <tbody id="sessionsTableBody">
+          <tbody id="sessionsBody">
             <tr>
-              <td colspan="9" class="loading-text" style="text-align: center;">Loading attacker sessions telemetry...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- 3. TTP FINGERPRINTS MATRIX -->
-    <section class="glass-card">
-      <h3>🧬 ATTACKER TTP FINGERPRINTS (PANEL C)</h3>
-      <div class="table-wrapper">
-        <table class="cyber-table" style="min-width: 1000px;">
-          <thead>
-            <tr>
-              <th>IP Address</th>
-              <th>Tool Signature</th>
-              <th onclick="sortTtpTableByEvasion()" style="cursor: pointer; text-decoration: underline; color: var(--accent-blue);">Evasion Attempts ↕</th>
-              <th>Attack Chain Stage</th>
-              <th>Last Seen</th>
-            </tr>
-          </thead>
-          <tbody id="ttpTableBody">
-            <tr>
-              <td colspan="5" class="loading-text" style="text-align: center;">Loading behavioral TTP metadata...</td>
+              <td colspan="10" class="loading-text" style="text-align: center;">Retrieving active attacker session histories...</td>
             </tr>
           </tbody>
         </table>
@@ -158,73 +119,55 @@
 
   </div>
 
+  <!-- Scripts -->
   <script src="js/api.js"></script>
   <script>
     let openSessionId = null;
-    let currentSessionsData = [];
-    const sessionRecordingsCache = {};
-    const sessionSummariesCache = {};
 
-    async function fetchSessionsData() {
-      const [sessionsRes, clustersRes] = await Promise.all([
-        safeFetch(`${API}/api/sessions?limit=50`),
-        safeFetch(`${API}/api/sessions/clusters`)
-      ]);
-
-      currentSessionsData = sessionsRes;
-      updateSessionsTable(sessionsRes, clustersRes);
-      renderTtpTable(sessionsRes);
+    async function loadSessions() {
+      const sessions = await fetchSessions();
+      renderSessions(sessions);
     }
 
-    function updateSessionsTable(sessions, clusters) {
-      const tbody = document.getElementById("sessionsTableBody");
-      if (sessions.error) {
-        tbody.innerHTML = `<tr><td colspan="9" class="error-text text-red" style="text-align: center;">Failed to load sessions.</td></tr>`;
-        return;
-      }
-      
+    function renderSessions(sessions) {
+      const tbody = document.getElementById("sessionsBody");
       if (!sessions.length) {
-        tbody.innerHTML = `<tr><td colspan="9" class="loading-text" style="text-align: center;">No recorded sessions yet.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="loading-text" style="text-align: center;">No recorded session history.</td></tr>`;
         return;
-      }
-
-      const clusterMap = {};
-      if (clusters && clusters.clusters) {
-        clusters.clusters.forEach(c => {
-          clusterMap[c.ip] = c.cluster_label;
-        });
       }
 
       let html = "";
       sessions.forEach(sess => {
         const truncId = sess.session_id.substring(0, 8);
         const col = riskColor(sess.risk_score);
-        const active = openSessionId === sess.session_id;
+        const deceptionScore = sess.deception_score_avg ? sess.deception_score_avg.toFixed(2) : "0.00";
+        
+        let statusBadge = `<span class="badge" style="background:rgba(0, 255, 136, 0.12); color:var(--accent-green); border:1px solid var(--accent-green);">Active</span>`;
+        if (sess.is_active === false) {
+          statusBadge = `<span class="badge" style="background:rgba(78, 97, 120, 0.12); color:var(--text-muted); border:1px solid var(--text-muted);">Closed</span>`;
+        }
 
-        const clusterLabel = clusterMap[sess.ip_address]
-          ? `<div style="font-size: 8px; color: var(--accent-blue); font-weight: bold; margin-top: 2px;">[${clusterMap[sess.ip_address].toUpperCase()}]</div>`
-          : "";
+        const chainStr = sess.attack_chain_name
+          ? `<span class="badge" style="background:rgba(255, 107, 43, 0.1); color:var(--accent-orange); border:1px solid var(--accent-orange);">${sess.attack_chain_name.toUpperCase().replace(/_/g, ' ')}</span>`
+          : `<span style="color:var(--text-muted);">None</span>`;
 
         html += `
-          <tr>
-            <td style="font-weight: bold; color: var(--text-secondary);">${truncId}</td>
-            <td><strong>${sess.ip_address}</strong>${clusterLabel}</td>
-            <td>${sess.attack_count}</td>
-            <td>${sess.interaction_depth}/4</td>
-            <td><span class="badge badge-${sess.honeypot_state}">${sess.honeypot_state}</span></td>
-            <td><strong style="color:${col}">${sess.risk_score}</strong></td>
-            <td>${Math.round(sess.session_duration)}s</td>
+          <tr style="cursor:pointer;" onclick="toggleSession('${sess.session_id}')">
+            <td style="font-family:var(--font-hud); font-weight:700; color:var(--accent-cyan);">#${truncId}</td>
+            <td><strong>${sess.ip_address}</strong></td>
+            <td>${sess.country || 'Unknown'}</td>
+            <td style="font-family:var(--font-hud); font-size:14px; font-weight:700;">${sess.attack_count}</td>
+            <td><strong style="color:${col};">${sess.risk_score}</strong></td>
+            <td style="font-family:var(--font-hud); font-size:14px; font-weight:700;">${deceptionScore}</td>
+            <td>${chainStr}</td>
+            <td style="font-family:var(--font-hud);">${sess.interaction_depth}/4</td>
             <td style="color:var(--text-secondary);">${new Date(sess.last_seen || sess.first_seen).toLocaleTimeString()}</td>
-            <td>
-              <button onclick="toggleSessionDetails('${sess.session_id}')" class="btn">
-                ${active ? 'Hide Info' : 'Details'}
-              </button>
-            </td>
+            <td>${statusBadge}</td>
           </tr>
-          <tr id="sessionDetailRow_${sess.session_id}" class="detail-row ${active ? '' : 'hidden'}">
-            <td colspan="9">
-              <div id="sessionDetailContent_${sess.session_id}" class="detail-content" style="padding:20px; background: rgba(3,5,10,0.3); border-bottom: 1px solid var(--card-border);">
-                <!-- Loaded dynamically -->
+          <tr id="timelineRow_${sess.session_id}" class="hidden">
+            <td colspan="10">
+              <div class="timeline-container" id="timelineBox_${sess.session_id}">
+                <div class="loading-text">Loading sequential timeline details...</div>
               </div>
             </td>
           </tr>
@@ -233,205 +176,59 @@
       tbody.innerHTML = html;
     }
 
-    async function toggleSessionDetails(sessionId) {
-      const row = document.getElementById(`sessionDetailRow_${sessionId}`);
+    async function toggleSession(sessionId) {
+      const row = document.getElementById(`timelineRow_${sessionId}`);
+      const box = document.getElementById(`timelineBox_${sessionId}`);
+      
       if (openSessionId === sessionId) {
         row.classList.add("hidden");
         openSessionId = null;
-      } else {
-        if (openSessionId) {
-          const prev = document.getElementById(`sessionDetailRow_${openSessionId}`);
-          if (prev) prev.classList.add("hidden");
-        }
-        openSessionId = sessionId;
-        row.classList.remove("hidden");
-        await fetchSessionRecording(sessionId);
-      }
-      // Re-trigger layout print
-      updateSessionsTable(currentSessionsData, null);
-    }
-
-    async function fetchSessionRecording(sessionId) {
-      const container = document.getElementById(`sessionDetailContent_${sessionId}`);
-      if (!container) return;
-
-      if (sessionRecordingsCache[sessionId]) {
-        renderSessionRecording(sessionId, container, sessionRecordingsCache[sessionId]);
         return;
       }
 
-      container.innerHTML = `<div class="loading-text">Loading keystroke recording streams...</div>`;
-      const rec = await safeFetch(`${API}/api/sessions/${sessionId}/recording`);
-      if (rec.error) {
-        container.innerHTML = `<div class="error-text">Failed to retrieve recording.</div>`;
-        return;
+      if (openSessionId) {
+        const prev = document.getElementById(`timelineRow_${openSessionId}`);
+        if (prev) prev.classList.add("hidden");
       }
 
-      sessionRecordingsCache[sessionId] = rec;
-      renderSessionRecording(sessionId, container, rec);
-    }
-
-    function renderSessionRecording(sessionId, container, rec) {
-      let cmdHtml = `<div style="color: var(--text-secondary); font-style: italic;">No keystroke CLI commands captured.</div>`;
-      if (rec.commands_issued && rec.commands_issued.length) {
-        cmdHtml = rec.commands_issued.map(c => `<pre class="pre-wrap-command">${c}</pre>`).join("");
-      }
+      openSessionId = sessionId;
+      row.classList.remove("hidden");
       
-      let hashHtml = `<div style="color: var(--text-secondary); font-style: italic;">No uploaded payload hashes recorded.</div>`;
-      if (rec.payload_hashes && rec.payload_hashes.length) {
-        hashHtml = rec.payload_hashes.map(h => `<div class="hash-text">${h}</div>`).join("");
-      }
-
-      const timelineRows = rec.events.map(e => `
-        <tr>
-          <td style="color: var(--text-secondary);">${new Date(e.timestamp).toLocaleTimeString()}</td>
-          <td><span class="badge badge-${e.attack_type}">${e.attack_type.replace('_',' ')}</span></td>
-          <td>${e.port}</td>
-          <td>${(e.confidence*100).toFixed(0)}%</td>
-          <td><strong style="color:${riskColor(e.risk_score)}">${e.risk_score}</strong></td>
-        </tr>
-      `).join("");
-
-      container.innerHTML = `
-        <div class="detail-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
-          <div>
-            <div class="detail-section-title">⌨️ Captured CLI Keystroke Commands</div>
-            <div class="keystroke-block">${cmdHtml}</div>
-            
-            <div class="detail-section-title" style="margin-top:16px;">🔑 Uploaded File payload Hashes</div>
-            <div>${hashHtml}</div>
-          </div>
-          
-          <div>
-            <div class="detail-section-title">⏱️ Session Event Timeline</div>
-            <div class="table-wrapper">
-              <table class="cyber-table session-timeline-table">
-                <thead>
-                  <tr style="background:rgba(3,5,10,0.6)">
-                    <th>Time</th>
-                    <th>Type</th>
-                    <th>Port</th>
-                    <th>Conf</th>
-                    <th>Risk</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${timelineRows}
-                </tbody>
-              </table>
-            </div>
-            
-            <div class="ai-analysis-container">
-              <button onclick="generateSessionSummary('${sessionId}')" class="btn btn-primary">
-                🧠 Request Gemini Analyst Briefing
-              </button>
-              <div id="aiSummaryBox_${sessionId}" class="ai-grid hidden"></div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      if (sessionSummariesCache[sessionId]) {
-        renderSessionSummary(sessionId, sessionSummariesCache[sessionId]);
-      }
-    }
-
-    async function generateSessionSummary(sessionId) {
-      const box = document.getElementById(`aiSummaryBox_${sessionId}`);
-      box.classList.remove("hidden");
+      box.innerHTML = `<div class="loading-text">Extracting sequential interaction timeline delta records...</div>`;
       
-      if (sessionSummariesCache[sessionId]) {
-        renderSessionSummary(sessionId, sessionSummariesCache[sessionId]);
-        return;
-      }
-
-      box.innerHTML = `<div class="loading-text" style="grid-column: 1 / span 3;">Contacting cognitive intelligence analysts...</div>`;
-
-      const sum = await safeFetch(`${API}/api/sessions/${sessionId}/summary`);
-      if (sum.error) {
-        box.innerHTML = `<div class="error-text" style="grid-column: 1 / span 3;">Failed to load Gemini threat intelligence.</div>`;
-        return;
-      }
-
-      sessionSummariesCache[sessionId] = sum;
-      renderSessionSummary(sessionId, sum);
+      const timeline = await fetchBehaviorTimeline(sessionId);
+      renderTimeline(box, timeline);
     }
 
-    function renderSessionSummary(sessionId, sum) {
-      const box = document.getElementById(`aiSummaryBox_${sessionId}`);
-      box.classList.remove("hidden");
-      box.innerHTML = `
-        <div class="ai-bubble description">
-          <div class="ai-bubble-title">Threat description</div>
-          <div class="ai-bubble-text">${sum.description}</div>
-        </div>
-        <div class="ai-bubble summary">
-          <div class="ai-bubble-title">Incident Analysis</div>
-          <div class="ai-bubble-text">${sum.summary}</div>
-        </div>
-        <div class="ai-bubble recommendation">
-          <div class="ai-bubble-title">Action Response</div>
-          <div class="ai-bubble-text">${sum.recommendation}</div>
-        </div>
-      `;
-    }
-
-    function renderTtpTable(sessions) {
-      const tbody = document.getElementById("ttpTableBody");
-      if (sessions.error) {
-        tbody.innerHTML = `<tr><td colspan="5" class="error-text text-red" style="text-align: center;">Failed to load TTP fingerprints.</td></tr>`;
-        return;
-      }
-      
-      if (!sessions.length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="loading-text" style="text-align: center;">No fingerprints recorded.</td></tr>`;
+    function renderTimeline(container, timeline) {
+      if (!timeline.length) {
+        container.innerHTML = `<div class="loading-text">No timeline trace logs found.</div>`;
         return;
       }
 
-      let html = "";
-      sessions.forEach(sess => {
-        const ttp = sess.ttp_fingerprint || {
-          tool_signature: "custom",
-          evasion_attempts: 0,
-          attack_chain_stage: "recon",
-          timing_pattern: "slow_drip"
-        };
+      let itemsHtml = "";
+      timeline.forEach(t => {
+        const delta = t.delta_seconds || 0;
+        const mitreStr = t.mitre_technique ? `MITRE ID: ${t.mitre_technique}` : "MITRE: None";
         
-        const stageColors = {
-          recon: "badge-unknown",
-          weaponize: "badge-port_scan",
-          exploit: "badge-sql_injection",
-          post_exploit: "badge-command_injection"
-        };
-        const stageClass = stageColors[ttp.attack_chain_stage] || "badge-unknown";
-
-        html += `
-          <tr>
-            <td><strong class="text-blue">${sess.ip_address}</strong></td>
-            <td><span class="badge" style="background-color: rgba(6,182,212,0.1); color: var(--accent-blue); border:1px solid var(--accent-blue);">${ttp.tool_signature.toUpperCase()}</span></td>
-            <td style="font-weight: bold; color: var(--accent-red);">${ttp.evasion_attempts}</td>
-            <td><span class="badge ${stageClass}">${ttp.attack_chain_stage.toUpperCase()}</span></td>
-            <td style="color:var(--text-secondary);">${new Date(sess.last_seen || sess.first_seen).toLocaleTimeString()}</td>
-          </tr>
+        itemsHtml += `
+          <div class="timeline-item">
+            <div class="timeline-meta">+${delta}s — ${mitreStr}</div>
+            <div class="timeline-title">${t.attack_type.toUpperCase().replace(/_/g, ' ')}</div>
+            <div class="timeline-detail">Adaptive State: <strong class="text-green">${t.deception_state.toUpperCase()}</strong> | Risk Index: <strong style="color:${riskColor(t.risk_score)}">${t.risk_score}</strong></div>
+          </div>
         `;
       });
-      tbody.innerHTML = html;
+
+      container.innerHTML = `
+        <div style="font-family:var(--font-hud); font-weight:700; color:var(--accent-cyan); margin-bottom:12px; font-size:12px; letter-spacing:1px; text-transform:uppercase;">Attacker Interaction Delta Timeline</div>
+        <div class="timeline-list">
+          ${itemsHtml}
+        </div>
+      `;
     }
 
-    function sortTtpTableByEvasion() {
-      if (!currentSessionsData || !currentSessionsData.length) return;
-      currentSessionsData.sort((a, b) => {
-        const evaA = a.ttp_fingerprint ? a.ttp_fingerprint.evasion_attempts : 0;
-        const evaB = b.ttp_fingerprint ? b.ttp_fingerprint.evasion_attempts : 0;
-        return evaB - evaA;
-      });
-      renderTtpTable(currentSessionsData);
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      fetchSessionsData();
-      setInterval(fetchSessionsData, 15000);
-    });
+    document.addEventListener("DOMContentLoaded", loadSessions);
   </script>
 </body>
 </html>

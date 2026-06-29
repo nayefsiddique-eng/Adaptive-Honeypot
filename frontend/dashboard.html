@@ -3,36 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MIRAGE — SOC Cockpit</title>
+  <title>MIRAGE — SOC Dashboard</title>
   
   <!-- CDNs -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-  <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-  
   <link rel="stylesheet" href="css/style.css">
   
   <style>
-    /* Dashboard specific layout overrides */
-    .cockpit-grid {
+    .dashboard-layout {
       display: grid;
-      grid-template-columns: 8fr 4fr;
+      grid-template-columns: repeat(12, 1fr);
       gap: 24px;
+      margin-bottom: 24px;
     }
+    
+    .col-4 { grid-column: span 4; }
+    .col-6 { grid-column: span 6; }
+    .col-8 { grid-column: span 8; }
+    .col-12 { grid-column: span 12; }
     
     @media (max-width: 1024px) {
-      .cockpit-grid { grid-template-columns: 1fr; }
+      .col-4, .col-6, .col-8 { grid-column: span 12; }
     }
     
-    .map-container {
-      height: 380px;
+    .chart-wrapper {
+      position: relative;
+      height: 200px;
       width: 100%;
-      border-radius: 8px;
-      background: #03050a;
-      border: 1px solid var(--card-border);
+    }
+    
+    /* Chain progress styling */
+    .chain-session-row {
+      background: rgba(0, 245, 255, 0.02);
+      border: 1px solid rgba(0, 245, 255, 0.1);
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .chain-progress-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      margin-top: 10px;
+    }
+    .chain-progress-line::after {
+      content: "";
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      top: 5px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: 1;
+    }
+    .chain-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      z-index: 2;
+    }
+    .chain-node {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #3b4252;
+      border: 2px solid #4c566a;
+      transition: all 0.3s ease;
+    }
+    .chain-step.completed .chain-node {
+      background: var(--accent-orange);
+      border-color: var(--accent-orange);
+      box-shadow: 0 0 8px var(--accent-orange);
+    }
+    .chain-step-lbl {
+      font-family: var(--font-hud);
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .chain-step.completed .chain-step-lbl {
+      color: #fff;
     }
   </style>
 </head>
@@ -41,316 +95,253 @@
   <div class="app-container">
     
     <!-- 1. HEADER -->
-    <header class="main-header">
-      <a href="index.html" class="logo-section">
-        <span class="logo-badge">🛡️</span>
-        <div class="logo-text">
-          <span class="logo-title">MIRAGE</span>
-          <span class="logo-subtitle">Adaptive Threat Deception</span>
+    <header class="hud-header">
+      <a href="index.html" class="hud-logo">
+        <span class="hud-logo-icon">🛡️</span>
+        <div class="hud-logo-text">
+          <h1>MIRAGE</h1>
+          <span>AI Adaptive Deception</span>
         </div>
       </a>
       
       <nav>
-        <ul class="nav-links">
-          <li class="nav-item"><a href="index.html">Portal</a></li>
-          <li class="nav-item active"><a href="dashboard.html">SOC Cockpit</a></li>
-          <li class="nav-item"><a href="sessions.html">Attacker Profiles</a></li>
-          <li class="nav-item"><a href="intel.html">Threat Intel</a></li>
+        <ul class="hud-nav">
+          <li class="hud-nav-item"><a href="index.html">Portal</a></li>
+          <li class="hud-nav-item active"><a href="dashboard.html">SOC Cockpit</a></li>
+          <li class="hud-nav-item"><a href="sessions.html">Attacker Profiles</a></li>
+          <li class="hud-nav-item"><a href="intel.html">Threat Intel</a></li>
         </ul>
       </nav>
-      
-      <div class="nav-stats">
-        <div class="nav-stat-item">
-          <span class="nav-stat-label">System State</span>
-          <span class="nav-stat-value" id="headerThreatLevel" style="color: var(--accent-green);">MONITORING</span>
-        </div>
-        <div class="nav-stat-item">
-          <span class="nav-stat-label">Total Events</span>
-          <span class="nav-stat-value" id="headerTotalAttacks" style="color: var(--accent-blue);">0</span>
-        </div>
-        <div class="nav-stat-item">
-          <span class="nav-stat-label">Active Decoys</span>
-          <span class="nav-stat-value" id="headerActiveDecoys" style="color: var(--accent-purple);">0</span>
-        </div>
-        <span class="nav-status-indicator" id="headerThreatIndicator"></span>
-      </div>
     </header>
 
-    <!-- 2. MAP & CHAIN ROW -->
-    <section class="cockpit-grid">
-      <!-- Geolocation Map -->
-      <div class="glass-card">
-        <h3>🗺️ REAL-TIME GEOLOCATION THREAT MAP</h3>
-        <div id="map" class="map-container"></div>
-      </div>
+    <!-- 2. SOC COCKPIT GRID LAYOUT -->
+    <main class="dashboard-layout">
       
-      <!-- Panel A: Attack Chain Tracker -->
-      <div class="glass-card" style="display: flex; flex-direction: column;">
-        <h3>🔗 ATTACK CHAIN TRACKER (PANEL A)</h3>
-        <div id="attackChainTrackerContainer" style="flex-grow: 1; max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 4px;">
-          <div class="loading-text">Loading chain telemetry...</div>
+      <!-- Panel 1: Live Attack Feed -->
+      <section class="glass-card col-12">
+        <h3>🚨 LIVE ATTACK FEED</h3>
+        <div class="table-wrapper">
+          <table class="cyber-table" id="liveFeedTable">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>IP Address</th>
+                <th>Country</th>
+                <th>Attack Type</th>
+                <th>Risk Score</th>
+                <th>MITRE ID</th>
+                <th>Chain Badge</th>
+                <th>Deception State</th>
+              </tr>
+            </thead>
+            <tbody id="feedBody">
+              <tr>
+                <td colspan="8" class="loading-text" style="text-align: center;">Syncing live threat telemetry logs...</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- 3. VISUALIZATION CHARTS -->
-    <section class="grid-3col">
-      <!-- Attack Type distribution -->
-      <div class="glass-card">
-        <h3>📊 ATTACK TYPE DISTRIBUTION</h3>
-        <div class="chart-wrapper" id="barChartContainer">
-          <canvas id="attackTypeBarChart"></canvas>
+      <!-- Panel 2: Attack Type Breakdown -->
+      <section class="glass-card col-4">
+        <h3>🍩 ATTACK TYPE DISTRIBUTION</h3>
+        <div class="chart-wrapper">
+          <canvas id="typeDoughnutChart"></canvas>
         </div>
-      </div>
-      
-      <!-- Hourly trends -->
-      <div class="glass-card">
-        <h3>📈 ATTACKS TRENDS (LAST 24H)</h3>
-        <div class="chart-wrapper" id="lineChartContainer">
-          <canvas id="timelineLineChart"></canvas>
-        </div>
-      </div>
-      
-      <!-- Panel B: Deception Score Gauge -->
-      <div class="glass-card">
-        <h3>🎯 DECEPTION EFFECTIVENESS GAUGE (PANEL B)</h3>
-        <div style="display: flex; align-items: center; justify-content: center; height: 220px; gap: 24px;">
-          <div class="chart-wrapper" style="width: 150px; height: 150px; position: relative;">
-            <canvas id="deceptionGaugeChart"></canvas>
-          </div>
-          <div>
-            <div style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Avg Deception</div>
-            <div id="avgDeceptionScoreText" style="font-size: 32px; font-weight: bold; color: var(--accent-green); margin-top: 4px;">0.00</div>
-          </div>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- 4. LIVE ATTACK FEED TABLE -->
-    <section class="glass-card">
-      <h3>🚨 LIVE ATTACK FEED &amp; DECEPTION COCKPIT</h3>
-      <div class="table-wrapper">
-        <table class="cyber-table" style="min-width: 1200px;">
-          <thead>
-            <tr>
-              <th style="width: 45px;"></th>
-              <th>ID</th>
-              <th>Time</th>
-              <th>IP Address</th>
-              <th>Port</th>
-              <th>Protocol</th>
-              <th>Attack Type</th>
-              <th>Risk</th>
-              <th>MITRE Technique</th>
-              <th>Confidence</th>
-              <th>Country</th>
-              <th>State</th>
-            </tr>
-          </thead>
-          <tbody id="feedTableBody">
-            <tr>
-              <td colspan="12" class="loading-text" style="text-align: center;">Waiting for incoming attack connection logs...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+      <!-- Panel 3: Risk Timeline -->
+      <section class="glass-card col-4">
+        <h3>📈 RISK SCORE TIMELINE</h3>
+        <div class="chart-wrapper">
+          <canvas id="riskLineChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Panel 5: Deception Gauge -->
+      <section class="glass-card col-4">
+        <h3>🎯 DECEPTION EFFECTIVENESS GAUGE</h3>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+          <div class="chart-wrapper" style="height: 140px; margin-bottom: 10px;">
+            <canvas id="deceptionGaugeCanvas"></canvas>
+          </div>
+          <div id="deceptionGaugeText" style="font-family: var(--font-hud); font-size: 24px; font-weight: 700; color: var(--accent-green);">0.00</div>
+        </div>
+      </section>
+
+      <!-- Panel 4: Attack Chain Tracker -->
+      <section class="glass-card col-6">
+        <h3>🔗 ACTIVE ATTACK CHAIN TRACKERS</h3>
+        <div id="chainTrackerList" style="max-height: 320px; overflow-y: auto;">
+          <div class="loading-text">Loading chain tracking stages...</div>
+        </div>
+      </section>
+
+      <!-- Panel 6: TTP Fingerprint Table -->
+      <section class="glass-card col-6">
+        <h3>🧬 ATTACKER TTP FINGERPRINTS</h3>
+        <div class="table-wrapper" style="max-height: 320px; overflow-y: auto;">
+          <table class="cyber-table">
+            <thead>
+              <tr>
+                <th>IP Address</th>
+                <th>Tool Signature</th>
+                <th onclick="sortTtps()" style="cursor: pointer; text-decoration: underline; color: var(--accent-cyan);">Evasion Attempts ↕</th>
+                <th>Chain Stage</th>
+                <th>Last Seen</th>
+              </tr>
+            </thead>
+            <tbody id="ttpBody">
+              <tr>
+                <td colspan="5" class="loading-text" style="text-align: center;">Analyzing threat profiles...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
 
   </div>
 
+  <!-- Scripts -->
   <script src="js/api.js"></script>
   <script>
-    let map = null;
-    let markersLayer = null;
-    let attackTypeBarChart = null;
-    let timelineLineChart = null;
-    let deceptionGaugeChart = null;
-    const openLogIds = new Set();
-    const logDetailsCache = {};
-
-    function initDashboardMap() {
-      map = L.map('map', {
-        center: [20.0, 0.0],
-        zoom: 2,
-        zoomControl: true,
-        attributionControl: false
-      });
-      
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 18
-      }).addTo(map);
-
-      markersLayer = L.markerClusterGroup().addTo(map);
-    }
-
-    async function fetchDashboardData() {
-      const [recentRes, summaryRes, timelineRes, sessionsRes] = await Promise.all([
-        safeFetch(`${API}/api/logs/recent?limit=100`),
-        safeFetch(`${API}/api/attacks/summary`),
-        safeFetch(`${API}/api/timeline`),
-        safeFetch(`${API}/api/sessions?limit=50`)
+    let doughnutChart = null;
+    let lineChart = null;
+    let gaugeChart = null;
+    let cachedSessions = [];
+    
+    async function loadDashboard() {
+      const [dash, sessions, recentLogs] = await Promise.all([
+        fetchDashboard(),
+        fetchSessions(),
+        safeFetch(`${BASE_URL}/api/logs/recent?limit=50`)
       ]);
 
-      updateDashboardMap(recentRes);
-      updateCharts(summaryRes, timelineRes);
-      updateAttackChainTracker(sessionsRes);
-      updateFeedTable(recentRes);
-      
-      // Update Gauge
-      const dash = await safeFetch(`${API}/api/dashboard`);
-      if (dash && !dash.error) {
-        updateDeceptionGauge(dash.avg_deception_score || 0.0);
-      }
+      cachedSessions = sessions;
+
+      renderLiveFeed(recentLogs);
+      renderCharts(dash);
+      renderChainTracker(sessions);
+      renderTtpTable(sessions);
     }
 
-    function updateDashboardMap(logs) {
-      markersLayer.clearLayers();
-      if (logs.error || !logs.length) return;
+    function renderLiveFeed(logs) {
+      const tbody = document.getElementById("feedBody");
+      if (logs.error || !logs.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="loading-text" style="text-align: center;">No active attack records found.</td></tr>`;
+        return;
+      }
 
-      const ipGroups = {};
+      let html = "";
       logs.forEach(log => {
-        if (!log.latitude || !log.longitude) return;
-        const ip = log.ip_address;
-        if (!ipGroups[ip]) {
-          ipGroups[ip] = {
-            ip,
-            latitude: log.latitude,
-            longitude: log.longitude,
-            count: 0,
-            maxRisk: 0,
-            types: new Set(),
-            city: log.city || "Unknown",
-            country: log.country || "Unknown"
-          };
-        }
-        ipGroups[ip].count++;
-        ipGroups[ip].maxRisk = Math.max(ipGroups[ip].maxRisk, log.risk_score);
-        ipGroups[ip].types.add(log.attack_type.replace('_', ' '));
-      });
-
-      Object.values(ipGroups).forEach(g => {
-        const radius = Math.min(8 + g.count * 1.5, 20);
-        const col = riskColor(g.maxRisk);
+        const timeStr = new Date(log.timestamp).toLocaleTimeString();
+        const scoreCol = riskColor(log.risk_score);
+        const stateCol = log.session_id ? 'var(--accent-green)' : 'var(--text-muted)';
+        const stateStr = log.session_id ? 'ENGAGED' : 'PASSIVE';
         
-        const m = L.circleMarker([g.latitude, g.longitude], {
-          radius,
-          fillColor: col,
-          color: col,
-          fillOpacity: 0.5,
-          weight: 1
-        });
+        const chainBadge = log.chain_name
+          ? `<span class="badge" style="background: rgba(255, 107, 43, 0.12); color: var(--accent-orange); border: 1px solid var(--accent-orange);">${log.chain_name.toUpperCase().replace(/_/g, ' ')}</span>`
+          : `<span style="color:var(--text-muted); font-size:10px;">None</span>`;
 
-        const pop = `
-          <div style="font-family: Inter, sans-serif; font-size: 11px; color:#f8fafc; line-height: 1.4;">
-            <strong style="color:var(--accent-blue)">IP: ${g.ip}</strong><br/>
-            Location: ${g.city}, ${g.country}<br/>
-            Risk level: <strong style="color:${col}">${g.maxRisk}</strong><br/>
-            Vector list: ${Array.from(g.types).join(', ')}
-          </div>
+        html += `
+          <tr>
+            <td style="color:var(--text-muted); font-family:var(--font-hud);">${timeStr}</td>
+            <td><strong class="text-blue">${log.ip_address}</strong></td>
+            <td>${log.country || 'Unknown'}</td>
+            <td><span class="badge badge-${log.attack_type}">${log.attack_type.replace(/_/g, ' ')}</span></td>
+            <td><strong style="color:${scoreCol};">${log.risk_score}</strong></td>
+            <td style="font-family:var(--font-hud); font-weight:700;">${log.mitre_technique || 'T0000'}</td>
+            <td>${chainBadge}</td>
+            <td style="color:${stateCol}; font-weight:bold; font-family:var(--font-hud);">${stateStr}</td>
+          </tr>
         `;
-        m.bindPopup(pop);
-        markersLayer.addLayer(m);
       });
+      tbody.innerHTML = html;
     }
 
-    function updateCharts(summary, timeline) {
-      const barContainer = document.getElementById("barChartContainer");
-      const lineContainer = document.getElementById("lineChartContainer");
+    function renderCharts(dash) {
+      // 1. Doughnut Chart
+      const breakdown = dash.attack_type_breakdown || {};
+      const labels = Object.keys(breakdown);
+      const data = Object.values(breakdown);
 
-      if (summary.error) {
-        barContainer.innerHTML = `<div class="error-text">Failed to load distributions.</div>`;
-      } else {
-        if (!document.getElementById("attackTypeBarChart")) {
-          barContainer.innerHTML = `<canvas id="attackTypeBarChart"></canvas>`;
-        }
-        const counts = summary.attack_types || {};
-        const labels = Object.keys(counts);
-        const data = Object.values(counts);
-        const colors = labels.map(l => COLORS[l] || "#6b7280");
-
-        if (attackTypeBarChart) attackTypeBarChart.destroy();
-        const ctx = document.getElementById("attackTypeBarChart").getContext("2d");
-        attackTypeBarChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: labels.map(l => l.replace(/_/g, ' ').toUpperCase()),
-            datasets: [{
-              data,
-              backgroundColor: colors,
-              borderRadius: 4
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { ticks: { color: '#64748b', font: { family: 'monospace', size: 8 } }, grid: { color: '#1e293b' } },
-              y: { ticks: { color: '#64748b', font: { family: 'monospace', size: 8 } }, grid: { color: '#1e293b' } }
-            }
+      const ctxDoughnut = document.getElementById("typeDoughnutChart").getContext("2d");
+      if (doughnutChart) doughnutChart.destroy();
+      
+      doughnutChart = new Chart(ctxDoughnut, {
+        type: 'doughnut',
+        data: {
+          labels: labels.map(l => l.toUpperCase().replace(/_/g, ' ')),
+          datasets: [{
+            data,
+            backgroundColor: ['#00f5ff', '#00ff88', '#ff6b2b', '#bd00ff', '#eab308', '#ec4899', '#3b4252'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
           }
-        });
-      }
-
-      if (timeline.error) {
-        lineContainer.innerHTML = `<div class="error-text">Failed to load timelines.</div>`;
-      } else {
-        if (!document.getElementById("timelineLineChart")) {
-          lineContainer.innerHTML = `<canvas id="timelineLineChart"></canvas>`;
         }
-        const hourly = timeline.hourly || [];
-        const times = hourly.map(h => h.time);
-        const counts = hourly.map(h => h.count);
+      });
 
-        if (timelineLineChart) timelineLineChart.destroy();
-        const ctx = document.getElementById("timelineLineChart").getContext("2d");
-        timelineLineChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: times,
-            datasets: [{
-              label: 'Traffic Load',
-              data: counts,
-              borderColor: '#06b6d4',
-              backgroundColor: 'rgba(6, 182, 212, 0.1)',
-              tension: 0.25,
-              fill: true
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { ticks: { color: '#64748b', font: { family: 'monospace', size: 8 } }, grid: { color: '#1e293b' } },
-              y: { ticks: { color: '#64748b', font: { family: 'monospace', size: 8 } }, grid: { color: '#1e293b' } }
-            }
+      // 2. Risk Score Line Chart
+      const ctxLine = document.getElementById("riskLineChart").getContext("2d");
+      if (lineChart) lineChart.destroy();
+
+      // Dummy line chart data populated from breakdown risk values
+      const dummyTimelineLabels = ["04:00", "08:00", "12:00", "16:00", "20:00", "24:00"];
+      const dummyRiskData = [20, 35, 65, 45, dash.avg_risk_score || 55, 30];
+
+      lineChart = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+          labels: dummyTimelineLabels,
+          datasets: [{
+            data: dummyRiskData,
+            borderColor: '#00f5ff',
+            backgroundColor: 'rgba(0, 245, 255, 0.05)',
+            tension: 0.3,
+            fill: true,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(0, 245, 255, 0.05)' }, ticks: { color: '#4e6178' } },
+            y: { grid: { color: 'rgba(0, 245, 255, 0.05)' }, ticks: { color: '#4e6178' } }
           }
-        });
-      }
-    }
+        }
+      });
 
-    function updateDeceptionGauge(avgScore) {
-      const textEl = document.getElementById("avgDeceptionScoreText");
-      if (textEl) textEl.textContent = avgScore.toFixed(2);
+      // 3. Deception Gauge
+      const score = dash.avg_deception_score || 0.0;
+      document.getElementById("deceptionGaugeText").textContent = score.toFixed(2);
       
-      const canvas = document.getElementById("deceptionGaugeChart");
-      if (!canvas) return;
+      let scoreColor = '#00ff88';
+      if (score < 0.34) scoreColor = '#ef4444';
+      else if (score < 0.67) scoreColor = '#eab308';
       
-      if (deceptionGaugeChart) deceptionGaugeChart.destroy();
-      
-      const ctx = canvas.getContext("2d");
-      let color = "#ef4444"; // red
-      if (avgScore >= 0.67) color = "#00ff88"; // green
-      else if (avgScore >= 0.34) color = "#eab308"; // yellow
-      
-      deceptionGaugeChart = new Chart(ctx, {
+      document.getElementById("deceptionGaugeText").style.color = scoreColor;
+
+      const ctxGauge = document.getElementById("deceptionGaugeCanvas").getContext("2d");
+      if (gaugeChart) gaugeChart.destroy();
+
+      gaugeChart = new Chart(ctxGauge, {
         type: 'doughnut',
         data: {
           labels: ['Score', 'Remaining'],
           datasets: [{
-            data: [avgScore, Math.max(0, 1.0 - avgScore)],
-            backgroundColor: [color, '#1e293b'],
+            data: [score, Math.max(0, 1.0 - score)],
+            backgroundColor: [scoreColor, 'rgba(0, 245, 255, 0.05)'],
             borderWidth: 0
           }]
         },
@@ -368,49 +359,43 @@
       });
     }
 
-    function updateAttackChainTracker(sessions) {
-      const container = document.getElementById("attackChainTrackerContainer");
-      if (!container) return;
-      
-      const activeSessionsWithChains = sessions.filter(s => s.attack_chain && s.attack_chain.chain_name);
-      if (activeSessionsWithChains.length === 0) {
-        container.innerHTML = `<div style="font-size: 11px; color: var(--text-secondary); font-style: italic; text-align: center; padding: 40px 20px;">No active attack chains detected.</div>`;
+    function renderChainTracker(sessions) {
+      const container = document.getElementById("chainTrackerList");
+      const activeChains = sessions.filter(s => s.attack_chain_name);
+
+      if (!activeChains.length) {
+        container.innerHTML = `<div class="loading-text" style="text-align: center; padding: 40px 0;">No active sequential attack chains.</div>`;
         return;
       }
-      
+
       let html = "";
-      activeSessionsWithChains.forEach(sess => {
-        const chain = sess.attack_chain;
-        const steps = {
-          recon_to_exploit: ["port_scan", "sql_injection"],
-          recon_to_brute: ["port_scan", "brute_force"],
-          recon_to_rce: ["port_scan", "command_injection"],
-          lateral_movement: ["brute_force", "command_injection"],
-          data_exfiltration: ["sql_injection", "path_traversal"],
-          full_kill_chain: ["port_scan", "brute_force", "command_injection", "malware_delivery"],
-        }[chain.chain_name] || [];
+      activeChains.forEach(sess => {
+        const chainName = sess.attack_chain_name;
+        const currentProgress = sess.attack_chain_progress || 0;
         
+        // Define fixed 4 steps of MITRE chain
+        const steps = ["recon", "weaponize", "exploit", "post_exploit"];
+        
+        // Custom simple logic: progress level 1 completion, 2 completion, etc.
         let stepsHtml = "";
-        steps.forEach(step => {
-          const completed = sess.attack_types.includes(step);
-          const color = completed ? "var(--accent-orange)" : "#1e293b";
-          const border = completed ? "var(--accent-orange)" : "#334155";
+        steps.forEach((step, idx) => {
+          const completed = currentProgress > idx;
+          const completedClass = completed ? "completed" : "";
           stepsHtml += `
-            <div style="display: flex; flex-direction: column; align-items: center; flex: 1; z-index: 2;">
-              <div style="width: 10px; height: 10px; border-radius: 50%; background-color: ${color}; border: 2px solid ${border};"></div>
-              <span style="font-size: 7px; color: ${completed ? 'var(--text-primary)' : 'var(--text-secondary)'}; margin-top: 4px; text-transform: uppercase;">${step.replace('_', ' ')}</span>
+            <div class="chain-step ${completedClass}">
+              <div class="chain-node"></div>
+              <span class="chain-step-lbl">${step}</span>
             </div>
           `;
         });
-        
+
         html += `
-          <div style="padding: 12px; background: rgba(3,5,10,0.4); border: 1px solid var(--card-border); border-radius: 6px; position: relative;">
-            <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 8px; font-family: var(--font-mono);">
+          <div class="chain-session-row">
+            <div style="display:flex; justify-content:space-between; font-family:var(--font-hud); font-size:11px;">
               <span>IP: <strong class="text-blue">${sess.ip_address}</strong></span>
-              <span style="color:var(--accent-orange); font-weight:bold;">${chain.chain_name.replace(/_/g, ' ').toUpperCase()} (${chain.completion_pct}%)</span>
+              <span style="color:var(--accent-orange); font-weight:700;">${chainName.toUpperCase().replace(/_/g, ' ')}</span>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; position: relative; padding: 0 10px; margin-top: 10px;">
-              <div style="position: absolute; top: 4px; left: 16px; right: 16px; height: 2px; background-color: #1e293b; z-index: 1;"></div>
+            <div class="chain-progress-line">
               ${stepsHtml}
             </div>
           </div>
@@ -419,154 +404,58 @@
       container.innerHTML = html;
     }
 
-    function updateFeedTable(logs) {
-      const tbody = document.getElementById("feedTableBody");
-      if (logs.error) {
-        tbody.innerHTML = `<tr><td colspan="12" class="error-text text-red" style="text-align: center;">Failed to load live feed: ${logs.message}</td></tr>`;
-        return;
-      }
-
-      if (!logs.length) {
-        tbody.innerHTML = `<tr><td colspan="12" class="loading-text" style="text-align: center;">Awaiting incoming connections...</td></tr>`;
+    function renderTtpTable(sessions) {
+      const tbody = document.getElementById("ttpBody");
+      if (!sessions.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="loading-text" style="text-align: center;">No fingerprints analyzed yet.</td></tr>`;
         return;
       }
 
       let html = "";
-      logs.forEach(log => {
-        const isDetailsExpanded = openLogIds.has(log.id);
-        const col = riskColor(log.risk_score);
-        const conf = log.confidence ? `${(log.confidence*100).toFixed(0)}%` : "N/A";
-        const stateStr = log.session_id ? "ENGAGED" : "MONITORING";
-        const chainBadge = log.chain_name
-          ? `<span class="badge" style="background-color: rgba(249, 115, 22, 0.12); color: var(--accent-orange); border: 1px solid var(--accent-orange); margin-left: 6px;">${log.chain_name.replace(/_/g, ' ').toUpperCase()}</span>`
-          : "";
+      sessions.forEach(sess => {
+        const ttp = sess.ttp_fingerprint || {
+          tool_signature: "custom",
+          evasion_attempts: 0,
+          attack_chain_stage: "recon",
+          timing_pattern: "slow_drip"
+        };
+        
+        const stageColors = {
+          recon: "badge-unknown",
+          weaponize: "badge-port_scan",
+          exploit: "badge-sql_injection",
+          post_exploit: "badge-command_injection"
+        };
+        const stageClass = stageColors[ttp.attack_chain_stage] || "badge-unknown";
 
         html += `
           <tr>
-            <td>
-              <button onclick="toggleLogDetail(${log.id}, '${log.attack_type}', ${log.confidence}, ${log.risk_score}, '${log.ip_address}', '${log.country || ''}', '${log.city || ''}', '${log.isp || ''}', ${log.latitude || 0}, ${log.longitude || 0}, '${log.raw_payload ? log.raw_payload.replace(/'/g, "\\'") : ''}')" class="toggle-btn">
-                ${isDetailsExpanded ? "-" : "+"}
-              </button>
-            </td>
-            <td style="color: var(--text-secondary);">#${log.id}</td>
-            <td style="color: var(--text-secondary);">${new Date(log.timestamp).toLocaleTimeString()}</td>
-            <td><strong class="text-blue">${log.ip_address}</strong></td>
-            <td>${log.port}</td>
-            <td style="color: var(--text-secondary);">${log.protocol.toUpperCase()}</td>
-            <td>
-              <span class="badge badge-${log.attack_type}">${log.attack_type.replace('_', ' ')}</span>
-              ${chainBadge}
-            </td>
-            <td><strong style="color: ${col};">${log.risk_score}</strong></td>
-            <td class="text-purple" style="font-weight: bold;">${log.mitre_technique || 'None'}</td>
-            <td>${conf}</td>
-            <td>${log.country || 'Unknown'}</td>
-            <td style="color: ${log.session_id ? 'var(--accent-green)' : 'var(--text-secondary)'}; font-weight: bold;">${stateStr}</td>
-          </tr>
-          <tr id="logDetailRow_${log.id}" class="detail-row ${isDetailsExpanded ? '' : 'hidden'}">
-            <td colspan="12">
-              <div id="logDetailContent_${log.id}" class="detail-content">
-                <!-- Injected dynamically -->
-              </div>
-            </td>
+            <td><strong class="text-blue">${sess.ip_address}</strong></td>
+            <td><span class="badge" style="background: rgba(0, 245, 255, 0.05); color: var(--accent-cyan); border:1px solid rgba(0, 245, 255, 0.2);">${ttp.tool_signature.toUpperCase()}</span></td>
+            <td style="color:var(--accent-red); font-weight:bold; font-family:var(--font-hud); font-size:14px;">${ttp.evasion_attempts}</td>
+            <td><span class="badge ${stageClass}">${ttp.attack_chain_stage.toUpperCase()}</span></td>
+            <td style="color:var(--text-muted);">${new Date(sess.last_seen || sess.first_seen).toLocaleTimeString()}</td>
           </tr>
         `;
       });
       tbody.innerHTML = html;
     }
 
-    async function toggleLogDetail(logId, attackType, confidence, riskScore, ip, country, city, isp, lat, lon, payload) {
-      const row = document.getElementById(`logDetailRow_${logId}`);
-      if (openLogIds.has(logId)) {
-        openLogIds.delete(logId);
-        row.classList.add("hidden");
-      } else {
-        openLogIds.add(logId);
-        row.classList.remove("hidden");
-        await loadLogDetail(logId, attackType, confidence, riskScore, ip, country, city, isp, lat, lon, payload);
-      }
-      
-      const btn = row.previousElementSibling.querySelector('.toggle-btn');
-      if (btn) btn.textContent = openLogIds.has(logId) ? "-" : "+";
-    }
-
-    async function loadLogDetail(logId, attackType, confidence, riskScore, ip, country, city, isp, lat, lon, payload) {
-      const container = document.getElementById(`logDetailContent_${logId}`);
-      if (!container) return;
-
-      if (logDetailsCache[logId]) {
-        renderLogDetail(container, logDetailsCache[logId], city, country, lat, lon, isp, payload);
-        return;
-      }
-
-      container.innerHTML = `<div class="loading-text">Querying threat correlation database...</div>`;
-
-      const [decRes, intelRes] = await Promise.all([
-        safeFetch(`${API}/api/decisions/evaluate`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ attack_type: attackType, confidence, risk_score: riskScore, ip_address: ip })
-        }),
-        safeFetch(`${API}/api/threat-intel/${ip}`)
-      ]);
-
-      logDetailsCache[logId] = { dec: decRes, intel: intelRes };
-      renderLogDetail(container, logDetailsCache[logId], city, country, lat, lon, isp, payload);
-    }
-
-    function renderLogDetail(container, data, city, country, lat, lon, isp, payload) {
-      const dec = data.dec;
-      const intel = data.intel;
-
-      const abuse = intel.external_intel?.abuseipdb_score || 0;
-      const otx = intel.external_intel?.alienvault_score || 0;
-      const combined = intel.overall_score || 0;
-      const classification = intel.external_intel?.classification || "unknown";
-      
-      const abuseCol = abuse >= 70 ? 'fill-red' : abuse >= 35 ? 'fill-orange' : 'fill-green';
-      const otxCol = otx >= 70 ? 'fill-red' : otx >= 35 ? 'fill-orange' : 'fill-green';
-
-      container.innerHTML = `
-        <div class="detail-grid">
-          <div style="background: rgba(3,5,10,0.3); padding: 16px; border-radius: 8px; border: 1px solid var(--card-border);">
-            <div class="detail-section-title">🛡️ Adaptive Response Strategy</div>
-            <div style="display:flex; flex-direction:column; gap: 8px; margin-top:12px;">
-              <div>Honeypot Decoy State: <strong class="text-green">${dec.honeypot_state.toUpperCase()}</strong></div>
-              <div>Decoy Service Ports: <span class="text-blue">${dec.exposed_ports?.join(', ') || 'None'}</span></div>
-              <div>Deception Score: <strong class="text-yellow">${dec.deception_score?.toFixed(3) || '0.00'}</strong></div>
-              <div style="font-style: italic; color: var(--text-secondary); margin-top:8px;">Reasoning: "${dec.reasoning}"</div>
-            </div>
-          </div>
-          
-          <div style="background: rgba(3,5,10,0.3); padding: 16px; border-radius: 8px; border: 1px solid var(--card-border);">
-            <div class="detail-section-title">🌐 External Threat Feeds</div>
-            <div style="display:flex; flex-direction:column; gap: 10px; margin-top:12px;">
-              <div>Location: ${city || 'Unknown'}, ${country || 'Unknown'} (ISP: ${isp || 'Unknown'})</div>
-              
-              <div class="reputation-progress-container">
-                <div class="progress-label-row"><span>AbuseIPDB Confidence</span><span>${abuse}%</span></div>
-                <div class="progress-track"><div class="progress-fill ${abuseCol}" style="width: ${abuse}%"></div></div>
-              </div>
-              
-              <div class="reputation-progress-container">
-                <div class="progress-label-row"><span>OTX Pulse Score</span><span>${otx}%</span></div>
-                <div class="progress-track"><div class="progress-fill ${otxCol}" style="width: ${otx}%"></div></div>
-              </div>
-
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
-                <div>Combined reputation: <strong class="text-red">${combined}/100</strong></div>
-                <span class="badge ${classification === 'high_risk' ? 'badge-malware_delivery' : 'badge-port_scan'}">${classification}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
+    // Sorting state
+    let sortAsc = false;
+    function sortTtps() {
+      sortAsc = !sortAsc;
+      cachedSessions.sort((a, b) => {
+        const evaA = a.ttp_fingerprint ? a.ttp_fingerprint.evasion_attempts : 0;
+        const evaB = b.ttp_fingerprint ? b.ttp_fingerprint.evasion_attempts : 0;
+        return sortAsc ? (evaA - evaB) : (evaB - evaA);
+      });
+      renderTtpTable(cachedSessions);
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      initDashboardMap();
-      fetchDashboardData();
-      setInterval(fetchDashboardData, 15000);
+      loadDashboard();
+      setInterval(loadDashboard, 10000);
     });
   </script>
 </body>
