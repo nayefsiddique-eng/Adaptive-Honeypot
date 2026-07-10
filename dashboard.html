@@ -1,0 +1,2238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIRAGE — Threat Deception System</title>
+  
+  <!-- CDN Dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+  <style>
+    /* DESIGN TOKENS */
+    :root {
+      --bg-color: #0a0e1a;
+      --card-bg: #0f1729;
+      --border-color: #1e293b;
+      --text-primary: #e2e8f0;
+      --text-muted: #64748b;
+      
+      --accent-green: #00ff88;
+      --accent-blue: #06b6d4;
+      --accent-purple: #a855f7;
+      --accent-red: #ef4444;
+      --accent-orange: #f97316;
+      --accent-yellow: #eab308;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Share Tech Mono', 'Courier New', monospace;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dashboard-container {
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      flex-grow: 1;
+    }
+
+    /* 1. HEADER */
+    .header-bar {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-emoji {
+      font-size: 32px;
+    }
+
+    .header-titles {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-title {
+      margin: 0;
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--accent-green);
+      letter-spacing: 1px;
+    }
+
+    .header-subtitle {
+      margin: 2px 0 0 0;
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 1.5px;
+      font-weight: normal;
+      text-transform: uppercase;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .last-update-text {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border-color);
+      background-color: #16223f;
+      color: var(--accent-green);
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Share Tech Mono', 'Courier New', monospace;
+      font-weight: bold;
+      font-size: 12px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:hover {
+      background-color: #1f3059;
+      border-color: var(--accent-green);
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.25);
+    }
+
+    .btn-primary {
+      background-color: var(--accent-green);
+      color: #0a0e1a;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background-color: #00dd77;
+      box-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
+    }
+
+    /* 2. STAT CARDS */
+    .stat-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 1200px) {
+      .stat-cards-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .stat-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background-color: transparent;
+    }
+
+    .stat-card.green::before { background-color: var(--accent-green); }
+    .stat-card.blue::before { background-color: var(--accent-blue); }
+    .stat-card.red::before { background-color: var(--accent-red); }
+    .stat-card.orange::before { background-color: var(--accent-orange); }
+    .stat-card.purple::before { background-color: var(--accent-purple); }
+
+    .stat-card-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card-value {
+      font-size: 26px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    /* 3. CHARTS ROW */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 1024px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .card h3 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 13px;
+      font-weight: bold;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 220px;
+      width: 100%;
+    }
+
+    /* 4. GEOLOCATION MAP */
+    .map-container {
+      height: 400px;
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background-color: #080c18;
+    }
+
+    /* 5. TABLES */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background-color: #05070f;
+    }
+
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 11px;
+    }
+
+    .custom-table th, .custom-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .custom-table th {
+      background-color: #0d1526;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 10px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+
+    .custom-table tr:hover {
+      background-color: #111a2f;
+    }
+
+    .badge-custom {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: bold;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+      letter-spacing: 0.5px;
+    }
+
+    /* State highlight styles */
+    .badge-brute_force { background-color: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444; }
+    .badge-port_scan { background-color: rgba(249, 115, 22, 0.15); color: #f97316; border: 1px solid #f97316; }
+    .badge-sql_injection { background-color: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid #eab308; }
+    .badge-xss { background-color: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid #a855f7; }
+    .badge-command_injection { background-color: rgba(236, 72, 153, 0.15); color: #ec4899; border: 1px solid #ec4899; }
+    .badge-malware_delivery { background-color: rgba(220, 38, 38, 0.15); color: #dc2626; border: 1px solid #dc2626; }
+    .badge-path_traversal { background-color: rgba(6, 182, 212, 0.15); color: #06b6d4; border: 1px solid #06b6d4; }
+    .badge-unknown { background-color: rgba(107, 114, 128, 0.15); color: #6b7280; border: 1px solid #6b7280; }
+
+    /* Action details toggle button */
+    .toggle-btn {
+      background: #16223f;
+      border: 1px solid var(--border-color);
+      color: var(--accent-green);
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      padding: 0;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-btn:hover {
+      border-color: var(--accent-green);
+      background-color: #1f3059;
+    }
+
+    /* Details panel */
+    .detail-row td {
+      padding: 0 !important;
+      background-color: #060912;
+    }
+
+    .detail-content {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+      animation: slideDown 0.2s ease-out;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .detail-section-title {
+      font-size: 11px;
+      font-weight: bold;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .pre-wrap-command {
+      background-color: #03050a;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 10px;
+      margin: 8px 0;
+      color: var(--accent-green);
+      font-size: 11px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .hash-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 8px 0;
+    }
+
+    .hash-text {
+      color: var(--accent-purple);
+      font-size: 11px;
+      word-break: break-all;
+      user-select: all;
+      background-color: #03050a;
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+    }
+
+    /* AI Incident Briefings */
+    .ai-summary-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .ai-card {
+      padding: 14px 16px;
+      background-color: #0a0f1d;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--border-color);
+    }
+
+    .ai-card.description { border-left-color: var(--accent-blue); }
+    .ai-card.summary { border-left-color: var(--accent-yellow); }
+    .ai-card.recommendation { border-left-color: var(--accent-green); }
+
+    .ai-card-label {
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .ai-card.description .ai-card-label { color: var(--accent-blue); }
+    .ai-card.summary .ai-card-label { color: var(--accent-yellow); }
+    .ai-card.recommendation .ai-card-label { color: var(--accent-green); }
+
+    .ai-card-body {
+      font-size: 11px;
+      line-height: 1.42;
+      color: #cbd5e1;
+    }
+
+    /* Reputation scores */
+    .reputation-progress-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin: 8px 0;
+    }
+
+    .progress-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .progress-track {
+      background-color: #151f32;
+      height: 6px;
+      border-radius: 3px;
+      width: 100%;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s cubic-bezier(0.1, 0.8, 0.2, 1);
+    }
+
+    .fill-red { background-color: var(--accent-red); }
+    .fill-orange { background-color: var(--accent-orange); }
+    .fill-green { background-color: #22c55e; }
+
+    /* 7. THREAT INTEL LOOKUP */
+    .lookup-container {
+      display: flex;
+      gap: 12px;
+      max-width: 500px;
+      margin-bottom: 16px;
+    }
+
+    .intel-input {
+      flex: 1;
+      background-color: #03050a;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-size: 12px;
+      font-family: 'Share Tech Mono', 'Courier New', monospace;
+    }
+
+    .intel-input:focus {
+      border-color: var(--accent-green);
+      outline: none;
+      box-shadow: 0 0 8px rgba(0, 255, 136, 0.15);
+    }
+
+    .intel-results {
+      background-color: #03050a;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 20px;
+      margin-top: 14px;
+      animation: slideDown 0.2s ease-out;
+    }
+
+    .intel-results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .intel-results-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .intel-score-box {
+      border-left: 1px solid var(--border-color);
+      padding-left: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    @media (max-width: 768px) {
+      .intel-score-box {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid var(--border-color);
+        padding-top: 16px;
+      }
+    }
+
+    .large-rep-score {
+      font-size: 36px;
+      font-weight: bold;
+      margin-top: 6px;
+    }
+
+    /* 8. RESEARCH METRICS */
+    .research-grid-layout {
+      display: grid;
+      grid-template-columns: 5fr 7fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 1024px) {
+      .research-grid-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .research-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .research-mini-card {
+      background-color: #03050a;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 16px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 90px;
+    }
+
+    .research-mini-card .label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .research-mini-card .value {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    /* ML Benchmarks Table shading */
+    .model-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 11px;
+      border: 1px solid var(--border-color);
+      background-color: #03050a;
+    }
+
+    .model-table th, .model-table td {
+      padding: 12px 14px;
+      border: 1px solid var(--border-color);
+    }
+
+    .model-table th {
+      background-color: #0d1526;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .model-table tr:nth-child(odd) td {
+      background-color: #0f1729;
+    }
+
+    .model-table tr:nth-child(even) td {
+      background-color: #0a0e1a;
+    }
+
+    /* 9. ML PIPELINE FLOW */
+    .pipeline-flow {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+      justify-content: space-between;
+    }
+
+    .pipeline-step-card {
+      flex: 1;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 140px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: border-color 0.2s ease;
+    }
+
+    .pipeline-step-card:hover {
+      border-color: var(--accent-green);
+    }
+
+    .pipeline-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: var(--border-color);
+      user-select: none;
+      font-weight: bold;
+    }
+
+    .step-num-badge {
+      font-size: 9px;
+      font-weight: bold;
+      color: var(--accent-green);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .step-title-text {
+      font-size: 11px;
+      font-weight: bold;
+      color: var(--text-primary);
+      margin-top: 3px;
+    }
+
+    .step-desc-text {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+
+    .step-live-data {
+      font-size: 10px;
+      color: var(--accent-blue);
+      border-top: 1px solid var(--border-color);
+      padding-top: 8px;
+      margin-top: 12px;
+      word-break: break-all;
+    }
+
+    @media (max-width: 900px) {
+      .pipeline-flow {
+        flex-direction: column;
+      }
+      .pipeline-arrow {
+        transform: rotate(90deg);
+        padding: 10px 0;
+      }
+    }
+
+    /* Colors and General utility styles */
+    .text-green { color: var(--accent-green) !important; }
+    .text-blue { color: var(--accent-blue) !important; }
+    .text-purple { color: var(--accent-purple) !important; }
+    .text-red { color: var(--accent-red) !important; }
+    .text-orange { color: var(--accent-orange) !important; }
+    .text-yellow { color: var(--accent-yellow) !important; }
+    
+    .error-text {
+      color: var(--accent-red);
+      font-weight: bold;
+    }
+    
+    .loading-text {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .badge-tor {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: var(--accent-red);
+      border: 1px solid var(--accent-red);
+    }
+      /* Professional typography overrides */
+    body { font-family: "Inter", sans-serif; font-size: 13px; line-height: 1.6; }
+    .logo-title, h1, h2, .card-title, .stat-label, th, .badge {
+        font-family: "Share Tech Mono", "Courier New", monospace;
+        letter-spacing: 2px;
+    }
+    .logo-title {
+        font-size: 30px !important;
+        font-weight: 700;
+        letter-spacing: 5px;
+        text-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+    }
+    .logo-sub {
+        font-size: 10px !important;
+        letter-spacing: 4px !important;
+        font-family: "Inter", sans-serif;
+        font-weight: 300;
+        opacity: 0.7;
+    }
+    .stat-value {
+        font-family: "Inter", sans-serif !important;
+        font-weight: 700 !important;
+        font-size: 36px !important;
+        letter-spacing: -1px;
+    }
+    .stat-label {
+        font-size: 10px !important;
+        letter-spacing: 2.5px !important;
+        font-weight: 500;
+        opacity: 0.6;
+    }
+    td { font-family: "Inter", sans-serif; font-size: 12px; }
+    th { font-size: 10px; letter-spacing: 1.5px; font-weight: 600; opacity: 0.5; }
+    .badge { font-size: 10px; letter-spacing: 1px; font-weight: 600; padding: 3px 10px; border-radius: 3px; }
+    .card-title { font-size: 10px !important; letter-spacing: 3px !important; font-weight: 600; opacity: 0.6; }
+    button { font-family: "Inter", sans-serif; font-weight: 600; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+
+  <div class="dashboard-container">
+    
+    <!-- 1. HEADER -->
+    <header class="header-bar">
+      <div class="header-left">
+        <span class="logo-emoji">🛡️</span>
+        <div class="header-titles">
+          <h1 class="header-title">MIRAGE</h1>
+          <div class="header-subtitle">MALICIOUS INTENT RECOGNITION AND ADAPTIVE GENUINE ENGAGEMENT</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span id="lastUpdate" class="last-update-text">Last update: --:--:--</span>
+        <button onclick="fetchAll()" class="btn btn-primary">⟳ Refresh</button>
+      </div>
+    </header>
+
+    <!-- 2. STAT CARDS (6 cards in one row) -->
+    <section class="stat-cards-grid">
+      <div class="stat-card green">
+        <div class="stat-card-label">Total Events</div>
+        <div id="statTotalEvents" class="stat-card-value text-green">0</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-card-label">Unique Attackers</div>
+        <div id="statUniqueAttackers" class="stat-card-value text-blue">0</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-card-label">Critical Alerts</div>
+        <div id="statCriticalAlerts" class="stat-card-value text-red">0</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-card-label">Avg Risk Score</div>
+        <div id="statAvgRiskScore" class="stat-card-value text-orange">0</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-card-label">Active Sessions</div>
+        <div id="statActiveSessions" class="stat-card-value text-purple">0</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-card-label">Detection Rate</div>
+        <div id="statDetectionRate" class="stat-card-value text-green">0%</div>
+      </div>
+    </section>
+
+    <!-- 3. CHARTS ROW (3 panels equal width) -->
+    <section class="charts-grid">
+      
+      <!-- Panel 1: Bar chart -->
+      <div class="card">
+        <h3>📊 ATTACK TYPE DISTRIBUTION</h3>
+        <div class="chart-wrapper" id="barChartContainer">
+          <canvas id="attackTypeBarChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Panel 2: Doughnut chart -->
+      <div class="card">
+        <h3>🍩 ATTACK PERCENTAGE BREAKDOWN</h3>
+        <div class="chart-wrapper" id="doughnutChartContainer">
+          <canvas id="attackTypeDoughnutChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Panel 3: Line chart -->
+      <div class="card">
+        <h3>📈 ATTACKS PER HOUR (LAST 24H)</h3>
+        <div class="chart-wrapper" id="lineChartContainer">
+          <canvas id="timelineLineChart"></canvas>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- NEW CHARTS & TRACKERS ROW (Panel A & Panel B) -->
+    <section class="charts-grid" style="grid-template-columns: repeat(2, 1fr);">
+      
+      <!-- Panel A: Attack Chain Tracker -->
+      <div class="card">
+        <h3>🔗 ATTACK CHAIN TRACKER</h3>
+        <div id="attackChainTrackerContainer" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+          <div class="loading-text">Loading chain telemetry...</div>
+        </div>
+      </div>
+
+      <!-- Panel B: Deception Score Gauge -->
+      <div class="card">
+        <h3>🎯 DECEPTION EFFECTIVENESS GAUGE</h3>
+        <div style="display: flex; align-items: center; justify-content: center; height: 220px; gap: 24px;">
+          <div class="chart-wrapper" style="width: 180px; height: 180px; position: relative;">
+            <canvas id="deceptionGaugeChart"></canvas>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Average Score</div>
+            <div id="avgDeceptionScoreText" style="font-size: 36px; font-weight: bold; color: var(--accent-green); margin-top: 4px;">0.00</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 4. GEOLOCATION MAP (full width) -->
+    <section class="card">
+      <h3>🗺️ REAL-TIME GEOLOCATION THREAT MAP</h3>
+      <div id="map" class="map-container"></div>
+    </section>
+
+    <!-- 5. ATTACKER SESSIONS TABLE -->
+    <section class="card">
+      <h3>📟 ATTACKER SESSIONS &amp; CLI RECORDING</h3>
+      <div class="table-responsive">
+        <table class="custom-table" style="min-width: 1000px;">
+          <thead>
+            <tr>
+              <th>Session ID</th>
+              <th>IP Address</th>
+              <th>Attack Count</th>
+              <th>Interaction Depth</th>
+              <th>Honeypot State</th>
+              <th>Risk Score</th>
+              <th>Duration</th>
+              <th>Last Seen</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sessionsTableBody">
+            <tr>
+              <td colspan="9" class="loading-text">Loading attacker sessions...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Panel C: TTP Fingerprint Table -->
+    <section class="card">
+      <h3>🧬 ATTACKER TTP FINGERPRINTS</h3>
+      <div class="table-responsive">
+        <table class="custom-table" style="min-width: 1000px;">
+          <thead>
+            <tr>
+              <th>IP Address</th>
+              <th>Tool Signature</th>
+              <th onclick="sortTtpTableByEvasion()" style="cursor: pointer; text-decoration: underline; color: var(--accent-blue);">Evasion Attempts ↕</th>
+              <th>Attack Chain Stage</th>
+              <th>Last Seen</th>
+            </tr>
+          </thead>
+          <tbody id="ttpTableBody">
+            <tr>
+              <td colspan="5" class="loading-text">Loading TTP fingerprints...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 6. LIVE ATTACK FEED TABLE -->
+    <section class="card">
+      <h3>🚨 LIVE ATTACK FEED &amp; DECEPTION STATE</h3>
+      <div class="table-responsive">
+        <table class="custom-table" style="min-width: 1200px;">
+          <thead>
+            <tr>
+              <th style="width: 40px;"></th>
+              <th>ID</th>
+              <th>Time</th>
+              <th>IP Address</th>
+              <th>Port</th>
+              <th>Protocol</th>
+              <th>Attack Type</th>
+              <th>Risk</th>
+              <th>MITRE Technique</th>
+              <th>Confidence</th>
+              <th>Country</th>
+              <th>Honeypot State</th>
+            </tr>
+          </thead>
+          <tbody id="feedTableBody">
+            <tr>
+              <td colspan="12" class="loading-text">Awaiting incoming connection logs...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 7. THREAT INTELLIGENCE PANEL (full width) -->
+    <section class="card">
+      <h3>🔍 THREAT INTELLIGENCE LOOKUP</h3>
+      <div class="lookup-container">
+        <input type="text" id="intelIpInput" class="intel-input" placeholder="Enter IP address...">
+        <button onclick="lookupThreatIntel()" class="btn btn-primary">Lookup</button>
+      </div>
+      <div id="intelResultContainer" class="intel-results hidden">
+        <!-- Results injected dynamically -->
+      </div>
+    </section>
+
+    <!-- 8. RESEARCH METRICS PANEL -->
+    <section class="research-grid-layout">
+      
+      <!-- Metrics Grid (5 cols) -->
+      <div class="card">
+        <h3>📊 RESEARCH METRICS SUMMARY</h3>
+        <div class="research-stats-grid">
+          <div class="research-mini-card">
+            <div class="label">Detection Rate</div>
+            <div id="metricsDetRate" class="value text-green">0%</div>
+          </div>
+          <div class="research-mini-card">
+            <div class="label">False Positive Rate</div>
+            <div id="metricsFpRate" class="value text-red">0%</div>
+          </div>
+          <div class="research-mini-card">
+            <div class="label">Adaptation Effectiveness</div>
+            <div id="metricsAdaptEff" class="value text-orange">0%</div>
+          </div>
+          <div class="research-mini-card">
+            <div class="label">Avg Response Time</div>
+            <div id="metricsRespTime" class="value text-blue">0ms</div>
+          </div>
+          <div class="research-mini-card">
+            <div class="label">Avg Deception Score</div>
+            <div id="metricsAvgDeception" class="value text-purple">0.00</div>
+          </div>
+          <div class="research-mini-card">
+            <div class="label">Chain Detection Rate</div>
+            <div id="metricsChainDet" class="value text-yellow">0%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparative Table (7 cols) -->
+      <div class="card">
+        <h3>🤖 IEEE ML MODEL EVALUATION BENCHMARKS</h3>
+        <div class="table-responsive" style="border: none;">
+          <table class="model-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Accuracy</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>F1-Score</th>
+              </tr>
+            </thead>
+            <tbody id="metricsModelTableBody">
+              <tr>
+                <td style="font-weight: bold; color: var(--text-primary);">Random Forest</td>
+                <td id="rf-acc">--</td>
+                <td id="rf-prec">--</td>
+                <td id="rf-rec">--</td>
+                <td id="rf-f1">--</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold; color: var(--text-primary);">XGBoost</td>
+                <td id="xgb-acc">--</td>
+                <td id="xgb-prec">--</td>
+                <td id="xgb-rec">--</td>
+                <td id="xgb-f1">--</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold; color: var(--text-primary);">Isolation Forest*</td>
+                <td id="iso-acc">--</td>
+                <td id="iso-prec">--</td>
+                <td id="iso-rec">--</td>
+                <td id="iso-f1">--</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size: 9px; color: var(--text-muted); margin-top: 10px;">
+          * Isolation Forest metrics reflect anomaly classification (separating malicious scans from benign baseline).
+        </div>
+      </div>
+      
+    </section>
+
+    <!-- 9. ML DECISION FLOW PANEL -->
+    <section class="card">
+      <h3>🧭 ML ADAPTIVE DECISION PIPELINE</h3>
+      <div class="pipeline-flow">
+        
+        <!-- Step 1 -->
+        <div class="pipeline-step-card">
+          <div>
+            <div class="step-num-badge">STEP 1</div>
+            <div class="step-title-text">Attacker Traffic</div>
+            <div class="step-desc-text">Inbound network connections.</div>
+          </div>
+          <div id="flowStep1Text" class="step-live-data">Waiting...</div>
+        </div>
+
+        <div class="pipeline-arrow">→</div>
+
+        <!-- Step 2 -->
+        <div class="pipeline-step-card">
+          <div>
+            <div class="step-num-badge">STEP 2</div>
+            <div class="step-title-text">Feature Extraction</div>
+            <div class="step-desc-text">Parse payload features.</div>
+          </div>
+          <div id="flowStep2Text" class="step-live-data">Waiting...</div>
+        </div>
+
+        <div class="pipeline-arrow">→</div>
+
+        <!-- Step 3 -->
+        <div class="pipeline-step-card">
+          <div>
+            <div class="step-num-badge">STEP 3</div>
+            <div class="step-title-text">ML Classifier</div>
+            <div class="step-desc-text">Classify threat vector.</div>
+          </div>
+          <div id="flowStep3Text" class="step-live-data">Waiting...</div>
+        </div>
+
+        <div class="pipeline-arrow">→</div>
+
+        <!-- Step 4 -->
+        <div class="pipeline-step-card">
+          <div>
+            <div class="step-num-badge">STEP 4</div>
+            <div class="step-title-text">Decision Engine</div>
+            <div class="step-desc-text">Assess severity profile.</div>
+          </div>
+          <div id="flowStep4Text" class="step-live-data">Waiting...</div>
+        </div>
+
+        <div class="pipeline-arrow">→</div>
+
+        <!-- Step 5 -->
+        <div class="pipeline-step-card">
+          <div>
+            <div class="step-num-badge">STEP 5</div>
+            <div class="step-title-text">Deception Profile</div>
+            <div class="step-desc-text">Deploy decoy services.</div>
+          </div>
+          <div id="flowStep5Text" class="step-live-data">Waiting...</div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    const API = "http://localhost:8000";
+    const COLORS = {
+      brute_force: "#ef4444",
+      port_scan: "#f97316",
+      sql_injection: "#eab308",
+      xss: "#a855f7",
+      command_injection: "#ec4899",
+      malware_delivery: "#dc2626",
+      path_traversal: "#06b6d4",
+      unknown: "#6b7280"
+    };
+
+    let map = null;
+    let markersLayer = null;
+    let attackTypeBarChart = null;
+    let attackTypeDoughnutChart = null;
+    let timelineLineChart = null;
+    let deceptionGaugeChart = null;
+    let currentSessionsData = [];
+    
+    // UI state trackers for expand panels
+    let openSessionId = null;
+    const openLogIds = new Set();
+
+    // Client-side cache to prevent visual flashing on auto-refreshes
+    const logDetailsCache = {};
+    const sessionRecordingsCache = {};
+    const sessionSummariesCache = {};
+
+    // Map initialization (ran once)
+    function initMap() {
+      map = L.map('map', {
+        center: [20.0, 0.0],
+        zoom: 2,
+        zoomControl: true,
+        attributionControl: false
+      });
+      
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19
+      }).addTo(map);
+
+      markersLayer = L.markerClusterGroup().addTo(map);
+    }
+
+    function riskColor(score) {
+      if (score >= 80) return "#ef4444";
+      if (score >= 60) return "#f97316";
+      if (score >= 40) return "#eab308";
+      return "#22c55e";
+    }
+
+    // Helper for safe fetches
+    async function safeFetch(url, options = {}) {
+      try {
+        const res = await fetch(url, options);
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return await res.json();
+      } catch (e) {
+        console.error(`Failed to fetch: ${url}`, e);
+        return { error: true, message: e.message };
+      }
+    }
+
+    // Main fetch orchestrator (polling)
+    async function fetchAll() {
+      document.getElementById("lastUpdate").textContent = "Updating...";
+      
+      const [recentRes, summaryRes, timelineRes, researchRes, sessionsRes, clustersRes] = await Promise.all([
+        safeFetch(`${API}/api/logs/recent?limit=100`),
+        safeFetch(`${API}/api/attacks/summary`),
+        safeFetch(`${API}/api/timeline`),
+        safeFetch(`${API}/api/research/metrics`),
+        safeFetch(`${API}/api/sessions?limit=50`),
+        safeFetch(`${API}/api/sessions/clusters`)
+      ]);
+
+      updateStats(recentRes, researchRes);
+      updateCharts(summaryRes, timelineRes);
+      updateMap(recentRes);
+      updateSessionsTable(sessionsRes, clustersRes);
+      updateFeedTable(recentRes);
+      updateResearchMetrics(researchRes);
+      updateMLDecisionPipeline(recentRes);
+
+      currentSessionsData = sessionsRes;
+      updateAttackChainTracker(sessionsRes);
+      safeFetch(`${API}/api/dashboard`).then(dashRes => {
+        if (dashRes && !dashRes.error) {
+          updateDeceptionGauge(dashRes.avg_deception_score || 0.0);
+        }
+      });
+      renderTtpTable(sessionsRes);
+
+      document.getElementById("lastUpdate").textContent = "Last update: " + new Date().toLocaleTimeString();
+    }
+
+    // Update the stat cards values
+    function updateStats(recent, metrics) {
+      const totalEventsVal = document.getElementById("statTotalEvents");
+      const uniqueAttackersVal = document.getElementById("statUniqueAttackers");
+      const criticalAlertsVal = document.getElementById("statCriticalAlerts");
+      const avgRiskScoreVal = document.getElementById("statAvgRiskScore");
+      const activeSessionsVal = document.getElementById("statActiveSessions");
+      const detectionRateVal = document.getElementById("statDetectionRate");
+
+      if (metrics.error) {
+        totalEventsVal.innerHTML = `<span class="error-text">ERR</span>`;
+        uniqueAttackersVal.innerHTML = `<span class="error-text">ERR</span>`;
+        activeSessionsVal.innerHTML = `<span class="error-text">ERR</span>`;
+        detectionRateVal.innerHTML = `<span class="error-text">ERR</span>`;
+      } else {
+        totalEventsVal.textContent = metrics.total_attacks || (recent.error ? 0 : recent.length);
+        uniqueAttackersVal.textContent = metrics.total_unique_ips || 0;
+        activeSessionsVal.textContent = metrics.total_sessions || 0;
+        detectionRateVal.textContent = (metrics.detection_rate_pct || 0) + "%";
+      }
+
+      if (recent.error) {
+        criticalAlertsVal.innerHTML = `<span class="error-text">ERR</span>`;
+        avgRiskScoreVal.innerHTML = `<span class="error-text">ERR</span>`;
+      } else {
+        const criticalCount = recent.filter(l => l.risk_score >= 80.0).length;
+        criticalAlertsVal.textContent = criticalCount;
+        
+        const avgRisk = recent.length ? (recent.reduce((a, l) => a + l.risk_score, 0) / recent.length).toFixed(1) : 0;
+        avgRiskScoreVal.textContent = avgRisk;
+      }
+    }
+
+    // Update Chart.js components
+    function updateCharts(summary, timeline) {
+      const barContainer = document.getElementById("barChartContainer");
+      const doughnutContainer = document.getElementById("doughnutChartContainer");
+      const lineContainer = document.getElementById("lineChartContainer");
+
+      // Handle Summary API Errors
+      if (summary.error) {
+        barContainer.innerHTML = `<div class="error-text">Failed to load attack type distribution chart data.</div>`;
+        doughnutContainer.innerHTML = `<div class="error-text">Failed to load breakdown chart data.</div>`;
+      } else {
+        // Restore canvas elements if they were wiped by a previous error state
+        if (!document.getElementById("attackTypeBarChart")) {
+          barContainer.innerHTML = `<canvas id="attackTypeBarChart"></canvas>`;
+        }
+        if (!document.getElementById("attackTypeDoughnutChart")) {
+          doughnutContainer.innerHTML = `<canvas id="attackTypeDoughnutChart"></canvas>`;
+        }
+
+        const typeCounts = summary.attack_types || {};
+        const labels = Object.keys(typeCounts);
+        const data = Object.values(typeCounts);
+        const colors = labels.map(l => COLORS[l] || "#6b7280");
+
+        // 1. Destroy and Recreate Bar Chart
+        if (attackTypeBarChart) attackTypeBarChart.destroy();
+        const ctxBar = document.getElementById("attackTypeBarChart").getContext("2d");
+        attackTypeBarChart = new Chart(ctxBar, {
+          type: 'bar',
+          data: {
+            labels: labels.map(l => l.replace('_', ' ').toUpperCase()),
+            datasets: [{
+              data,
+              backgroundColor: colors,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: {
+                ticks: { color: '#64748b', font: { family: 'monospace', size: 9 } },
+                grid: { color: '#1e293b' }
+              },
+              y: {
+                ticks: { color: '#64748b', font: { family: 'monospace', size: 9 } },
+                grid: { color: '#1e293b' }
+              }
+            }
+          }
+        });
+
+        // 2. Destroy and Recreate Doughnut Chart
+        if (attackTypeDoughnutChart) attackTypeDoughnutChart.destroy();
+        const ctxDoughnut = document.getElementById("attackTypeDoughnutChart").getContext("2d");
+        attackTypeDoughnutChart = new Chart(ctxDoughnut, {
+          type: 'doughnut',
+          data: {
+            labels: labels.map(l => l.replace('_', ' ').toUpperCase()),
+            datasets: [{
+              data,
+              backgroundColor: colors,
+              borderWidth: 1,
+              borderColor: '#0f1729'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                  color: '#64748b',
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                  font: { family: 'monospace', size: 9 },
+                  padding: 10
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // Handle Timeline API Errors
+      if (timeline.error) {
+        lineContainer.innerHTML = `<div class="error-text">Failed to load timeline chart data.</div>`;
+      } else {
+        if (!document.getElementById("timelineLineChart")) {
+          lineContainer.innerHTML = `<canvas id="timelineLineChart"></canvas>`;
+        }
+
+        const hourlyData = timeline.hourly || [];
+        const times = hourlyData.map(h => h.time);
+        const counts = hourlyData.map(h => h.count);
+        const risks = hourlyData.map(h => h.avg_risk);
+
+        // 3. Destroy and Recreate Line Chart
+        if (timelineLineChart) timelineLineChart.destroy();
+        const ctxLine = document.getElementById("timelineLineChart").getContext("2d");
+        timelineLineChart = new Chart(ctxLine, {
+          type: 'line',
+          data: {
+            labels: times,
+            datasets: [
+              {
+                label: 'Events Count',
+                data: counts,
+                borderColor: '#00ff88',
+                backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                yAxisID: 'y',
+                tension: 0.3,
+                fill: true
+              },
+              {
+                label: 'Mean Risk',
+                data: risks,
+                borderColor: '#f97316',
+                backgroundColor: 'transparent',
+                yAxisID: 'y1',
+                tension: 0.3,
+                borderDash: [4, 4],
+                fill: false
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  color: '#64748b',
+                  font: { family: 'monospace', size: 9 },
+                  padding: 10
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: { color: '#64748b', font: { family: 'monospace', size: 8 } },
+                grid: { color: '#1e293b' }
+              },
+              y: {
+                type: 'linear',
+                position: 'left',
+                ticks: { color: '#64748b', font: { family: 'monospace', size: 8 } },
+                grid: { color: '#1e293b' }
+              },
+              y1: {
+                type: 'linear',
+                position: 'right',
+                ticks: { color: '#64748b', font: { family: 'monospace', size: 8 } },
+                grid: { drawOnChartArea: false }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Clear and replot Leaflet markers
+    function updateMap(logs) {
+      markersLayer.clearLayers();
+      if (logs.error || !logs.length) return;
+
+      const ipGroups = {};
+      logs.forEach(log => {
+        if (!log.latitude || !log.longitude) return;
+        const ip = log.ip_address;
+        if (!ipGroups[ip]) {
+          ipGroups[ip] = {
+            ip,
+            latitude: log.latitude,
+            longitude: log.longitude,
+            attack_count: 0,
+            max_risk: 0.0,
+            types: new Set(),
+            city: log.city || "Unknown",
+            country: log.country || "Unknown",
+            isp: log.isp || "Unknown"
+          };
+        }
+        ipGroups[ip].attack_count += 1;
+        ipGroups[ip].max_risk = Math.max(ipGroups[ip].max_risk, log.risk_score);
+        ipGroups[ip].types.add(log.attack_type);
+      });
+
+      Object.values(ipGroups).forEach(group => {
+        const size = Math.min(6 + (group.attack_count * 2), 20);
+        const color = riskColor(group.max_risk);
+
+        const marker = L.circleMarker([group.latitude, group.longitude], {
+          radius: size,
+          fillColor: color,
+          color: color,
+          fillOpacity: 0.5,
+          weight: 1
+        });
+
+        const popupText = `
+          <div style="font-size:11px; line-height:1.4;">
+            <strong>IP: ${group.ip}</strong><br/>
+            Country: ${group.country}<br/>
+            City: ${group.city}<br/>
+            ISP: ${group.isp}<br/>
+            Risk Score: <span style="color: ${color}; font-weight:bold">${group.max_risk}</span><br/>
+            Attack Types: ${Array.from(group.types).join(", ")}
+          </div>
+        `;
+        marker.bindPopup(popupText);
+        markersLayer.addLayer(marker);
+      });
+    }
+
+    // Populate Attacker Sessions Table
+    function updateSessionsTable(sessions, clusters) {
+      const tbody = document.getElementById("sessionsTableBody");
+      
+      if (sessions.error) {
+        tbody.innerHTML = `<tr><td colspan="9" class="error-text text-red" style="text-align: center;">Failed to load attacker sessions: ${sessions.message}</td></tr>`;
+        return;
+      }
+      
+      if (!sessions.length) {
+        tbody.innerHTML = `<tr><td colspan="9" class="loading-text" style="text-align: center;">No recorded attacker sessions.</td></tr>`;
+        return;
+      }
+
+      const clusterMap = {};
+      if (clusters && clusters.clusters) {
+        clusters.clusters.forEach(c => {
+          clusterMap[c.ip] = c.cluster_label;
+        });
+      }
+
+      let html = "";
+      sessions.forEach(sess => {
+        const truncatedId = sess.session_id.substring(0, 8);
+        const color = riskColor(sess.risk_score);
+        const stateColorClass = `badge-${sess.honeypot_state}`;
+        const isDetailsExpanded = openSessionId === sess.session_id;
+
+        const clusterLabel = clusterMap[sess.ip_address]
+          ? `<div style="font-size: 8px; color: var(--accent-blue); font-weight: bold; margin-top: 2px;">[${clusterMap[sess.ip_address].replace('_', ' ').toUpperCase()}]</div>`
+          : "";
+
+        html += `
+          <tr>
+            <td style="font-weight: bold; color: var(--text-muted);">${truncatedId}</td>
+            <td>
+              <strong class="text-blue">${sess.ip_address}</strong>
+              ${clusterLabel}
+            </td>
+            <td>${sess.attack_count}</td>
+            <td>${sess.interaction_depth}/4</td>
+            <td>
+              <span class="badge-custom ${stateColorClass}">
+                ${sess.honeypot_state.toUpperCase()}
+              </span>
+            </td>
+            <td><strong style="color: ${color};">${sess.risk_score}</strong></td>
+            <td>${Math.round(sess.session_duration)}s</td>
+            <td style="color: var(--text-muted);">${new Date(sess.last_seen || sess.first_seen).toLocaleTimeString()}</td>
+            <td>
+              <button onclick="toggleSessionDetails('${sess.session_id}')" class="btn btn-action">
+                Details
+              </button>
+            </td>
+          </tr>
+          <tr id="sessionDetailRow_${sess.session_id}" class="detail-row ${isDetailsExpanded ? '' : 'hidden'}">
+            <td colspan="9">
+              <div id="sessionDetailContent_${sess.session_id}" class="detail-content">
+                <!-- Loaded dynamically -->
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+
+      // Keep details active if expanded
+      if (openSessionId) {
+        const expandedRow = document.getElementById(`sessionDetailRow_${openSessionId}`);
+        if (expandedRow) {
+          fetchSessionRecording(openSessionId);
+        }
+      }
+    }
+
+    // Expand/Collapse Session Details row
+    async function toggleSessionDetails(sessionId) {
+      const detailRow = document.getElementById(`sessionDetailRow_${sessionId}`);
+      
+      if (openSessionId === sessionId) {
+        detailRow.classList.add("hidden");
+        openSessionId = null;
+      } else {
+        // Collapse currently open
+        if (openSessionId) {
+          const prevRow = document.getElementById(`sessionDetailRow_${openSessionId}`);
+          if (prevRow) prevRow.classList.add("hidden");
+        }
+        
+        openSessionId = sessionId;
+        detailRow.classList.remove("hidden");
+        await fetchSessionRecording(sessionId);
+      }
+    }
+
+    // Fetch and populate interactive recording logs
+    async function fetchSessionRecording(sessionId) {
+      const container = document.getElementById(`sessionDetailContent_${sessionId}`);
+      if (!container) return;
+      
+      if (sessionRecordingsCache[sessionId]) {
+        renderSessionRecording(sessionId, container, sessionRecordingsCache[sessionId]);
+        return;
+      }
+      
+      container.innerHTML = `<div class="loading-text">Loading recording database telemetry...</div>`;
+      
+      const rec = await safeFetch(`${API}/api/sessions/${sessionId}/recording`);
+      if (rec.error) {
+        container.innerHTML = `<div class="error-text">Failed to fetch session recording timeline.</div>`;
+        return;
+      }
+
+      sessionRecordingsCache[sessionId] = rec;
+      renderSessionRecording(sessionId, container, rec);
+    }
+
+    // Render session recording components
+    function renderSessionRecording(sessionId, container, rec) {
+      let cmdHtml = `<div style="color: var(--text-muted); font-style: italic;">No CLI commands captured.</div>`;
+      if (rec.commands_issued && rec.commands_issued.length) {
+        cmdHtml = rec.commands_issued.map(c => `<pre class="pre-wrap-command">${c}</pre>`).join("");
+      }
+      
+      let hashHtml = `<div style="color: var(--text-muted); font-style: italic;">No payload payloads captured.</div>`;
+      if (rec.payload_hashes && rec.payload_hashes.length) {
+        hashHtml = rec.payload_hashes.map(h => `<div class="hash-text">${h}</div>`).join("");
+      }
+
+      let timelineRows = rec.events.map(e => `
+        <tr>
+          <td style="color: var(--text-muted);">${new Date(e.timestamp).toLocaleTimeString()}</td>
+          <td><span class="badge-custom badge-${e.attack_type}">${e.attack_type}</span></td>
+          <td>${e.port}</td>
+          <td>${(e.confidence*100).toFixed(0)}%</td>
+          <td><strong style="color: ${riskColor(e.risk_score)}">${e.risk_score}</strong></td>
+        </tr>
+      `).join("");
+
+      container.innerHTML = `
+        <div class="detail-grid">
+          <div>
+            <div class="detail-section-title">⌨️ Interactive CLI Commands Issued</div>
+            <div style="max-height: 200px; overflow-y: auto;">
+              ${cmdHtml}
+            </div>
+            
+            <div class="detail-section-title" style="margin-top: 16px;">🔑 Captured Payload SHA256 Hashes</div>
+            <div class="hash-container">
+              ${hashHtml}
+            </div>
+          </div>
+          
+          <div>
+            <div class="detail-section-title">⏱️ Session Event Timeline</div>
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr style="background-color: #03050a;">
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Port</th>
+                    <th>Conf</th>
+                    <th>Risk</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${timelineRows}
+                </tbody>
+              </table>
+            </div>
+            
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+              <button onclick="generateSessionSummary('${sessionId}')" class="btn btn-primary btn-ai">
+                🧠 Generate AI Incident Briefing
+              </button>
+              <div id="aiSummaryBox_${sessionId}" class="ai-summary-grid hidden"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Check if summary was cached
+      if (sessionSummariesCache[sessionId]) {
+        renderSessionSummary(sessionId, sessionSummariesCache[sessionId]);
+      }
+    }
+
+    // Call LLM Summarizer API
+    async function generateSessionSummary(sessionId) {
+      const summaryBox = document.getElementById(`aiSummaryBox_${sessionId}`);
+      summaryBox.classList.remove("hidden");
+      
+      if (sessionSummariesCache[sessionId]) {
+        renderSessionSummary(sessionId, sessionSummariesCache[sessionId]);
+        return;
+      }
+
+      summaryBox.innerHTML = `<div class="loading-text">Contacting cognitive defense summarizers...</div>`;
+
+      const sum = await safeFetch(`${API}/api/sessions/${sessionId}/summary`);
+      if (sum.error) {
+        summaryBox.innerHTML = `<div class="error-text">Failed to fetch cognitive summary models.</div>`;
+        return;
+      }
+
+      sessionSummariesCache[sessionId] = sum;
+      renderSessionSummary(sessionId, sum);
+    }
+
+    function renderSessionSummary(sessionId, sum) {
+      const summaryBox = document.getElementById(`aiSummaryBox_${sessionId}`);
+      summaryBox.classList.remove("hidden");
+      
+      summaryBox.innerHTML = `
+        <div class="ai-card description">
+          <div class="ai-card-label">Threat Description</div>
+          <div class="ai-card-body">${sum.description}</div>
+        </div>
+        <div class="ai-card summary">
+          <div class="ai-card-label">Cognitive Incident Analysis</div>
+          <div class="ai-card-body">${sum.summary}</div>
+        </div>
+        <div class="ai-card recommendation">
+          <div class="ai-card-label">Adaptive Response Recommendations</div>
+          <div class="ai-card-body"><strong>${sum.recommendation}</strong></div>
+        </div>
+      `;
+    }
+
+    // Populate Live Attack Feed Table
+    function updateFeedTable(logs) {
+      const tbody = document.getElementById("feedTableBody");
+
+      if (logs.error) {
+        tbody.innerHTML = `<tr><td colspan="12" class="error-text text-red" style="text-align: center;">Failed to load live feed: ${logs.message}</td></tr>`;
+        return;
+      }
+
+      if (!logs.length) {
+        tbody.innerHTML = `<tr><td colspan="12" class="loading-text" style="text-align: center;">Awaiting incoming connection logs...</td></tr>`;
+        return;
+      }
+
+      let html = "";
+      logs.forEach(log => {
+        const isDetailsExpanded = openLogIds.has(log.id);
+        const badgeColorClass = `badge-${log.attack_type}`;
+        const riskValColor = riskColor(log.risk_score);
+        const confStr = log.confidence ? `${(log.confidence * 100).toFixed(0)}%` : "N/A";
+        const deceptionStateStr = log.session_id ? "DECEPTION ENGAGED" : "MONITORING";
+        const timeStr = new Date(log.timestamp).toLocaleTimeString();
+        const chainBadge = log.chain_name
+          ? `<span class="badge-custom" style="background-color: rgba(249, 115, 22, 0.15); color: var(--accent-orange); border: 1px solid var(--accent-orange); margin-left: 6px;">${log.chain_name.replace(/_/g, ' ').toUpperCase()}</span>`
+          : "";
+
+        html += `
+          <tr>
+            <td>
+              <button onclick="toggleLogDetail(${log.id}, '${log.attack_type}', ${log.confidence}, ${log.risk_score}, '${log.ip_address}', '${log.country}', '${log.city}', '${log.isp}', ${log.latitude}, ${log.longitude}, '${log.raw_payload ? log.raw_payload.replace(/'/g, "\\'") : ''}')" class="toggle-btn">
+                ${isDetailsExpanded ? "-" : "+"}
+              </button>
+            </td>
+            <td style="color: var(--text-muted);">#${log.id}</td>
+            <td style="color: var(--text-muted);">${timeStr}</td>
+            <td><strong class="text-blue">${log.ip_address}</strong></td>
+            <td>${log.port}</td>
+            <td style="color: var(--text-muted);">${log.protocol.toUpperCase()}</td>
+            <td>
+              <span class="badge-custom ${badgeColorClass}">
+                ${log.attack_type.replace('_', ' ').toUpperCase()}
+              </span>
+              ${chainBadge}
+            </td>
+            <td><strong style="color: ${riskValColor};">${log.risk_score}</strong></td>
+            <td class="text-purple" style="font-weight: bold;">${log.mitre_technique || 'None'}</td>
+            <td>${confStr}</td>
+            <td>${log.country || 'Unknown'}</td>
+            <td>
+              <span style="font-size: 10px; font-weight: bold; color: ${log.session_id ? 'var(--accent-green)' : 'var(--text-muted)'};">
+                ${deceptionStateStr}
+              </span>
+            </td>
+          </tr>
+          <tr id="logDetailRow_${log.id}" class="detail-row ${isDetailsExpanded ? '' : 'hidden'}">
+            <td colspan="12">
+              <div id="logDetailContent_${log.id}" class="detail-content">
+                <!-- Loaded dynamically -->
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+
+      // Keep expanded row details loaded
+      openLogIds.forEach(logId => {
+        const matchingLog = logs.find(l => l.id === logId);
+        if (matchingLog) {
+          loadLogDetail(
+            matchingLog.id,
+            matchingLog.attack_type,
+            matchingLog.confidence,
+            matchingLog.risk_score,
+            matchingLog.ip_address,
+            matchingLog.country,
+            matchingLog.city,
+            matchingLog.isp,
+            matchingLog.latitude,
+            matchingLog.longitude,
+            matchingLog.raw_payload
+          );
+        }
+      });
+    }
+
+    // Toggle live feed expanded state
+    function toggleLogDetail(logId, attackType, confidence, riskScore, ip, country, city, isp, lat, lon, payload) {
+      const row = document.getElementById(`logDetailRow_${logId}`);
+      
+      if (openLogIds.has(logId)) {
+        openLogIds.delete(logId);
+        row.classList.add("hidden");
+      } else {
+        openLogIds.add(logId);
+        row.classList.remove("hidden");
+        loadLogDetail(logId, attackType, confidence, riskScore, ip, country, city, isp, lat, lon, payload);
+      }
+      
+      // Update toggle icon directly
+      const btn = row.previousElementSibling.querySelector('.toggle-btn');
+      if (btn) {
+        btn.textContent = openLogIds.has(logId) ? "-" : "+";
+      }
+    }
+
+    // Fetch and populate deception evaluate + threat intel for feed row
+    async function loadLogDetail(logId, attackType, confidence, riskScore, ip, country, city, isp, lat, lon, payload) {
+      const container = document.getElementById(`logDetailContent_${logId}`);
+      if (!container) return;
+
+      if (logDetailsCache[logId]) {
+        renderLogDetail(container, logDetailsCache[logId], city, country, lat, lon, isp, payload);
+        return;
+      }
+
+      container.innerHTML = `<div class="loading-text">Analyzing deception vectors &amp; threat feeds...</div>`;
+
+      try {
+        const [decRes, intelRes] = await Promise.all([
+          fetch(`${API}/api/decisions/evaluate`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              attack_type: attackType,
+              confidence: confidence,
+              risk_score: riskScore,
+              ip_address: ip
+            })
+          }).then(r => r.json()),
+          fetch(`${API}/api/threat-intel/${ip}`).then(r => r.json())
+        ]);
+
+        logDetailsCache[logId] = { dec: decRes, intel: intelRes };
+        renderLogDetail(container, logDetailsCache[logId], city, country, lat, lon, isp, payload);
+      } catch (err) {
+        container.innerHTML = `<div class="error-text">Failed to evaluate intelligence correlation data.</div>`;
+      }
+    }
+
+    // Render detailed panels side-by-side
+    function renderLogDetail(container, data, city, country, lat, lon, isp, payload) {
+      const decRes = data.dec;
+      const intelRes = data.intel;
+
+      const abuseScore = intelRes.external_intel.abuseipdb_score;
+      const otxScore = intelRes.external_intel.alienvault_score;
+      const reputation = intelRes.overall_score;
+      const classification = intelRes.external_intel.classification;
+      const isTor = intelRes.external_intel.is_tor;
+
+      const abuseColor = abuseScore >= 70 ? 'fill-red' : abuseScore >= 35 ? 'fill-orange' : 'fill-green';
+      const otxColor = otxScore >= 70 ? 'fill-red' : otxScore >= 35 ? 'fill-orange' : 'fill-green';
+      
+      let repColorClass = 'text-green';
+      if (reputation < 40) repColorClass = 'text-red';
+      else if (reputation < 70) repColorClass = 'text-orange';
+
+      let classBadgeClass = 'low_risk';
+      if (classification === 'high_risk') classBadgeClass = 'high_risk';
+      else if (classification === 'medium_risk') classBadgeClass = 'medium_risk';
+
+      container.innerHTML = `
+        <div class="detail-grid">
+          
+          <!-- Left panel: Deception Profile -->
+          <div class="feed-detail-box">
+            <div class="feed-detail-title">🛡️ Deception Profile</div>
+            <div class="feed-detail-row"><span>Honeypot State:</span> <strong class="text-green">${decRes.honeypot_state.toUpperCase()}</strong></div>
+            <div class="feed-detail-row"><span>Fake Services:</span> ${decRes.fake_services.join(', ') || 'None'}</div>
+            <div class="feed-detail-row">
+              <span>Fake Banners:</span>
+              <pre class="pre-wrap-command" style="color: var(--accent-orange); max-height: 120px; overflow-y: auto;">${JSON.stringify(decRes.fake_banners, null, 2)}</pre>
+            </div>
+            <div class="feed-detail-row"><span>Decoy Files Exposed:</span> ${decRes.decoy_files.join(', ') || 'None'}</div>
+            <div class="feed-detail-row"><span>Deception Reasoning:</span> <em class="text-primary">"${decRes.reasoning}"</em></div>
+          </div>
+          
+          <!-- Right panel: GeoIP + Threat Intel -->
+          <div class="feed-detail-box">
+            <div class="feed-detail-title">🌐 GeoIP &amp; Threat Intelligence Feeds</div>
+            <div class="feed-detail-row"><span>Country/City:</span> ${city || 'Unknown'}, ${country || 'Unknown'}</div>
+            <div class="feed-detail-row"><span>Coordinates:</span> Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}</div>
+            <div class="feed-detail-row"><span>Network ISP:</span> ${isp || 'Unknown'}</div>
+            
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+              <div class="reputation-progress-container">
+                <div class="progress-label-row">
+                  <span>AbuseIPDB Confidence Score</span>
+                  <span>${abuseScore}%</span>
+                </div>
+                <div class="progress-track">
+                  <div class="progress-fill ${abuseColor}" style="width: ${abuseScore}%"></div>
+                </div>
+              </div>
+              
+              <div class="reputation-progress-container">
+                <div class="progress-label-row">
+                  <span>AlienVault OTX Pulse Score</span>
+                  <span>${otxScore}%</span>
+                </div>
+                <div class="progress-track">
+                  <div class="progress-fill ${otxColor}" style="width: ${otxScore}%"></div>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+                <div>
+                  <span style="font-size: 10px; color: var(--text-muted);">Combined Rep Score</span>
+                  <div style="font-size: 14px; font-weight: bold;" class="${repColorClass}">${reputation}/100</div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <span class="badge-custom badge-classification ${classBadgeClass}">${classification.replace('_', ' ')}</span>
+                  ${isTor ? '<span class="badge-custom badge-tor">TOR NODE</span>' : ''}
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+              <span style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 4px;">Payload Snippet:</span>
+              <pre class="pre-wrap-command" style="color: var(--accent-red); margin: 0;">${payload || 'No payload logged.'}</pre>
+            </div>
+          </div>
+          
+        </div>
+      `;
+    }
+
+    // Threat intelligence lookup query
+    async function lookupThreatIntel() {
+      const ip = document.getElementById("intelIpInput").value.trim();
+      const container = document.getElementById("intelResultContainer");
+      if (!ip) return;
+      
+      container.classList.remove("hidden");
+      container.innerHTML = `<div class="loading-text">Querying threat intelligence engines...</div>`;
+
+      const data = await safeFetch(`${API}/api/threat-intel/${ip}`);
+      
+      if (data.error) {
+        container.innerHTML = `<div class="error-text text-red">Invalid IP or lookup failed.</div>`;
+        return;
+      }
+      
+      const abuse = data.external_intel.abuseipdb_score;
+      const otx = data.external_intel.alienvault_score;
+      const reputation = data.overall_score;
+      const classification = data.external_intel.classification;
+      const isTor = data.external_intel.is_tor;
+
+      const abuseColor = abuse >= 70 ? 'fill-red' : abuse >= 35 ? 'fill-orange' : 'fill-green';
+      const otxColor = otx >= 70 ? 'fill-red' : otx >= 35 ? 'fill-orange' : 'fill-green';
+      
+      let repColorClass = 'text-green';
+      if (reputation < 40) repColorClass = 'text-red';
+      else if (reputation < 70) repColorClass = 'text-orange';
+      
+      let classBadgeClass = 'low_risk';
+      if (classification === 'high_risk') classBadgeClass = 'high_risk';
+      else if (classification === 'medium_risk') classBadgeClass = 'medium_risk';
+      
+      const torBadge = isTor
+        ? `<span class="badge-custom badge-tor">TOR NODE</span>`
+        : `<span class="badge-custom" style="background-color: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid #22c55e;">CLEAN</span>`;
+
+      container.innerHTML = `
+        <div class="intel-results-grid">
+          <div>
+            <div class="reputation-progress-container">
+              <div class="progress-label-row">
+                <span>AbuseIPDB Score</span>
+                <span>${abuse}%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill ${abuseColor}" style="width: ${abuse}%"></div>
+              </div>
+            </div>
+            
+            <div class="reputation-progress-container">
+              <div class="progress-label-row">
+                <span>AlienVault OTX Score</span>
+                <span>${otx}%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill ${otxColor}" style="width: ${otx}%"></div>
+              </div>
+            </div>
+            
+            <div class="feed-detail-row" style="margin-top: 14px;">
+              <span>Location:</span> ${data.local_history.city || 'Unknown'}, ${data.local_history.country || 'Unknown'}
+            </div>
+            <div class="feed-detail-row">
+              <span>ISP:</span> ${data.local_history.isp || 'Unknown'}
+            </div>
+          </div>
+          
+          <div class="intel-score-box">
+            <div>
+              <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Combined Reputation Score</span>
+              <div class="large-rep-score ${repColorClass}">${reputation}</div>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span class="badge-custom badge-classification ${classBadgeClass}">${classification.replace('_', ' ')}</span>
+              ${torBadge}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Populate IEEE Research Evaluation details
+    function updateResearchMetrics(metrics) {
+      const detRate = document.getElementById("metricsDetRate");
+      const fpRate = document.getElementById("metricsFpRate");
+      const adaptEff = document.getElementById("metricsAdaptEff");
+      const respTime = document.getElementById("metricsRespTime");
+
+      if (metrics.error) {
+        detRate.innerHTML = `<span class="error-text">ERR</span>`;
+        fpRate.innerHTML = `<span class="error-text">ERR</span>`;
+        adaptEff.innerHTML = `<span class="error-text">ERR</span>`;
+        respTime.innerHTML = `<span class="error-text">ERR</span>`;
+        return;
+      }
+
+      detRate.textContent = (metrics.detection_rate_pct || 0) + "%";
+      fpRate.textContent = (metrics.false_positive_rate_pct || 0) + "%";
+      adaptEff.textContent = (metrics.adaptation_effectiveness_pct || 0) + "%";
+      respTime.textContent = (metrics.average_response_time_ms || 0) + "ms";
+
+      const mc = metrics.model_comparison || {};
+      
+      const updateRow = (modelId, key) => {
+        const metricsModel = mc[key];
+        if (metricsModel) {
+          document.getElementById(`${modelId}-acc`).textContent = (metricsModel.accuracy * 100).toFixed(2) + "%";
+          document.getElementById(`${modelId}-prec`).textContent = (metricsModel.precision * 100).toFixed(2) + "%";
+          document.getElementById(`${modelId}-rec`).textContent = (metricsModel.recall * 100).toFixed(2) + "%";
+          document.getElementById(`${modelId}-f1`).textContent = (metricsModel.f1_score * 100).toFixed(2) + "%";
+        }
+      };
+
+      updateRow('rf', 'random_forest');
+      updateRow('xgb', 'xgboost');
+      updateRow('iso', 'isolation_forest');
+    }
+
+    // Real-time ML Pipeline updates
+    async function updateMLDecisionPipeline(logs) {
+      if (logs.error || !logs.length) {
+        document.getElementById("flowStep1Text").textContent = "No log data available";
+        document.getElementById("flowStep2Text").textContent = "No log data available";
+        document.getElementById("flowStep3Text").textContent = "No log data available";
+        document.getElementById("flowStep4Text").textContent = "No log data available";
+        document.getElementById("flowStep5Text").textContent = "No log data available";
+        return;
+      }
+
+      const lastLog = logs[0];
+      
+      // Step 1: Attacker Traffic
+      document.getElementById("flowStep1Text").innerHTML = `Port: ${lastLog.port} | Protocol: ${lastLog.protocol.toUpperCase()}`;
+      
+      // Step 2: Feature Extraction
+      const featCount = lastLog.features ? Object.keys(lastLog.features).length : 0;
+      const len = lastLog.raw_payload ? lastLog.raw_payload.length : 0;
+      document.getElementById("flowStep2Text").innerHTML = `${featCount} features extracted | Payload: ${len} bytes`;
+
+      // Step 3: ML Classifier
+      const mlModel = lastLog.confidence > 0.0 ? (lastLog.confidence > 0.85 ? "XGBoost" : "Random Forest") : "Heuristic";
+      const conf = lastLog.confidence ? `${(lastLog.confidence*100).toFixed(0)}%` : "N/A";
+      document.getElementById("flowStep3Text").innerHTML = `Model: ${mlModel} | Confidence: ${conf}`;
+
+      // Step 4: Decision Engine
+      const priority = lastLog.risk_score >= 80 ? "critical" : lastLog.risk_score >= 60 ? "high" : lastLog.risk_score >= 40 ? "medium" : "low";
+      document.getElementById("flowStep4Text").innerHTML = `Risk Score: ${lastLog.risk_score} | Priority: ${priority}`;
+
+      // Step 5: Deception Profile (evaluate API call)
+      try {
+        const dec = await fetch(`${API}/api/decisions/evaluate`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            attack_type: lastLog.attack_type,
+            confidence: lastLog.confidence,
+            risk_score: lastLog.risk_score,
+            ip_address: lastLog.ip_address
+          })
+        }).then(r => r.json());
+
+        const svcCount = dec.fake_services ? dec.fake_services.length : 0;
+        document.getElementById("flowStep5Text").innerHTML = `State: ${dec.honeypot_state.toUpperCase()} | Services: ${svcCount} exposed`;
+      } catch (err) {
+        document.getElementById("flowStep5Text").innerHTML = `<span class="error-text">State: DECEPTION ACTIVE</span>`;
+      }
+    }
+
+    function updateAttackChainTracker(sessions) {
+      const container = document.getElementById("attackChainTrackerContainer");
+      if (!container) return;
+      
+      const activeSessionsWithChains = sessions.filter(s => s.attack_chain && s.attack_chain.chain_name);
+      if (activeSessionsWithChains.length === 0) {
+        container.innerHTML = `<div style="font-size: 11px; color: var(--text-muted); font-style: italic; text-align: center; padding: 20px;">No active attack chains detected.</div>`;
+        return;
+      }
+      
+      let html = "";
+      activeSessionsWithChains.forEach(sess => {
+        const chain = sess.attack_chain;
+        const steps = {
+          recon_to_exploit: ["port_scan", "sql_injection"],
+          recon_to_brute: ["port_scan", "brute_force"],
+          recon_to_rce: ["port_scan", "command_injection"],
+          lateral_movement: ["brute_force", "command_injection"],
+          data_exfiltration: ["sql_injection", "path_traversal"],
+          full_kill_chain: ["port_scan", "brute_force", "command_injection", "malware_delivery"],
+        }[chain.chain_name] || [];
+        
+        let stepsHtml = "";
+        steps.forEach(step => {
+          const completed = sess.attack_types.includes(step);
+          const color = completed ? "var(--accent-orange)" : "#334155";
+          const border = completed ? "var(--accent-orange)" : "#475569";
+          stepsHtml += `
+            <div style="display: flex; flex-direction: column; align-items: center; flex: 1; position: relative;">
+              <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${color}; border: 2px solid ${border}; z-index: 2;"></div>
+              <span style="font-size: 8px; color: ${completed ? 'var(--text-primary)' : 'var(--text-muted)'}; margin-top: 4px; text-align: center; text-transform: uppercase;">${step.replace('_', ' ')}</span>
+            </div>
+          `;
+        });
+        
+        html += `
+          <div style="padding: 12px; background-color: #0d1526; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 6px;">
+              <span>Attacker IP: <strong class="text-blue">${sess.ip_address}</strong></span>
+              <span>Chain: <strong style="color: var(--accent-orange);">${chain.chain_name.replace(/_/g, ' ').toUpperCase()}</strong> (${chain.completion_pct}%)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; position: relative; padding: 0 10px; margin-top: 10px;">
+              <div style="position: absolute; top: 5px; left: 20px; right: 20px; height: 2px; background-color: #1e293b; z-index: 1;"></div>
+              ${stepsHtml}
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function updateDeceptionGauge(avgScore) {
+      const textEl = document.getElementById("avgDeceptionScoreText");
+      if (textEl) textEl.textContent = avgScore.toFixed(2);
+      
+      const canvas = document.getElementById("deceptionGaugeChart");
+      if (!canvas) return;
+      
+      if (deceptionGaugeChart) deceptionGaugeChart.destroy();
+      
+      const ctx = canvas.getContext("2d");
+      let color = "#ef4444"; // red
+      if (avgScore >= 0.67) color = "#00ff88"; // green
+      else if (avgScore >= 0.34) color = "#eab308"; // yellow
+      
+      deceptionGaugeChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Score', 'Remaining'],
+          datasets: [{
+            data: [avgScore, Math.max(0, 1.0 - avgScore)],
+            backgroundColor: [color, '#1e293b'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          circumference: 180,
+          rotation: 270,
+          cutout: '80%',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          }
+        }
+      });
+    }
+
+    function renderTtpTable(sessions) {
+      const tbody = document.getElementById("ttpTableBody");
+      if (!tbody) return;
+      
+      if (!sessions.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="loading-text" style="text-align: center;">No attacker TTP profiles recorded.</td></tr>`;
+        return;
+      }
+      
+      let html = "";
+      sessions.forEach(sess => {
+        const ttp = sess.ttp_fingerprint || {
+          tool_signature: "custom",
+          evasion_attempts: 0,
+          attack_chain_stage: "recon",
+          timing_pattern: "slow_drip"
+        };
+        
+        const stageColors = {
+          recon: "badge-unknown",
+          weaponize: "badge-port_scan",
+          exploit: "badge-sql_injection",
+          post_exploit: "badge-command_injection"
+        };
+        
+        const stageColorClass = stageColors[ttp.attack_chain_stage] || "badge-unknown";
+        
+        html += `
+          <tr>
+            <td><strong class="text-blue">${sess.ip_address}</strong></td>
+            <td><span class="badge-custom" style="background-color: rgba(6, 182, 212, 0.15); color: var(--accent-blue); border: 1px solid var(--accent-blue);">${ttp.tool_signature.toUpperCase()}</span></td>
+            <td style="font-weight: bold; color: var(--accent-red);">${ttp.evasion_attempts}</td>
+            <td><span class="badge-custom ${stageColorClass}">${ttp.attack_chain_stage.toUpperCase()}</span></td>
+            <td style="color: var(--text-muted);">${new Date(sess.last_seen || sess.first_seen).toLocaleTimeString()}</td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function sortTtpTableByEvasion() {
+      if (!currentSessionsData || !currentSessionsData.length) return;
+      currentSessionsData.sort((a, b) => {
+        const evasionA = a.ttp_fingerprint ? a.ttp_fingerprint.evasion_attempts : 0;
+        const evasionB = b.ttp_fingerprint ? b.ttp_fingerprint.evasion_attempts : 0;
+        return evasionB - evasionA;
+      });
+      renderTtpTable(currentSessionsData);
+    }
+
+    // Initialize Map & Start polling
+    initMap();
+    fetchAll();
+    setInterval(fetchAll, 15000);
+  </script>
+</body>
+</html>
