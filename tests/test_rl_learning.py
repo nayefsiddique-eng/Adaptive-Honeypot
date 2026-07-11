@@ -91,5 +91,45 @@ def test_rl_learning_convergence():
     assert avg_last_50 > avg_first_50 + 1.0, f"Policy failed to converge. First 50 avg: {avg_first_50:.2f}, Last 50 avg: {avg_last_50:.2f}"
     assert avg_last_50 >= 7.0, f"Final policy quality is too low. Last 50 avg: {avg_last_50:.2f}"
 
+def test_rl_action_keys_lookup():
+    from backend.core.cooperative_rl_engine import CooperativeRLCoordinator
+    engine = create_engine("sqlite:///:memory:")
+    TestingSessionLocal = sessionmaker(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db = TestingSessionLocal()
+    
+    coordinator = CooperativeRLCoordinator(db)
+    action_str, selected, confidence = coordinator.select_coordinated_strategy("sql_injection:new:low")
+    assert "network" in selected
+    assert "service" in selected
+    assert "intel" in selected
+    assert "net" not in selected
+    assert "intl" not in selected
+    
+    db.close()
+    Base.metadata.drop_all(bind=engine)
+
+def test_rl_action_variation_regression():
+    engine = create_engine("sqlite:///:memory:")
+    TestingSessionLocal = sessionmaker(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db = TestingSessionLocal()
+    
+    net_actions = set()
+    intel_actions = set()
+    
+    for i in range(50):
+        action_str, confidence, explored, selected = choose_rl_action(db, "sql_injection", 1, "low")
+        net_actions.add(selected.get("network"))
+        intel_actions.add(selected.get("intel"))
+        
+    assert len(net_actions) > 1, f"Expected multiple distinct network actions, got: {net_actions}"
+    assert len(intel_actions) > 1, f"Expected multiple distinct intel actions, got: {intel_actions}"
+    
+    db.close()
+    Base.metadata.drop_all(bind=engine)
+
 if __name__ == "__main__":
     test_rl_learning_convergence()
+    test_rl_action_keys_lookup()
+    test_rl_action_variation_regression()

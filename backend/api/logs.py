@@ -193,8 +193,8 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
         
         session.rl_state = state_str
         session.rl_action = action_str
-        session.rl_network_action = selected.get("net", "default:medium")
-        session.rl_intel_action = selected.get("intl", "delayed_response")
+        session.rl_network_action = selected.get("network", "default:medium")
+        session.rl_intel_action = selected.get("intel", "delayed_response")
         
         parts = action_str.split(":")
         profile_key = parts[0]
