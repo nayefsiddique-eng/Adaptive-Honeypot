@@ -16,7 +16,8 @@ from backend.services.classifier import predict, models_loaded
 from backend.services.geoip_enricher import enrich_ip
 from backend.core.threat_intel import evaluate_ip_threat
 from backend.core.adaptive_engine import decide_behavior
-from backend.core.decision_engine import detect_attack_chain
+from backend.core.decision_engine import detect_attack_chain, get_deception_profile
+from backend.core.rl_engine import choose_rl_action, serialize_state, get_history_bucket
 
 router = APIRouter()
 
@@ -77,171 +78,201 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
     # 4. Threat Intel Evaluation
     intel = await evaluate_ip_threat(req.ip_address)
 
-    # 5. Maintain Attacker Reputation Profile
-    reputation = db.query(AttackerReputation).filter(AttackerReputation.ip_address == req.ip_address).first()
-    if not reputation:
-        reputation = AttackerReputation(
+    try:
+        # 5. Maintain Attacker Reputation Profile
+        reputation = db.query(AttackerReputation).filter(AttackerReputation.ip_address == req.ip_address).first()
+        if not reputation:
+            reputation = AttackerReputation(
+                ip_address=req.ip_address,
+                total_sessions=1,
+                attack_count=1,
+                previous_attack_types=[attack_type],
+                country=geo["country"],
+                city=geo["city"],
+                isp=geo["isp"],
+                latitude=geo["latitude"],
+                longitude=geo["longitude"],
+                abuse_ip_db_score=intel["abuseipdb_score"],
+                alien_vault_score=intel["alienvault_score"],
+                reputation_score=max(0.0, 100.0 - intel["reputation_score"])
+            )
+            db.add(reputation)
+        else:
+            reputation.attack_count += 1
+            
+            # Handle JSON mutation detection in SQLAlchemy
+            prev_attacks = list(reputation.previous_attack_types)
+            if attack_type not in prev_attacks:
+                prev_attacks.append(attack_type)
+                reputation.previous_attack_types = prev_attacks
+                
+            # Recalculate combined reputation (local frequency + intelligence feeds)
+            local_freq_penalty = min(reputation.attack_count * 2.0, 40.0)
+            external_feed_penalty = intel["reputation_score"] * 0.60
+            reputation.reputation_score = max(0.0, round(100.0 - local_freq_penalty - external_feed_penalty, 2))
+            
+            # Ensure coordinates are saved if not present
+            if reputation.latitude == 0.0 and geo["latitude"] != 0.0:
+                reputation.latitude = geo["latitude"]
+                reputation.longitude = geo["longitude"]
+                reputation.country = geo["country"]
+                reputation.city = geo["city"]
+                reputation.isp = geo["isp"]
+
+        # 6. Session Lifecycle & Recording Updates
+        time_limit = datetime.utcnow() - timedelta(minutes=30)
+        session = db.query(AttackerSession).filter(
+            AttackerSession.ip_address == req.ip_address,
+            AttackerSession.is_active == True,
+            # Compare SQLite timestamps safely
+            AttackerSession.last_seen >= time_limit
+        ).first()
+
+        now_dt = datetime.utcnow()
+
+        if not session:
+            # Create a new session
+            session_id = raw_event["session_id"]
+            session = AttackerSession(
+                ip_address=req.ip_address,
+                session_id=session_id,
+                attack_count=1,
+                attack_types=[attack_type],
+                risk_score=risk_score,
+                honeypot_state="default",
+                fake_services=[],
+                is_active=True,
+                session_duration=0.0,
+                commands_issued=[],
+                payload_hashes=[],
+                deception_score_avg=0.0,
+                attack_chain_name=None,
+                attack_chain_progress=0
+            )
+            db.add(session)
+            reputation.total_sessions += 1
+        else:
+            session_id = session.session_id
+            session.attack_count += 1
+            
+            # Update attack type list
+            sess_types = list(session.attack_types)
+            if attack_type not in sess_types:
+                sess_types.append(attack_type)
+                session.attack_types = sess_types
+                
+            session.risk_score = max(session.risk_score, risk_score)
+            
+            # Calculate session duration
+            first_seen_naive = session.first_seen.replace(tzinfo=None)
+            session.session_duration = max(0.0, (now_dt - first_seen_naive).total_seconds())
+
+        # Record command execution inputs (CLI-based payloads)
+        session_commands = list(session.commands_issued)
+        if attack_type == "command_injection" and req.payload:
+            session_commands.append(req.payload.strip())
+        elif attack_type == "brute_force" and req.payload:
+            session_commands.append(f"AUTHENTICATION TRY: {req.payload.strip()}")
+        session.commands_issued = session_commands
+
+        # Append payload hashes
+        session_hashes = list(session.payload_hashes)
+        if req.payload:
+            p_hash = hashlib.sha256(req.payload.encode()).hexdigest()
+            if p_hash not in session_hashes:
+                session_hashes.append(p_hash)
+        session.payload_hashes = session_hashes
+
+        # 7. Execute Adaptive Behavior Engine
+        current_depth = session.interaction_depth or 0
+        depth_map = {0: "low", 1: "low", 2: "medium", 3: "high", 4: "high"}
+        current_level = depth_map.get(current_depth, "low")
+        
+        action_str, policy_confidence, explored = choose_rl_action(db, attack_type, reputation.total_sessions, current_level)
+        state_str = serialize_state(attack_type, get_history_bucket(reputation.total_sessions), current_level)
+        
+        session.rl_state = state_str
+        session.rl_action = action_str
+        
+        parts = action_str.split(":")
+        profile_key = parts[0]
+        level = parts[1] if len(parts) > 1 else "low"
+        
+        profile = get_deception_profile(profile_key)
+        
+        action_map = {"low": "monitor", "medium": "active_deception", "high": "full_deception"}
+        deception = {
+            "action": action_map.get(level, "monitor"),
+            "interaction_level": level,
+            "honeypot_state": profile["state"],
+            "fake_services": profile["fake_services"],
+            "fake_banners": profile["fake_banners"],
+            "response_delay_ms": profile["response_delay_ms"],
+            "fake_credentials_accepted": profile["fake_credentials_accepted"],
+            "decoy_files": profile["decoy_files"],
+            "exposed_ports": [80, 22] if level == "low" else [21, 22, 23, 80, 443, 445, 3306, 3389, 8080],
+            "reasoning": f"RL selected action '{action_str}' based on state '{state_str}'",
+            "deception_score": 0.0
+        }
+        
+        # Calculate deception score
+        interaction_level_map = {"low": 0, "medium": 1, "high": 2}
+        deception_score = (
+            (interaction_level_map.get(level, 0) / 2.0) * 0.40 +
+            (len(profile["fake_services"]) / 5.0) * 0.20 +
+            (len(profile["decoy_files"]) / 6.0) * 0.20 +
+            (min(profile["response_delay_ms"], 2000) / 2000.0) * 0.20
+        )
+        deception["deception_score"] = min(round(deception_score, 4), 1.0)
+        session.rl_deception_score = deception["deception_score"]
+
+        # Update session details from adaptive engine
+        session.honeypot_state = deception["honeypot_state"]
+        session.fake_services = deception["fake_services"]
+        
+        depth_levels = {"low": 1, "medium": 2, "high": 3}
+        session.interaction_depth = max(current_depth, depth_levels.get(level, 1))
+        session.last_seen = now_dt
+
+        # Feature 2 - Update Deception Score Average
+        current_count = session.attack_count
+        prev_avg = session.deception_score_avg or 0.0
+        session.deception_score_avg = round((prev_avg * (current_count - 1) + deception["deception_score"]) / current_count, 4)
+
+        # Feature 3 - Attack Chain Detection
+        chain_result = detect_attack_chain(reputation.previous_attack_types)
+        session.attack_chain_name = chain_result["chain_name"]
+        session.attack_chain_progress = chain_result["chain_progress"]
+
+        # Measure API Response Latency
+        response_time_ms = round((time.time() - start_time) * 1000.0, 3)
+
+        # 8. Save Log to SQLite
+        log = AttackLog(
+            session_id=session_id,
             ip_address=req.ip_address,
-            total_sessions=1,
-            attack_count=1,
-            previous_attack_types=[attack_type],
+            port=req.port,
+            protocol=req.protocol,
+            attack_type=attack_type,
+            confidence=confidence,
+            risk_score=risk_score,
+            mitre_technique=mitre["technique_id"],
             country=geo["country"],
             city=geo["city"],
             isp=geo["isp"],
             latitude=geo["latitude"],
             longitude=geo["longitude"],
-            abuse_ip_db_score=intel["abuseipdb_score"],
-            alien_vault_score=intel["alienvault_score"],
-            reputation_score=max(0.0, 100.0 - intel["reputation_score"])
+            raw_payload=req.payload,
+            features=features,
+            ttp_fingerprint=ttp_fingerprint,
+            response_time_ms=response_time_ms
         )
-        db.add(reputation)
-    else:
-        reputation.attack_count += 1
-        
-        # Handle JSON mutation detection in SQLAlchemy
-        prev_attacks = list(reputation.previous_attack_types)
-        if attack_type not in prev_attacks:
-            prev_attacks.append(attack_type)
-            reputation.previous_attack_types = prev_attacks
-            
-        # Recalculate combined reputation (local frequency + intelligence feeds)
-        local_freq_penalty = min(reputation.attack_count * 2.0, 40.0)
-        external_feed_penalty = intel["reputation_score"] * 0.60
-        reputation.reputation_score = max(0.0, round(100.0 - local_freq_penalty - external_feed_penalty, 2))
-        
-        # Ensure coordinates are saved if not present
-        if reputation.latitude == 0.0 and geo["latitude"] != 0.0:
-            reputation.latitude = geo["latitude"]
-            reputation.longitude = geo["longitude"]
-            reputation.country = geo["country"]
-            reputation.city = geo["city"]
-            reputation.isp = geo["isp"]
-
-    # 6. Session Lifecycle & Recording Updates
-    time_limit = datetime.utcnow() - timedelta(minutes=30)
-    session = db.query(AttackerSession).filter(
-        AttackerSession.ip_address == req.ip_address,
-        AttackerSession.is_active == True,
-        # Compare SQLite timestamps safely
-        AttackerSession.last_seen >= time_limit
-    ).first()
-
-    now_dt = datetime.utcnow()
-
-    if not session:
-        # Create a new session
-        session_id = raw_event["session_id"]
-        session = AttackerSession(
-            ip_address=req.ip_address,
-            session_id=session_id,
-            attack_count=1,
-            attack_types=[attack_type],
-            risk_score=risk_score,
-            honeypot_state="default",
-            fake_services=[],
-            is_active=True,
-            session_duration=0.0,
-            commands_issued=[],
-            payload_hashes=[],
-            deception_score_avg=0.0,
-            attack_chain_name=None,
-            attack_chain_progress=0
-        )
-        db.add(session)
-        reputation.total_sessions += 1
-    else:
-        session_id = session.session_id
-        session.attack_count += 1
-        
-        # Update attack type list
-        sess_types = list(session.attack_types)
-        if attack_type not in sess_types:
-            sess_types.append(attack_type)
-            session.attack_types = sess_types
-            
-        session.risk_score = max(session.risk_score, risk_score)
-        
-        # Calculate session duration
-        first_seen_naive = session.first_seen.replace(tzinfo=None)
-        session.session_duration = max(0.0, (now_dt - first_seen_naive).total_seconds())
-
-    # Record command execution inputs (CLI-based payloads)
-    session_commands = list(session.commands_issued)
-    if attack_type == "command_injection" and req.payload:
-        session_commands.append(req.payload.strip())
-    elif attack_type == "brute_force" and req.payload:
-        session_commands.append(f"AUTHENTICATION TRY: {req.payload.strip()}")
-    session.commands_issued = session_commands
-
-    # Append payload hashes
-    session_hashes = list(session.payload_hashes)
-    if req.payload:
-        p_hash = hashlib.sha256(req.payload.encode()).hexdigest()
-        if p_hash not in session_hashes:
-            session_hashes.append(p_hash)
-    session.payload_hashes = session_hashes
-
-    # 7. Execute Adaptive Behavior Engine
-    attacker_history = {
-        "ip_address": req.ip_address,
-        "total_sessions": reputation.total_sessions,
-        "attack_count": reputation.attack_count,
-        "previous_attack_types": reputation.previous_attack_types
-    }
-    deception = decide_behavior(
-        attack_type=attack_type,
-        confidence=confidence,
-        risk_score=risk_score,
-        attacker_history=attacker_history
-    )
-
-    # Update session details from adaptive engine
-    session.honeypot_state = deception["honeypot_state"]
-    session.fake_services = deception["fake_services"]
-    
-    depth_levels = {"low": 1, "medium": 2, "high": 3, "deep": 4}
-    current_depth = session.interaction_depth or 0
-    session.interaction_depth = max(current_depth, depth_levels.get(deception["interaction_level"], 1))
-    session.last_seen = now_dt
-
-    # Feature 2 - Update Deception Score Average
-    current_count = session.attack_count
-    prev_avg = session.deception_score_avg or 0.0
-    deception_score = deception.get("deception_score", 0.0)
-    session.deception_score_avg = round((prev_avg * (current_count - 1) + deception_score) / current_count, 4)
-
-    # Feature 3 - Attack Chain Detection
-    chain_result = detect_attack_chain(reputation.previous_attack_types)
-    session.attack_chain_name = chain_result["chain_name"]
-    session.attack_chain_progress = chain_result["chain_progress"]
-
-    # Measure API Response Latency
-    response_time_ms = round((time.time() - start_time) * 1000.0, 3)
-
-    # 8. Save Log to SQLite
-    log = AttackLog(
-        session_id=session_id,
-        ip_address=req.ip_address,
-        port=req.port,
-        protocol=req.protocol,
-        attack_type=attack_type,
-        confidence=confidence,
-        risk_score=risk_score,
-        mitre_technique=mitre["technique_id"],
-        country=geo["country"],
-        city=geo["city"],
-        isp=geo["isp"],
-        latitude=geo["latitude"],
-        longitude=geo["longitude"],
-        raw_payload=req.payload,
-        features=features,
-        ttp_fingerprint=ttp_fingerprint,
-        response_time_ms=response_time_ms
-    )
-    db.add(log)
-    
-    db.commit()
-    db.refresh(log)
+        db.add(log)
+        db.commit()
+        db.refresh(log)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database transaction failure: {str(e)}")
 
     return {
         "id": log.id,
