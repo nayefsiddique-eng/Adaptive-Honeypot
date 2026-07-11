@@ -20,6 +20,10 @@ const fetchers = {
   research: () => fetch(`${BASE_URL}/api/research/metrics`)
     .then(r => r.ok ? r.json() : { new_metrics: {} })
     .catch(() => ({ new_metrics: {} })),
+
+  learningCurve: () => fetch(`${BASE_URL}/api/research/learning-curve`)
+    .then(r => r.ok ? r.json() : [])
+    .catch(() => []),
     
   timeline: (id) => fetch(`${BASE_URL}/api/sessions/${id}/behavior_timeline`)
     .then(r => r.ok ? r.json() : [])
