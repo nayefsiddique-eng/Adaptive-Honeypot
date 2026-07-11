@@ -78,6 +78,7 @@ app.include_router(timeline.router)
 app.include_router(research.router)
 app.include_router(dashboard.router)
 app.include_router(attacks.router)
+app.include_router(threat_intel.router)
 
 @app.get("/")
 def root():

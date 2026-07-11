@@ -4,7 +4,6 @@ from backend.models.attack import AttackLog
 from backend.models.session import AttackerSession
 import backend.core.behavior_intelligence as behavior_intel
 import backend.core.threat_intel_fusion as threat_fusion
-import backend.core.cooperative_rl_engine as coop_rl
 
 # Copy of standard DECEPTION_PROFILES configuration to keep it backward compatible
 DECEPTION_PROFILES = {
@@ -97,17 +96,20 @@ def decide_honeypot_action(attack_type: str, confidence: float, risk_score: floa
         "confidence": confidence
     }
 
-def detect_attack_chain(attack_type: str, session_logs: List[AttackLog]) -> Tuple[int, str]:
+def detect_attack_chain(attack_types: List[str]) -> Dict[str, Any]:
     """
-    Computes kill chain metrics for attacker telemetry.
+    Computes kill chain metrics for attacker telemetry based on the
+    distinct attack types observed for this session/reputation history.
     """
-    unique_types = {log.attack_type for log in session_logs}
+    unique_types = set(attack_types or [])
     progress = len(unique_types)
     if "command_injection" in unique_types or "malware_delivery" in unique_types:
-        return progress, "Exfiltration / Exploitation Stage"
+        chain_name = "Exfiltration / Exploitation Stage"
     elif "sql_injection" in unique_types or "path_traversal" in unique_types:
-        return progress, "Intrusion / Exploit Stage"
-    return progress, "Reconnaissance Stage"
+        chain_name = "Intrusion / Exploit Stage"
+    else:
+        chain_name = "Reconnaissance Stage"
+    return {"chain_progress": progress, "chain_name": chain_name}
 
 class AutonomousDecisionEngine:
     """
@@ -131,6 +133,7 @@ class AutonomousDecisionEngine:
         attributes = behavior_intel.estimate_attacker_properties(sequence)
         
         # 4. Invoke the Cooperative Q-learning Coordinator
+        import backend.core.cooperative_rl_engine as coop_rl
         history_bucket = behavior_intel.get_history_bucket(len(session_logs))
         state_str = coop_rl.serialize_state(attack_type, history_bucket, "low")
         coordinator = coop_rl.CooperativeRLCoordinator(self.db)
