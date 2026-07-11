@@ -6,7 +6,7 @@ from backend.models.attack import AttackLog
 from backend.models.session import AttackerSession
 from backend.models.reputation import AttackerReputation
 from backend.core.decision_engine import decide_honeypot_action, get_deception_profile, DECEPTION_PROFILES
-from backend.core.rl_engine import choose_rl_action, serialize_state, get_history_bucket
+from backend.core.cooperative_rl_engine import choose_rl_action, serialize_state, get_history_bucket
 
 router = APIRouter()
 

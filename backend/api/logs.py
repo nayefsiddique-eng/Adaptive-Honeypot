@@ -17,7 +17,7 @@ from backend.services.geoip_enricher import enrich_ip
 from backend.core.threat_intel import evaluate_ip_threat
 from backend.core.adaptive_engine import decide_behavior
 from backend.core.decision_engine import detect_attack_chain, get_deception_profile
-from backend.core.rl_engine import choose_rl_action, serialize_state, get_history_bucket
+from backend.core.cooperative_rl_engine import choose_rl_action, serialize_state, get_history_bucket
 
 router = APIRouter()
 

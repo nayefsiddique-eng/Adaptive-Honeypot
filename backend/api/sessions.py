@@ -225,3 +225,80 @@ def get_session_behavior_timeline(session_id: str, db: Session = Depends(get_db)
         })
         
     return timeline
+
+@router.get("/{session_id}/explain")
+def get_session_explanation(session_id: str, db: Session = Depends(get_db)):
+    """
+    Exposes explainability metrics (SHAP contributions, counterfactuals, policies) for a session.
+    """
+    from backend.core.explanation_engine import DeceptionExplanationEngine
+    latest_log = db.query(AttackLog).filter(AttackLog.session_id == session_id).order_by(AttackLog.timestamp.desc()).first()
+    if not latest_log:
+        raise HTTPException(status_code=404, detail="No logs found for this session")
+        
+    engine = DeceptionExplanationEngine(db)
+    return engine.generate_decision_explanation(session_id, latest_log.id)
+
+@router.get("/{session_id}/report")
+def get_session_markdown_report(session_id: str, db: Session = Depends(get_db)):
+    """
+    Returns a copy-pasteable Markdown brief summarizing the incident and actions.
+    """
+    from backend.core.explanation_engine import DeceptionExplanationEngine
+    engine = DeceptionExplanationEngine(db)
+    return {"report": engine.generate_soc_markdown_report(session_id)}
+
+@router.get("/{session_id}/graph")
+def get_session_behavior_graph(session_id: str, db: Session = Depends(get_db)):
+    """
+    Calculates dynamic behavior sequence graph and next TTP prediction vectors.
+    """
+    import backend.core.behavior_intelligence as behavior_intel
+    logs = db.query(AttackLog).filter(AttackLog.session_id == session_id).order_by(AttackLog.timestamp.asc()).all()
+    if not logs:
+        raise HTTPException(status_code=404, detail="No logs found for session")
+        
+    sequence = behavior_intel.build_attack_sequence(logs)
+    next_ttp, probability = behavior_intel.predict_next_mitre_technique(sequence)
+    objective = behavior_intel.infer_attacker_objective(sequence)
+    attributes = behavior_intel.estimate_attacker_properties(sequence)
+    similar_sess, similarity = behavior_intel.analyze_campaign_similarity(db, session_id, sequence)
+    
+    # Structure node/edge link representation
+    nodes = []
+    edges = []
+    seen_nodes = set()
+    
+    for idx, ttp in enumerate(sequence):
+        details = next((v for v in behavior_intel.MITRE_ATTACK_MAPPING.values() if v["id"] == ttp), {"name": "Unknown", "stage": "Reconnaissance"})
+        if ttp not in seen_nodes:
+            seen_nodes.add(ttp)
+            nodes.append({
+                "id": ttp,
+                "label": f"{details['name']} ({ttp})",
+                "stage": details["stage"]
+            })
+        if idx > 0:
+            edges.append({
+                "source": sequence[idx - 1],
+                "target": ttp,
+                "weight": 1
+            })
+            
+    return {
+        "session_id": session_id,
+        "sequence": sequence,
+        "nodes": nodes,
+        "edges": edges,
+        "predictions": {
+            "probable_next_mitre_technique": next_ttp,
+            "transition_probability": probability,
+            "expected_attacker_objective": objective,
+            "expected_dwell_time_seconds": attributes["expected_dwell_time_seconds"],
+            "persistence_probability": attributes["persistence_probability"]
+        },
+        "campaign_cluster": {
+            "similar_session_id": similar_sess,
+            "similarity_score": similarity
+        }
+    }

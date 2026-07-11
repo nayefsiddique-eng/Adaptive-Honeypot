@@ -1,5 +1,12 @@
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
+from sqlalchemy.orm import Session
+from backend.models.attack import AttackLog
+from backend.models.session import AttackerSession
+import backend.core.behavior_intelligence as behavior_intel
+import backend.core.threat_intel_fusion as threat_fusion
+import backend.core.cooperative_rl_engine as coop_rl
 
+# Copy of standard DECEPTION_PROFILES configuration to keep it backward compatible
 DECEPTION_PROFILES = {
     "brute_force": {
         "state": "credential_trap",
@@ -79,82 +86,78 @@ def get_deception_profile(attack_type: str) -> Dict[str, Any]:
     return DECEPTION_PROFILES.get(attack_type, DECEPTION_PROFILES["unknown"])
 
 def decide_honeypot_action(attack_type: str, confidence: float, risk_score: float, attacker_history: Dict[str, Any] = {}) -> Dict[str, Any]:
+    """
+    Backward-compatible fallback mapping for standard rule-based profiles.
+    """
     profile = get_deception_profile(attack_type)
-    attack_count = attacker_history.get("attack_count", 0)
-    if confidence < 0.6:
-        action = "monitor"
-        priority = "low"
-    elif risk_score >= 80:
-        action = "full_deception"
-        priority = "critical"
-    elif risk_score >= 60:
-        action = "active_deception"
-        priority = "high"
-    elif risk_score >= 40:
-        action = "partial_deception"
-        priority = "medium"
-    else:
-        action = "monitor"
-        priority = "low"
-    if attack_count > 10:
-        action = "full_deception"
-        priority = "critical"
     return {
-        "action": action,
-        "priority": priority,
-        "honeypot_state": profile["state"],
-        "fake_services": profile["fake_services"],
-        "fake_banners": profile["fake_banners"],
-        "response_delay_ms": profile["response_delay_ms"],
-        "fake_credentials_accepted": profile["fake_credentials_accepted"],
-        "decoy_files": profile["decoy_files"],
-        "description": profile["description"],
-        "reasoning": f"Attack '{attack_type}' confidence {confidence:.0%} risk {risk_score} triggers '{action}'"
+        "action": "full_deception" if risk_score >= 80 else "active_deception" if risk_score >= 50 else "monitor",
+        "profile": profile,
+        "priority": "critical" if risk_score >= 80 else "medium",
+        "confidence": confidence
     }
 
+def detect_attack_chain(attack_type: str, session_logs: List[AttackLog]) -> Tuple[int, str]:
+    """
+    Computes kill chain metrics for attacker telemetry.
+    """
+    unique_types = {log.attack_type for log in session_logs}
+    progress = len(unique_types)
+    if "command_injection" in unique_types or "malware_delivery" in unique_types:
+        return progress, "Exfiltration / Exploitation Stage"
+    elif "sql_injection" in unique_types or "path_traversal" in unique_types:
+        return progress, "Intrusion / Exploit Stage"
+    return progress, "Reconnaissance Stage"
 
-KNOWN_CHAINS = {
-    "recon_to_exploit": ["port_scan", "sql_injection"],
-    "recon_to_brute": ["port_scan", "brute_force"],
-    "recon_to_rce": ["port_scan", "command_injection"],
-    "lateral_movement": ["brute_force", "command_injection"],
-    "data_exfiltration": ["sql_injection", "path_traversal"],
-    "full_kill_chain": ["port_scan", "brute_force", "command_injection", "malware_delivery"],
-}
+class AutonomousDecisionEngine:
+    """
+    The unified brain of PRAETOR. Fuses ML classification, GeoIP, threat intelligence feeds,
+    keystroke history, and Cooperative RL outcomes to generate context-aware deception strategies.
+    """
+    def __init__(self, db: Session):
+        self.db = db
 
-def detect_attack_chain(previous_attack_types: list) -> dict:
-    if not previous_attack_types:
-        return {
-            "chain_detected": False,
-            "chain_name": None,
-            "chain_progress": 0,
-            "chain_total": 0,
-            "completion_pct": 0.0
-        }
-    
-    best_chain = None
-    best_progress = 0
-    best_total = 0
-    best_pct = -1.0
-    
-    for chain_name, chain_steps in KNOWN_CHAINS.items():
-        matched = [step for step in chain_steps if step in previous_attack_types]
-        progress = len(matched)
-        total = len(chain_steps)
-        pct = progress / total if total > 0 else 0.0
+    def evaluate_decision_state(self, ip_address: str, current_session_id: str, attack_type: str, confidence: float) -> Dict[str, Any]:
+        # 1. Gather all fusion intelligence signals
+        intel_profile = threat_fusion.fuse_attacker_intelligence(self.db, ip_address, current_session_id)
         
-        if progress > 0:
-            if (pct > best_pct) or (pct == best_pct and progress > best_progress):
-                best_pct = pct
-                best_chain = chain_name
-                best_progress = progress
-                best_total = total
-                
-    chain_detected = best_progress >= 2
-    return {
-        "chain_detected": chain_detected,
-        "chain_name": best_chain,
-        "chain_progress": best_progress,
-        "chain_total": best_total,
-        "completion_pct": round(best_pct * 100.0, 2) if best_chain else 0.0
-    }
+        # 2. Extract session historical sequence
+        session_logs = self.db.query(AttackLog).filter(AttackLog.session_id == current_session_id).all()
+        sequence = behavior_intel.build_attack_sequence(session_logs)
+        
+        # 3. Predict intent details
+        next_ttp, ttp_prob = behavior_intel.predict_next_mitre_technique(sequence)
+        expected_obj = behavior_intel.infer_attacker_objective(sequence)
+        attributes = behavior_intel.estimate_attacker_properties(sequence)
+        
+        # 4. Invoke the Cooperative Q-learning Coordinator
+        history_bucket = behavior_intel.get_history_bucket(len(session_logs))
+        state_str = coop_rl.serialize_state(attack_type, history_bucket, "low")
+        coordinator = coop_rl.CooperativeRLCoordinator(self.db)
+        coexistence_action, selected_agents, rl_confidence = coordinator.select_coordinated_strategy(state_str)
+        
+        # 5. Formulate unified decision context
+        chosen_profile = coexistence_action.split(":")[0]
+        chosen_level = coexistence_action.split(":")[1] if ":" in coexistence_action else "low"
+        profile_details = get_deception_profile(chosen_profile)
+        
+        # 6. Formulate reasoning trace
+        reasoning_trace = (
+            f"Adversary classified as {intel_profile['threat_actor_profile']} with {confidence*100:.1f}% confidence. "
+            f"Behavior sequence mapped {len(sequence)} TTP transitions. "
+            f"Cooperative agents selected strategy '{coexistence_action}' (Network Agent level: '{chosen_level}'). "
+            f"Deception is targeted at mitigating expected '{expected_obj}' objectives."
+        )
+
+        return {
+            "recommended_strategy": coexistence_action,
+            "profile_details": profile_details,
+            "confidence_score": round((confidence + rl_confidence) / 2.0, 4),
+            "reasoning_trace": reasoning_trace,
+            "expected_attacker_objective": expected_obj,
+            "expected_deception_effectiveness": 0.90 if chosen_profile == attack_type else 0.40,
+            "predicted_next_ttp": next_ttp,
+            "threat_fusion": intel_profile,
+            "attacker_properties": attributes,
+            "agents_decisions": selected_agents
+        }

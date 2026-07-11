@@ -28,7 +28,7 @@ def close_sessions(db: Session = Depends(get_db)):
     Manually close all sessions to trigger Q-learning updates immediately.
     """
     try:
-        from backend.core.rl_engine import update_q_table_for_session
+        from backend.core.cooperative_rl_engine import update_q_table_for_session
         active_sessions = db.query(AttackerSession).filter(AttackerSession.is_active == True).all()
         closed_count = 0
         for session in active_sessions:

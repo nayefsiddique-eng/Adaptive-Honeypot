@@ -3,12 +3,12 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.api import logs, decisions, geoip, threat_intel, timeline, sessions, research, dashboard, attacks, admin
+from backend.api import logs, decisions, geoip, threat_intel, timeline, sessions, research, dashboard, attacks, admin, digital_twin
 from backend.database import init_db, SessionLocal
 from backend.services.classifier import load_models
 from backend.api.adaptive import router as adaptive_router
 from backend.models.session import AttackerSession
-from backend.core.rl_engine import update_q_table_for_session
+from backend.core.cooperative_rl_engine import update_q_table_for_session
 
 async def session_reaper():
     """
@@ -69,6 +69,7 @@ app.add_middleware(
 app.include_router(logs.router, prefix="/api/logs", tags=["Logs"])
 app.include_router(decisions.router, prefix="/api/decisions", tags=["Decisions"])
 app.include_router(sessions.router)
+app.include_router(digital_twin.router)
 app.include_router(admin.router)
 app.include_router(adaptive_router)
 app.include_router(geoip.router)
