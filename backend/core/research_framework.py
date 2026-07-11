@@ -70,9 +70,16 @@ class PRAETORResearchFramework:
                 else:  # Without CMARL
                     captured_intel_points.append(random.randint(10, 30))
                     
+            mean_points = statistics.mean(captured_intel_points)
+            if "Full Architecture" in ablation_results:
+                baseline = ablation_results["Full Architecture"]["mean_intelligence_points"]
+                degradation = ((baseline - mean_points) / baseline) * 100.0 if baseline > 0 else 0.0
+            else:
+                degradation = 0.0
+                
             ablation_results[config] = {
-                "mean_intelligence_points": round(statistics.mean(captured_intel_points), 2),
-                "performance_degradation_pct": round(((statistics.mean(ablation_results.get("Full Architecture", {"mean_intelligence_points": 70})["mean_intelligence_points"]) - statistics.mean(captured_intel_points)) / 70.0) * 100.0, 2) if ablation_results else 0.0
+                "mean_intelligence_points": round(mean_points, 2),
+                "performance_degradation_pct": round(degradation, 2)
             }
             
         return ablation_results

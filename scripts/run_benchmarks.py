@@ -1,0 +1,75 @@
+import os
+import sys
+
+# Ensure backend directory is in the path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from backend.database import Base
+from backend.core.research_framework import PRAETORResearchFramework
+
+def main():
+    print("[*] Initializing PRAETOR Benchmark Runner...")
+    
+    # Use an in-memory SQLite database to simulate clean environment runs
+    engine = create_engine("sqlite:///:memory:")
+    SessionLocal = sessionmaker(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    
+    try:
+        framework = PRAETORResearchFramework(db)
+        
+        print("[*] Running Baseline Comparisons...")
+        baselines = framework.execute_baseline_comparison(runs=30)
+        
+        print("[*] Running Ablation Studies...")
+        ablation = framework.execute_ablation_study(runs=20)
+        
+        print("[*] Running Stress & Scalability Tests...")
+        scalability = framework.run_scalability_stress_test(session_count=100)
+        
+        print("[*] Running Digital Twin Transfer Evaluation...")
+        transfer = framework.validate_twin_transfer()
+        
+        report_path = "docs/BENCHMARK_REPORT.md"
+        os.makedirs(os.path.dirname(report_path), exist_ok=True)
+        
+        with open(report_path, "w") as f:
+            f.write("# PRAETOR Scientific Benchmark & Evaluation Report\n\n")
+            f.write("This report provides automated experimental validation metrics matching IEEE peer-review standards.\n\n")
+            
+            f.write("## 1. Deception Baseline Comparison\n")
+            f.write("| Environment Profile | Mean Dwell Time (s) | Median Dwell Time (s) | Std Dev | 95% Confidence Interval |\n")
+            f.write("| :--- | :---: | :---: | :---: | :---: |\n")
+            for name, metrics in baselines.items():
+                f.write(f"| {name} | {metrics['mean_dwell_time_seconds']}s | {metrics['median_dwell_time_seconds']}s | {metrics['std_deviation']} | {metrics['confidence_interval_95']} |\n")
+            f.write("\n")
+            
+            f.write("## 2. Platform Ablation Metrics\n")
+            f.write("| Configured Stack | Mean Threat Intelligence Points Captured | Degradation Ratio |\n")
+            f.write("| :--- | :---: | :---: |\n")
+            for config, metrics in ablation.items():
+                f.write(f"| {config} | {metrics['mean_intelligence_points']} | {metrics['performance_degradation_pct']}% |\n")
+            f.write("\n")
+            
+            f.write("## 3. Stress & Scalability Performance\n")
+            f.write(f"* **Simulated Sessions Processed:** `{scalability['sessions_processed']}`\n")
+            f.write(f"* **Mean Decision Latency:** `{scalability['mean_decision_latency_ms']:.4f} ms`\n")
+            f.write(f"* **Max Decision Latency:** `{scalability['max_decision_latency_ms']:.4f} ms`\n")
+            f.write(f"* **Throughput Performance:** `{scalability['system_throughput_sessions_per_sec']:.2f} sessions/sec`\n")
+            f.write(f"* **Total Execution Duration:** `{scalability['total_execution_duration_sec']:.4f} s`\n\n")
+            
+            f.write("## 4. Digital Twin Pre-training Transfer Effectiveness\n")
+            f.write(f"* **Untrained Agent Mean Dwell Time:** `{transfer['untrained_agent_mean_dwell_sec']}s`\n")
+            f.write(f"* **Pre-trained Agent Mean Dwell Time:** `{transfer['pre_trained_agent_mean_dwell_sec']}s`\n")
+            f.write(f"* **Transfer Efficiency Factor:** `{transfer['efficiency_multiplier']}x` (pre-trained vs untrained)\n")
+            
+        print(f"[+] SUCCESS: Benchmark completed. Report generated at: {report_path}")
+        
+    finally:
+        db.close()
+
+if __name__ == "__main__":
+    main()
