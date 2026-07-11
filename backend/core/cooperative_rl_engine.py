@@ -140,8 +140,8 @@ def update_q_table_for_session(db: Session, session_id: str, state_str: str, act
     
     # Reconstruct coordinated actions dictionary
     svc_act = action_str
-    net_act = f"default:medium"
-    intl_act = "delayed_response"
+    net_act = session.rl_network_action or f"default:medium"
+    intl_act = session.rl_intel_action or "delayed_response"
     
     actions_dict = {
         "network": net_act,
@@ -178,7 +178,7 @@ def set_q_value(db: Session, state: str, action: str, value: float) -> bool:
 def calculate_reward(session: AttackerSession, deception_score: float) -> float:
     return calculate_joint_reward(session, deception_score)
 
-def choose_rl_action(db: Session, attack_type: str, total_sessions: int, current_level: str) -> Tuple[str, float, bool]:
+def choose_rl_action(db: Session, attack_type: str, total_sessions: int, current_level: str) -> Tuple[str, float, bool, Dict[str, str]]:
     """
     Standard interface mapping for API logging ingestion.
     """
@@ -186,6 +186,6 @@ def choose_rl_action(db: Session, attack_type: str, total_sessions: int, current
     state_str = serialize_state(attack_type, history_bucket, current_level)
     
     coordinator = CooperativeRLCoordinator(db)
-    action_str, _, confidence = coordinator.select_coordinated_strategy(state_str)
+    action_str, selected, confidence = coordinator.select_coordinated_strategy(state_str)
     
-    return action_str, confidence, False
+    return action_str, confidence, False, selected

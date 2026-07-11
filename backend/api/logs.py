@@ -188,11 +188,13 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
         depth_map = {0: "low", 1: "low", 2: "medium", 3: "high", 4: "high"}
         current_level = depth_map.get(current_depth, "low")
         
-        action_str, policy_confidence, explored = choose_rl_action(db, attack_type, reputation.total_sessions, current_level)
+        action_str, policy_confidence, explored, selected = choose_rl_action(db, attack_type, reputation.total_sessions, current_level)
         state_str = serialize_state(attack_type, get_history_bucket(reputation.total_sessions), current_level)
         
         session.rl_state = state_str
         session.rl_action = action_str
+        session.rl_network_action = selected.get("net", "default:medium")
+        session.rl_intel_action = selected.get("intl", "delayed_response")
         
         parts = action_str.split(":")
         profile_key = parts[0]

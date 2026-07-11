@@ -1,5 +1,5 @@
 import os
-import httpx
+import httpx2 as httpx
 import time
 from typing import Dict, Any
 

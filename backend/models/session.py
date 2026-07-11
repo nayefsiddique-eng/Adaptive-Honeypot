@@ -24,6 +24,8 @@ class AttackerSession(Base):
     llm_summary = Column(JSON, nullable=True)
     rl_state = Column(String, nullable=True)
     rl_action = Column(String, nullable=True)
+    rl_network_action = Column(String, nullable=True)
+    rl_intel_action = Column(String, nullable=True)
     rl_deception_score = Column(Float, nullable=True)
     rl_reward = Column(Float, nullable=True)
     first_seen = Column(DateTime(timezone=True), server_default=func.now())

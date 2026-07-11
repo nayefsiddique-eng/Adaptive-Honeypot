@@ -46,7 +46,7 @@ def evaluate_rl(req: DecisionRequest, db: Session = Depends(get_db)):
         current_level = depth_map.get(session.interaction_depth or 0, "low")
         
     # 3. Call Q-learning engine to select action
-    action_str, policy_confidence, explored = choose_rl_action(db, req.attack_type, total_sessions, current_level)
+    action_str, policy_confidence, explored, _ = choose_rl_action(db, req.attack_type, total_sessions, current_level)
     
     parts = action_str.split(":")
     profile_key = parts[0]

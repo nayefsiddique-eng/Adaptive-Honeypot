@@ -66,7 +66,9 @@ class DeceptionDigitalTwin:
             ip_address=ip_address,
             is_active=True,
             rl_state="start",
-            rl_action="default:low"
+            rl_action="default:low",
+            rl_network_action="default:medium",
+            rl_intel_action="delayed_response"
         )
         self.db.add(session)
         self.db.commit()

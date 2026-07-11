@@ -38,7 +38,7 @@ def test_rl_learning_convergence():
         # Select action using Q-learning (epsilon-greedy)
         # Note: get_epsilon will decay epsilon dynamically based on the count of RLPolicy records in DB.
         # To simulate updates decaying epsilon, we write entries.
-        action_str, confidence, explored = choose_rl_action(db, attack_type, total_sessions, current_level)
+        action_str, confidence, explored, _ = choose_rl_action(db, attack_type, total_sessions, current_level)
         
         # 3. Attacker feedback simulator (the environment)
         # If the honeypot action's profile matches the attack type, the attacker is convinced and stays

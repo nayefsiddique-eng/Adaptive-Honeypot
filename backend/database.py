@@ -55,6 +55,10 @@ def migrate_db():
                 conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN rl_state VARCHAR"))
             if 'rl_action' not in columns:
                 conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN rl_action VARCHAR"))
+            if 'rl_network_action' not in columns:
+                conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN rl_network_action VARCHAR"))
+            if 'rl_intel_action' not in columns:
+                conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN rl_intel_action VARCHAR"))
             if 'rl_deception_score' not in columns:
                 conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN rl_deception_score FLOAT"))
             if 'rl_reward' not in columns:
