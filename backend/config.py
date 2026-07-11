@@ -1,7 +1,4 @@
-try:
-    from pydantic_settings import BaseSettings
-except ModuleNotFoundError:
-    from pydantic import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./honeypot.db"
@@ -10,7 +7,6 @@ class Settings(BaseSettings):
     ML_MODEL_PATH: str = "ml/models/classifier.pkl"
     LOG_DIR: str = "logs/"
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env")
 
 settings = Settings()
