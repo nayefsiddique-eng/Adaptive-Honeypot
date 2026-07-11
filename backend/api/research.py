@@ -156,3 +156,44 @@ def get_research_metrics(db: Session = Depends(get_db)):
             "intel_cache_hit_rate": intel_cache_hit_rate
         }
     }
+
+@router.get("/learning-curve")
+def get_learning_curve(db: Session = Depends(get_db)):
+    """
+    Returns data points representing the reinforcement learning curve:
+    average reward and session duration per sequential session index.
+    """
+    sessions = db.query(AttackerSession).filter(
+        AttackerSession.rl_state.isnot(None),
+        AttackerSession.is_active == False
+    ).order_by(AttackerSession.last_seen.asc()).all()
+    
+    curve_data = []
+    running_rewards = []
+    running_durations = []
+    
+    for idx, s in enumerate(sessions):
+        reward = s.rl_reward or 0.0
+        duration = s.session_duration or 0.0
+        
+        running_rewards.append(reward)
+        running_durations.append(duration)
+        
+        if len(running_rewards) > 10:
+            running_rewards.pop(0)
+            running_durations.pop(0)
+            
+        avg_reward = round(sum(running_rewards) / len(running_rewards), 4)
+        avg_duration = round(sum(running_durations) / len(running_durations), 4)
+        
+        curve_data.append({
+            "session_index": idx + 1,
+            "session_id": s.session_id,
+            "ip_address": s.ip_address,
+            "reward": reward,
+            "session_duration": duration,
+            "running_avg_reward": avg_reward,
+            "running_avg_duration": avg_duration
+        })
+        
+    return curve_data
