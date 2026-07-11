@@ -1,3 +1,12 @@
+"""
+TRAINING DATASET DISCLOSURE AND PROVENANCE:
+This module generates a synthetically engineered dataset (N=5000 samples per class) 
+using procedural rules and hand-specified feature distributions. It is intended 
+primarily as a prototype validation tool. The features and classes are trivially 
+separable by construction. This training dataset is synthetic and has not been 
+derived from or validated against real-world captures (e.g., CICIDS2017).
+"""
+
 import pandas as pd
 import numpy as np
 import joblib
