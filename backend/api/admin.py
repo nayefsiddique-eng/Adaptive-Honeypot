@@ -47,3 +47,12 @@ def close_sessions(db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         return {"status": "error", "message": f"Database transaction issue: {str(e)}"}
+
+@router.post("/guided-demo")
+def execute_guided_demo(db: Session = Depends(get_db)):
+    """
+    Triggers an automated, multi-stage attack scenario to demonstrate PRAETOR's capabilities.
+    """
+    from backend.core.demo_engine import GuidedDeceptionDemo
+    demo = GuidedDeceptionDemo(db)
+    return demo.execute_guided_scenario()
