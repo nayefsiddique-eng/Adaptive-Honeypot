@@ -76,6 +76,7 @@ Open `frontend/index.html` directly in any modern browser. No build step require
 | POST | /api/logs/ingest | Ingest attack — runs full ML pipeline |
 | GET | /api/logs/recent | Last 100 attack logs (enriched with `chain_name`) |
 | POST | /api/decisions/evaluate | Get deception profile for attack + IP |
+| POST | /api/decisions/evaluate_rl | Get deception profile using Reinforcement Learning Q-engine |
 | GET | /api/decisions/profile/{type} | Static deception rules |
 | GET | /api/dashboard | Aggregated dashboard telemetry (includes `avg_deception_score`) |
 | GET | /api/attacks/summary | Attack type counts + MITRE breakdown |
@@ -88,6 +89,8 @@ Open `frontend/index.html` directly in any modern browser. No build step require
 | GET | /api/sessions/{id}/summary | LLM threat brief (cached in database) |
 | GET | /api/sessions/{id}/behavior_timeline | Attacker session behavior timeline with delta timing |
 | GET | /api/research/metrics | IEEE evaluation metrics (includes `new_metrics` dictionary) |
+| POST | /api/admin/reset-demo | Reset and clear database tables (test logs, sessions, policies) |
+| POST | /api/admin/close-sessions | Close all active sessions to trigger immediate Q-learning updates |
 
 ---
 
