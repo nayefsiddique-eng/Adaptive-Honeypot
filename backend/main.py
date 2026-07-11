@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.api import logs, decisions, geoip, threat_intel, timeline, sessions, research, dashboard, attacks
+from backend.api import logs, decisions, geoip, threat_intel, timeline, sessions, research, dashboard, attacks, admin
 from backend.database import init_db
 from backend.services.classifier import load_models
 from backend.api.adaptive import router as adaptive_router
@@ -24,6 +24,7 @@ async def startup():
 # Register API Routers
 app.include_router(logs.router, prefix="/api/logs", tags=["Logs"])
 app.include_router(decisions.router, prefix="/api/decisions", tags=["Decisions"])
+app.include_router(admin.router)
 app.include_router(adaptive_router)
 app.include_router(geoip.router)
 app.include_router(threat_intel.router)

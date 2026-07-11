@@ -51,6 +51,14 @@ def migrate_db():
                 conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN attack_chain_progress INTEGER DEFAULT 0"))
             if 'llm_summary' not in columns:
                 conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN llm_summary JSON"))
+            if 'rl_state' not in columns:
+                conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN rl_state VARCHAR"))
+            if 'rl_action' not in columns:
+                conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN rl_action VARCHAR"))
+            if 'rl_deception_score' not in columns:
+                conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN rl_deception_score FLOAT"))
+            if 'rl_reward' not in columns:
+                conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN rl_reward FLOAT"))
 
 def get_db():
     db = SessionLocal()
