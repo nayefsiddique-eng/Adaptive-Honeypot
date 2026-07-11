@@ -1,109 +1,40 @@
 # MIRAGE — Malicious Intent Recognition and Adaptive Genuine Engagement
 
-![Python](https://img.shields.io/badge/Python-3.12-blue?style=flat-square&logo=python)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green?style=flat-square&logo=fastapi)
-![ML](https://img.shields.io/badge/ML-RandomForest%20|%20XGBoost%20|%20IsolationForest-orange?style=flat-square)
-![License](https://img.shields.io/badge/License-MIT-purple?style=flat-square)
+Malicious Intent Recognition and Adaptive Genuine Engagement (MIRAGE) is a research-grade, stateful adaptive honeypot system designed for intelligent cyber threat deception. MIRAGE is part of the larger **PRAETOR** capstone project, which unifies this adaptive deception cockpit with an explainable, policy-governed autonomous response layer.
 
-> A research-grade adaptive honeypot system that classifies attacker behavior in real time using an ML ensemble, dynamically reconfigures its deception environment based on attack type and attacker history, and generates AI-powered threat intelligence briefs.
+MIRAGE leverages machine learning (Random Forest + XGBoost) for real-time classification, Isolation Forest for anomaly detection, K-Means clustering for attacker profiling, and a Q-learning reinforcement learning engine to dynamically optimize deception profiles against ongoing attack chains.
 
 ---
 
-## ML Model Benchmarks
+## Technical Architecture & Flow
 
-| Model | Accuracy | Precision | Recall | F1-Score |
-|---|---|---|---|---|
-| Random Forest | 100.00% | 100.00% | 100.00% | 100.00% |
-| XGBoost | 100.00% | 100.00% | 100.00% | 100.00% |
-| Isolation Forest* | 97.08% | 88.30% | 88.30% | 88.30% |
-
-*Isolation Forest evaluated on anomaly detection.
-
----
-
-## Features
-
-- ML Ensemble Classification — Random Forest + XGBoost with confidence scoring
-- Isolation Forest Anomaly Detection — 88.3% recall on unknown traffic
-- 8 Adaptive Deception Profiles — credential_trap, database_decoy, shell_trap, malware_sink, port_expansion, filesystem_decoy, web_decoy
-- Session Recording — CLI command capture, payload SHA-256 hashing, interaction depth
-- K-Means Attacker Clustering — script_kiddie / opportunist / targeted / advanced_persistent
-- Dual Threat Intelligence — AbuseIPDB + AlienVault OTX
-- GeoIP Enrichment — coordinates stored per log
-- LLM Threat Summaries — Gemini API analyst-grade briefs per session
-- Research Metrics API — detection rate, FP rate, adaptation effectiveness for IEEE evaluation
-- MIRAGE SOC Dashboard — 9-section dark dashboard, Leaflet geo map, live attack feed
-
----
-
-## Setup
-
-### 1. Clone and create virtual environment
-```bash
-git clone https://github.com/nayefsiddique-eng/Adaptive-Honeypot.git
-cd Adaptive-Honeypot
-python -m venv venv
-.\venv\Scripts\activate   # Windows
-source venv/bin/activate    # Linux/macOS
+```mermaid
+graph TD
+    A[Incoming Attack Traffic] --> B[FastAPI Backend /api/logs/ingest]
+    B --> C[Feature Extractor & Heuristics]
+    C --> D[ML Ensemble Classifier]
+    D -->|Classification & Confidence| E[Combined Risk Scorer]
+    D -->|Anomaly Flag| E
+    B --> F[GeoIP & External Feeds Enrichment]
+    E --> G[Attacker Session Registry]
+    F --> G
+    G --> H[RL Q-Learning Engine]
+    H -->|Bellman Equation Update| I[Deception Action Selector]
+    I -->|Dynamic Profile Selection| J[Attacker Interaction Interface]
+    K[Startup Event] --> L[Asyncio Session Reaper]
+    L -->|Timeout Detection >15s| M[Close Session & Finalize Reward]
+    M -->|Attribution feedback| H
 ```
 
-### 2. Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Train ML models
-```bash
-python ml/train_classifier.py
-python ml/evaluate_models.py
-```
-
-### 4. Start backend
-```bash
-python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 5. Open dashboard
-Open `frontend/index.html` directly in any modern browser. No build step required.
-
 ---
 
-## API Endpoints
-
-| Method | Path | Description |
-|---|---|---|
-| GET | / | Health check |
-| POST | /api/logs/ingest | Ingest attack — runs full ML pipeline |
-| GET | /api/logs/recent | Last 100 attack logs (enriched with `chain_name`) |
-| POST | /api/decisions/evaluate | Get deception profile for attack + IP |
-| POST | /api/decisions/evaluate_rl | Get deception profile using Reinforcement Learning Q-engine |
-| GET | /api/decisions/profile/{type} | Static deception rules |
-| GET | /api/dashboard | Aggregated dashboard telemetry (includes `avg_deception_score`) |
-| GET | /api/attacks/summary | Attack type counts + MITRE breakdown |
-| GET | /api/attacks/top-ips | Top 10 IPs by attack volume |
-| GET | /api/threat-intel/{ip} | AbuseIPDB + OTX + reputation score |
-| GET | /api/timeline | Hourly and daily attack trends |
-| GET | /api/sessions | All attacker sessions (enriched with `ttp_fingerprint` + `attack_chain`) |
-| GET | /api/sessions/clusters | K-Means attacker profiling |
-| GET | /api/sessions/{id}/recording | Full event timeline + commands |
-| GET | /api/sessions/{id}/summary | LLM threat brief (cached in database) |
-| GET | /api/sessions/{id}/behavior_timeline | Attacker session behavior timeline with delta timing |
-| GET | /api/research/metrics | IEEE evaluation metrics (includes `new_metrics` dictionary) |
-| POST | /api/admin/reset-demo | Reset and clear database tables (test logs, sessions, policies) |
-| POST | /api/admin/close-sessions | Close all active sessions to trigger immediate Q-learning updates |
-
----
-
-## Research Metrics
-
-| Metric | Description |
-|---|---|
-| Detection Rate | % of intrusions classified with confidence >= 50% |
-| False Positive Rate | % of low-confidence events flagged incorrectly |
-| Adaptation Effectiveness | % of sessions engaged in medium or high deception |
-| Mean Response Time | API handling latency in milliseconds |
-| Average Deception Score | Value (0.0-1.0) assessing overall honeypot response richness |
-| Chain Detection Rate | % of multi-step attacks matched to standardized kill chains |
+## Core Capabilities
+* **Stateful Deception Profiles**: Integrates 8 custom profiles (`credential_trap`, `database_decoy`, `shell_trap`, `malware_sink`, `port_expansion`, `filesystem_decoy`, `web_decoy`, `default_monitor`) matching fake services, banners, response delays, and decoy files.
+* **Closed-loop Reinforcement Learning**: Computes state-action values utilizing a Q-learning matrix mapped to attack types, session depth, and intruder return rate, optimizing engagement duration dynamically.
+* **Auto-Reaper Background Loop**: Background worker monitors activity states, automatically closing sessions inactive for over 15 seconds to apply reward updates.
+* **Command & Forensics Timeline Player**: Logs active attacker shell keystrokes and session SHA-256 hashes, with an inline visualization on the web UI.
+* **External Threat Intelligence**: Integrates dual AbuseIPDB and AlienVault OTX feeds with cache layers to query visitor reputations safely.
+* **Unified Cyber-HUD Dashboard**: A modular HTML/CSS/JS dashboard matching an Elastic SIEM holographic military HUD style, featuring an interactive Three.js threat globe, Leaflet maps, and real-time Chart.js gauges.
 
 ---
 
@@ -111,30 +42,117 @@ Open `frontend/index.html` directly in any modern browser. No build step require
 
 ```
 adaptive-honeypot/
+├── .github/
+│   └── workflows/
+│       └── ci.yml             # Automated GitHub Actions Pytest Suite
 ├── backend/
-│   ├── api/          # FastAPI route handlers
-│   ├── core/         # Feature extractor, adaptive engine, decision engine
-│   ├── models/       # SQLAlchemy ORM models
-│   ├── services/     # ML classifier, GeoIP, threat intel, LLM, clustering
-│   └── main.py
-├── frontend/
-│   ├── css/          # Translucent glassmorphism stylesheets
-│   ├── js/           # Shared API client & poller
-│   ├── index.html    # Security Portal landing page
-│   ├── dashboard.html# SOC Cockpit (maps, Panel A, Panel B)
-│   ├── sessions.html # Attacker Profiles (Panel C, CLI player, AI briefs)
-│   └── intel.html    # Threat Intelligence lookup hub
-├── ml/
-│   ├── train_classifier.py
-│   ├── evaluate_models.py
-│   └── models/       # Trained .pkl files + evaluation_results.json
-├── docs/figures/     # Architecture and flow diagrams
-└── requirements.txt
+│   ├── api/                   # FastAPI REST API Route definitions
+│   │   ├── admin.py           # Demo controls & session closures
+│   │   ├── research.py        # IEEE research evaluation & learning curves
+│   │   ├── decisions.py       # Rule-based and RL engine evaluation
+│   │   └── logs.py            # Primary log ingestion, classification, & session lifecycles
+│   ├── core/                  # Engine cores
+│   │   ├── adaptive_engine.py # Rule-based heuristics
+│   │   ├── decision_engine.py # Deception profile descriptors
+│   │   ├── feature_extractor.py# Log payload parsing
+│   │   └── rl_engine.py       # Q-learning Bellman equations & rewards
+│   ├── models/                # SQLAlchemy database schema models
+│   ├── services/              # Integrations (GeoIP, LLMs, external feeds)
+│   ├── database.py            # Database setups and migrations
+│   └── main.py                # FastAPI bootstrapper & session reaper task
+├── frontend/                  # Responsive Cyber-HUD static client files
+│   ├── css/style.css          # Design system stylesheet
+│   ├── js/api.js              # Fetch layer and status indicators
+│   ├── index.html             # Command Center & 3D Three.js globe
+│   ├── dashboard.html         # Live SOC feeds and Chart.js gauges
+│   ├── sessions.html          # Intruder forensic timeline cards
+│   └── intel.html             # Threat Map and research statistics
+├── ml/                        # ML Pipeline code
+│   ├── models/                # Saved classifier models (.pkl)
+│   ├── train_classifier.py    # Training runner
+│   └── evaluate_models.py     # Evaluation runner
+├── scripts/                   # Simulation tools
+│   ├── simulate_attacks.py    # Closed-loop multi-step attack simulation
+│   └── run_demo.bat/.sh       # Demo startup launch scripts
+├── tests/                     # Verification tests
+│   └── test_rl_learning.py    # Policy model convergence unit tests
+├── requirements.txt           # Pinned python packages
+└── README.md                  # System manual
 ```
 
 ---
 
-## Citation
+## Setup & Running Locally
+
+### 1. Clone and Initialize Environment
+```bash
+git clone https://github.com/nayefsiddique-eng/Adaptive-Honeypot.git
+cd Adaptive-Honeypot
+python -m venv venv
+# On Windows
+.\venv\Scripts\activate
+# On Linux/macOS
+source venv/bin/activate
+```
+
+### 2. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Generate ML Models
+Train the RandomForest, XGBoost, and IsolationForest models before running the API:
+```bash
+python ml/train_classifier.py
+python ml/evaluate_models.py
+```
+
+### 4. Boot the FastAPI Server
+```bash
+python -m uvicorn backend.main:app --port 8000
+```
+FastAPI interactive Swagger documentation is available at `http://localhost:8000/docs`.
+
+### 5. Launch the Attack Simulator
+In a separate terminal (with the virtual environment activated), start the closed-loop simulator:
+```bash
+python scripts/simulate_attacks.py --count 15 --delay 0.5 --session-delay 1.0
+```
+
+### 6. View the Dashboard
+Simply double-click or open `frontend/index.html` in any modern web browser. It runs on `file://` protocols and links directly to the API on `http://localhost:8000`.
+
+---
+
+## Restful API Interface Reference
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/` | Health check & system versioning |
+| `POST` | `/api/logs/ingest` | Main ingestion endpoint running classification, geo, reputation, and RL profiles. |
+| `GET` | `/api/logs` | Query logs (supports `?ip={ip_address}` search filtering). |
+| `POST` | `/api/decisions/evaluate` | Static rule-based profile selection. |
+| `POST` | `/api/decisions/evaluate_rl` | Reinforcement learning-based profile selection. |
+| `GET` | `/api/sessions` | Fetch all sessions enriched with attack chains and TTP signatures. |
+| `GET` | `/api/sessions/{id}/behavior_timeline` | Reconstruct attacker delta-time event logs for CLI playback. |
+| `GET` | `/api/research/metrics` | Research metrics for IEEE papers (contain hit rates, latencies, fp ratios). |
+| `GET` | `/api/research/learning-curve` | Returns sequential data points of Q-rewards for charting learning rates. |
+| `POST` | `/api/admin/reset-demo` | Clears all tables in the SQLite database (`honeypot.db`). |
+| `POST` | `/api/admin/close-sessions` | Instantly close active sessions to trigger immediate learning updates. |
+
+---
+
+## ML Models Evaluation Metrics
+
+| Classifier | Accuracy | Precision | Recall | F1-Score |
+| :--- | :--- | :--- | :--- | :--- |
+| **Random Forest** | 100.00% | 100.00% | 100.00% | 100.00% |
+| **XGBoost** | 100.00% | 100.00% | 100.00% | 100.00% |
+| **Isolation Forest** | 97.08% | 88.30% | 88.30% | 88.30% |
+
+---
+
+## IEEE Research Citations
 
 ```bibtex
 @ARTICLE{MIRAGE2026,
