@@ -21,7 +21,7 @@ The table below documents the hyperparameter values used in the CMARL (Cooperati
 
 ## 2. Experimental Protocols
 
-To replicate the evaluations presented in the benchmark report, follow these protocols:
+To replicate the evaluations presented in the benchmark report (note: all metrics represent internal simulation-based benchmarks, see Section 5 of [docs/BENCHMARK_REPORT.md](file:///c:/Users/Admin%20pc/Desktop/AI-Based%20HoneyPot/adaptive-honeypot/docs/BENCHMARK_REPORT.md) for details/limitations), follow these protocols:
 
 ### Protocol A: Attacker Persona Simulation (Baseline Validation)
 1. **Goal:** Verify the mean and median attacker dwell times across different deception setups.

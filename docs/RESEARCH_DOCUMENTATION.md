@@ -44,6 +44,7 @@ PRAETOR is subject to the following structural limitations:
 * **Zero-Interaction Probes:** Attackers executing fast, single-packet scans (e.g. `nmap -sS` without TCP handshakes) limit the duration parameters, reducing the reward feedback loop's gradient.
 * **Encrypted Command Streams:** Payloads dropped over end-to-end encrypted tunnels (e.g., custom SSH configurations) prevent deep feature inspection, falling back to network-only metadata logs.
 * **Supply-Chain & Physical Exploits:** Compromises targeting base dependencies or physical access bypass the software-defined redirect structures entirely.
+* **Self-Simulated Benchmark Evaluation:** All current experimental metrics are generated internally via our digital-twin simulator. These results reflect theoretical performance under configured adversary models and have not been validated against real-world attacker traffic, production deployments, or independent red teams. See Section 5 of [docs/BENCHMARK_REPORT.md](file:///c:/Users/Admin%20pc/Desktop/AI-Based%20HoneyPot/adaptive-honeypot/docs/BENCHMARK_REPORT.md) for details.
 
 ---
 
