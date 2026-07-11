@@ -1,11 +1,15 @@
 import time
 import hashlib
+import logging
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from pydantic import BaseModel
 from typing import Optional
 from backend.database import get_db
+
+logger = logging.getLogger(__name__)
 from backend.models.attack import AttackLog
 from backend.models.session import AttackerSession
 from backend.models.reputation import AttackerReputation
@@ -272,8 +276,13 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
         db.add(log)
         db.commit()
         db.refresh(log)
+    except SQLAlchemyError as db_err:
+        db.rollback()
+        logger.error(f"Database transaction failure during log ingestion: {str(db_err)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Database transaction integrity failure.")
     except Exception as e:
         db.rollback()
+        logger.error(f"Generic internal failure during log ingestion: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Database transaction failure: {str(e)}")
 
     return {

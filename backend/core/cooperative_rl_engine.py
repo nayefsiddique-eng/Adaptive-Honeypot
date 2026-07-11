@@ -25,7 +25,7 @@ class CooperativeRLCoordinator:
     Coordinative architecture that syncs Network, Service, and Intelligence agents' state spaces
     to optimize a joint reward function.
     """
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         
     def get_epsilon(self) -> float:
@@ -46,7 +46,7 @@ class CooperativeRLCoordinator:
             logger.error(f"Error reading Q-value: {e}")
         return 20.0  # Optimistic initial value
 
-    def set_agent_q(self, agent_name: str, state: str, action: str, value: float):
+    def set_agent_q(self, agent_name: str, state: str, action: str, value: float) -> None:
         state_key = f"{agent_name}:{state}"
         try:
             entry = self.db.query(RLPolicy).filter(RLPolicy.state == state_key, RLPolicy.action == action).first()
@@ -93,7 +93,7 @@ class CooperativeRLCoordinator:
         coexistence_action = f"{final_profile}:{final_level}"
         return coexistence_action, selected, 1.0 - epsilon
 
-    def update_cooperative_rewards(self, state_str: str, actions: Dict[str, str], next_state_str: str, joint_reward: float):
+    def update_cooperative_rewards(self, state_str: str, actions: Dict[str, str], next_state_str: str, joint_reward: float) -> None:
         """
         Updates Q-tables of all cooperative agents using the single joint reward score.
         """
@@ -127,7 +127,7 @@ def calculate_joint_reward(session: AttackerSession, deception_score: float) -> 
     
     return round(r_time + r_depth + r_deception, 4)
 
-def update_q_table_for_session(db: Session, session_id: str, state_str: str, action_str: str, deception_score: float):
+def update_q_table_for_session(db: Session, session_id: str, state_str: str, action_str: str, deception_score: float) -> None:
     """
     Called by the session reaper background task to finalize cooperative rewards.
     """
