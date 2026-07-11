@@ -3,146 +3,214 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MIRAGE — Cyber Deception Portal</title>
+  <title>MIRAGE — Cyber Operations Center</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    /* Hero HUD Layout */
-    .hero-hud {
+    .portal-hero {
       display: flex;
       gap: 24px;
-      margin-bottom: 24px;
-      height: 480px;
+      height: 520px;
     }
-    .globe-panel {
-      flex: 0 0 55%;
-      height: 100%;
+    
+    .globe-container {
+      flex: 0 0 58%;
       position: relative;
-      background: rgba(0, 245, 255, 0.015);
-      border: 1px solid rgba(0, 245, 255, 0.15);
-      backdrop-filter: blur(20px);
-      border-radius: 4px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
       overflow: hidden;
     }
+    
     #globe-canvas {
       width: 100%;
       height: 100%;
-      cursor: grab;
-    }
-    #globe-canvas:active {
-      cursor: grabbing;
-    }
-    .inspector-panel {
-      flex: 0 0 45%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
+      display: block;
     }
     
-    /* Decoy port items */
+    .matrix-panel {
+      flex: 0 0 42%;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    
+    /* Decoy control matrix list */
     .decoy-port-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       overflow-y: auto;
       flex-grow: 1;
       padding-right: 4px;
     }
-    .decoy-port-row {
+    
+    .decoy-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(0, 245, 255, 0.02);
-      border: 1px solid rgba(0, 245, 255, 0.1);
-      padding: 10px 16px;
-      cursor: pointer;
-      font-family: var(--font-hud);
-      transition: all 0.2s ease;
-    }
-    .decoy-port-row:hover {
-      background: rgba(0, 245, 255, 0.08);
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 10px rgba(0, 245, 255, 0.2);
-    }
-    .decoy-port-row.selected {
-      border-color: #fff;
-      background: rgba(255, 255, 255, 0.05);
-    }
-    .port-tag {
-      color: var(--text-muted);
-      font-size: 11px;
-      width: 80px;
-    }
-    .decoy-name {
-      color: var(--accent-cyan);
-      font-weight: 700;
-      flex-grow: 1;
-      font-size: 13px;
-      letter-spacing: 1px;
-    }
-    .decoy-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--text-muted);
-    }
-    .decoy-port-row.active .decoy-indicator {
-      background: var(--accent-green);
-      box-shadow: 0 0 8px var(--accent-green);
-    }
-
-    /* Decoy Info Box */
-    .decoy-info-box {
-      margin-top: 16px;
-      background: rgba(0, 245, 255, 0.01);
-      border: 1px solid rgba(0, 245, 255, 0.1);
-      padding: 16px;
+      background: rgba(0, 245, 255, 0.015);
+      border: 1px solid var(--border);
       border-radius: 4px;
-      min-height: 120px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .decoy-info-title {
-      font-family: var(--font-hud);
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      color: var(--accent-green);
-      margin-bottom: 6px;
-      text-transform: uppercase;
+    
+    .decoy-row:hover {
+      background: rgba(0, 245, 255, 0.08);
+      border-left: 3px solid var(--cyan);
+      border-color: rgba(0, 245, 255, 0.3);
+      box-shadow: 0 0 10px rgba(0, 245, 255, 0.1);
     }
-    .decoy-info-desc {
+    
+    .decoy-row.selected {
+      background: rgba(0, 245, 255, 0.08);
+      border-left: 3px solid var(--cyan);
+      border-color: var(--cyan);
+    }
+    
+    .decoy-port-tag {
+      font-family: monospace;
+      color: var(--green);
       font-size: 12px;
-      color: #94a3b8;
+      font-weight: 700;
+      width: 60px;
     }
-
-    /* Quick Nav Cards */
-    .nav-deck {
+    
+    .decoy-name {
+      font-family: var(--font-hud);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 0.5px;
+    }
+    
+    .decoy-desc {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 1px;
+    }
+    
+    .decoy-status-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-hud);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--green);
+    }
+    
+    /* Monospace log box */
+    .mini-log-box {
+      background: rgba(2, 4, 8, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--green);
+      height: 90px;
+      overflow-y: hidden;
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    
+    .log-line {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+      animation: slideUpLog 0.2s ease-out;
+    }
+    
+    @keyframes slideUpLog {
+      from { transform: translateY(6px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    /* ASCII Quick Nav */
+    .quick-nav-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 24px;
-      margin-top: 24px;
     }
+    
     .nav-card {
       text-decoration: none;
       color: inherit;
       display: flex;
-      align-items: center;
-      gap: 20px;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 140px;
     }
-    .nav-icon {
-      font-size: 36px;
-      text-shadow: 0 0 10px var(--accent-cyan);
+    
+    .nav-ascii-icon {
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--cyan);
+      white-space: pre;
+      line-height: 1.1;
+      height: 45px;
+      overflow: hidden;
+      margin-bottom: 8px;
+      opacity: 0.8;
+      transition: opacity 0.3s;
     }
-    .nav-card-title {
+    
+    .nav-card:hover .nav-ascii-icon {
+      opacity: 1;
+      animation: glitchASCII 0.15s steps(2) 2;
+    }
+    
+    @keyframes glitchASCII {
+      0% { transform: skewX(0deg); }
+      50% { transform: skewX(10deg); }
+      100% { transform: skewX(-10deg); }
+    }
+    
+    .nav-title {
       font-family: var(--font-hud);
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
-      letter-spacing: 1.5px;
-      color: var(--accent-cyan);
+      color: var(--cyan);
+      letter-spacing: 1px;
       text-transform: uppercase;
     }
-    .nav-card-desc {
-      font-size: 12px;
-      color: #94a3b8;
-      margin-top: 2px;
+    
+    .nav-desc {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      flex-grow: 1;
+    }
+    
+    .nav-btn {
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--cyan);
+      margin-top: 12px;
+      letter-spacing: 0.5px;
+    }
+    
+    /* 3D Globe tooltip overlay */
+    .globe-tooltip {
+      position: absolute;
+      background: rgba(6, 13, 20, 0.95);
+      border: 1px solid var(--cyan);
+      border-radius: 4px;
+      padding: 6px 12px;
+      color: #fff;
+      font-size: 11px;
+      pointer-events: none;
+      z-index: 10;
+      font-family: monospace;
+      box-shadow: 0 0 15px rgba(0, 245, 255, 0.25);
+      display: none;
     }
   </style>
 </head>
@@ -150,217 +218,317 @@
 
   <div class="app-container">
     
-    <!-- 1. HEADER -->
+    <!-- 1. HEADER COCKPIT -->
     <header class="hud-header">
-      <a href="index.html" class="hud-logo">
-        <span class="hud-logo-icon">🛡️</span>
-        <div class="hud-logo-text">
-          <h1>MIRAGE</h1>
-          <span>AI Adaptive Deception</span>
-        </div>
-      </a>
-      
-      <nav>
-        <ul class="hud-nav">
-          <li class="hud-nav-item active"><a href="index.html">Portal</a></li>
-          <li class="hud-nav-item"><a href="dashboard.html">SOC Cockpit</a></li>
-          <li class="hud-nav-item"><a href="sessions.html">Attacker Profiles</a></li>
-          <li class="hud-nav-item"><a href="intel.html">Threat Intel</a></li>
-        </ul>
-      </nav>
+      <a href="index.html" class="hud-logo">◈ MIRAGE</a>
+      <div class="hud-clock" id="utcClock">00:00:00 UTC</div>
+      <div class="hud-status-bar">
+        <span class="badge" id="backendStatusPill" style="background:rgba(255, 45, 85, 0.15); color:var(--red); border-color:var(--red);">BACKEND: OFFLINE</span>
+        <span class="badge" id="threatStatusPill" style="background:rgba(0, 255, 136, 0.15); color:var(--green); border-color:var(--green);">THREAT: STABLE</span>
+      </div>
     </header>
 
-    <!-- 2. HERO HUD WITH 3D GLOBE -->
-    <main class="hero-hud">
-      <!-- 3D Globe Visualizer -->
-      <section class="globe-panel">
+    <!-- 2. HERO SPLIT SECTION -->
+    <main class="portal-hero">
+      <!-- 3D Globe Container -->
+      <section class="globe-container">
         <canvas id="globe-canvas"></canvas>
+        <div id="globeTooltip" class="globe-tooltip"></div>
       </section>
 
-      <!-- Decoy Inspector Panel -->
-      <section class="glass-card inspector-panel">
-        <h2>ACTIVE DECOY MATRIX</h2>
-        <div class="decoy-port-list" id="decoyList">
-          <!-- Rows will be bound dynamically -->
+      <!-- Decoy Matrix Control Board -->
+      <section class="glass-card matrix-panel">
+        <h3>◈ ACTIVE DECOY MATRIX</h3>
+        <div class="decoy-port-list" id="matrixList">
+          <!-- Dynamically populated rows -->
         </div>
-
-        <div class="decoy-info-box">
-          <div class="decoy-info-title" id="infoTitle">SELECT DECOY MODULE</div>
-          <div class="decoy-info-desc" id="infoDesc">
-            Click on any active deception profile above to target its coordinate node on the 3D threat globe and audit its decoy rules.
-          </div>
+        
+        <!-- Action Stream logs -->
+        <div class="mini-log-box" id="miniLogs">
+          <div class="log-line" style="color:var(--text-dim)">[+] System idle. Syncing telemetry sensors...</div>
         </div>
       </section>
     </main>
 
-    <!-- 3. HUD STATS BAR -->
-    <section class="hud-stats-grid">
-      <div class="hud-stat-tile">
-        <div class="hud-stat-num" id="statTotalAttacks">0</div>
-        <div class="hud-stat-label">Total Attacks</div>
+    <!-- 3. STATS HUD BAR -->
+    <section class="stats-bar-grid">
+      <div class="stat-tile" style="border-bottom: 2px solid var(--red)">
+        <span class="stat-icon">⚔️</span>
+        <div class="stat-num counter" id="statAttacks">0</div>
+        <div class="stat-label">Total Attacks</div>
       </div>
-      <div class="hud-stat-tile">
-        <div class="hud-stat-num" id="statActiveSessions">0</div>
-        <div class="hud-stat-label">Active Sessions</div>
+      <div class="stat-tile" style="border-bottom: 2px solid var(--green)">
+        <span class="stat-icon">🧬</span>
+        <div class="stat-num counter" id="statSessions">0</div>
+        <div class="stat-label">Active Sessions</div>
       </div>
-      <div class="hud-stat-tile">
-        <div class="hud-stat-num" id="statUniqueIPs">0</div>
-        <div class="hud-stat-label">Unique IPs</div>
+      <div class="stat-tile" style="border-bottom: 2px solid var(--cyan)">
+        <span class="stat-icon">🌐</span>
+        <div class="stat-num counter" id="statIPs">0</div>
+        <div class="stat-label">Unique IPs</div>
       </div>
-      <div class="hud-stat-tile warning">
-        <div class="hud-stat-num" id="statAvgRisk">0.00</div>
-        <div class="hud-stat-label">Avg Risk Score</div>
+      <div class="stat-tile" style="border-bottom: 2px solid var(--orange)">
+        <span class="stat-icon">⚡</span>
+        <div class="stat-num counter" id="statRisk">0</div>
+        <div class="stat-label">Avg Risk Score</div>
       </div>
-      <div class="hud-stat-tile success">
-        <div class="hud-stat-num" id="statAvgDeception">0.00</div>
-        <div class="hud-stat-label">Deception Score</div>
+      <div class="stat-tile" style="border-bottom: 2px solid var(--purple)">
+        <span class="stat-icon">🎯</span>
+        <div class="stat-num counter" id="statDeception">0.00</div>
+        <div class="stat-label">Avg Deception Score</div>
       </div>
-      <div class="hud-stat-tile">
-        <div class="hud-stat-num" id="statChainRate">0%</div>
-        <div class="hud-stat-label">Chain Detection</div>
+      <div class="stat-tile" style="border-bottom: 2px solid var(--yellow)">
+        <span class="stat-icon">⛓️</span>
+        <div class="stat-num counter" id="statChain">0%</div>
+        <div class="stat-label">Chain Detection</div>
       </div>
     </section>
 
     <!-- 4. QUICK NAV DECK -->
-    <section class="nav-deck">
+    <section class="quick-nav-grid">
       <a href="dashboard.html" class="glass-card nav-card">
-        <span class="nav-icon">📊</span>
-        <div>
-          <div class="nav-card-title">SOC Cockpit</div>
-          <div class="nav-card-desc">Audit live geolocation maps and traffic trends.</div>
-        </div>
+        <div class="nav-ascii-icon">
+  ___ ___   ____ 
+ / __|   \ / _  |
+ \__ \ |) | (_) |
+ |___/___/ \___/ </div>
+        <div class="nav-title">SOC Operations Center</div>
+        <div class="nav-desc">Audit live geolocation events mapping, traffic severity alerts, and kill chain progression trackers.</div>
+        <div class="nav-btn">sys_console --execute_soc →</div>
       </a>
+      
       <a href="sessions.html" class="glass-card nav-card">
-        <span class="nav-icon">🧬</span>
-        <div>
-          <div class="nav-card-title">Attacker Profiles</div>
-          <div class="nav-card-desc">Inspect interactive keystroke recorders and AI briefs.</div>
-        </div>
+        <div class="nav-ascii-icon">
+  _  _ _  _ ___  
+ | || | | | |  \ 
+ | __ | |_| | | )
+ |_||_|\___/___/ </div>
+        <div class="nav-title">Session Forensics</div>
+        <div class="nav-desc">Audit detailed attacker logs, interactive CLI keystroke timeline sequences, and Gemini briefings.</div>
+        <div class="nav-btn">sys_console --read_attacker_profiles →</div>
       </a>
+      
       <a href="intel.html" class="glass-card nav-card">
-        <span class="nav-icon">🔍</span>
-        <div>
-          <div class="nav-card-title">Threat Intel</div>
-          <div class="nav-card-desc">Correlate IP address records against OTX and AbuseIPDB.</div>
-        </div>
+        <div class="nav-ascii-icon">
+  _ _  _ ___ ____ _   
+ | | \| | |  |___ |   
+ | |  | | |  |___ |___</div>
+        <div class="nav-title">Threat Intelligence</div>
+        <div class="nav-desc">Query external AbuseIPDB and AlienVault OTX feeds, and verify IEEE academic deployment research metrics.</div>
+        <div class="nav-btn">sys_console --query_intel_sensors →</div>
       </a>
     </section>
 
   </div>
 
-  <!-- Scripts -->
+  <!-- Three.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="js/api.js"></script>
   <script>
-    // Decoy profiles config mapping to fixed latitude and longitude nodes on the globe
-    const DECOY_PROFILES = [
-      { id: "credential_trap", name: "Credential Trap", port: "PORT: 22", lat: 37.77, lon: -122.41, desc: "Traps brute-force attempts on mock SSH sockets. Logs credentials and emulates delayed user authentication.", active: true },
-      { id: "database_decoy", name: "Database Decoy", port: "PORT: 3306", lat: 51.50, lon: -0.12, desc: "Deploys a responsive MySQL instance exposing dummy schemas and logging malicious query commands.", active: true },
-      { id: "shell_trap", name: "Shell Trap", port: "PORT: 23", lat: 35.67, lon: 139.65, desc: "Emulates interactive command line shells. Records standard recon inputs (ls, whoami, pwd).", active: true },
-      { id: "malware_sink", name: "Malware Sink", port: "PORT: 80", lat: -23.55, lon: -46.63, desc: "Intercepts file drop commands and isolates scripts. Saves uploaded binaries to calculate sha256 checksums.", active: true },
-      { id: "port_expansion", name: "Port Expansion", port: "PORT: DYN", lat: -33.86, lon: 151.20, desc: "Inflates the attack surface by dynamically spinning up dummy port listeners during active scans.", active: true },
-      { id: "filesystem_decoy", name: "Filesystem Decoy", port: "PORT: 445", lat: 55.75, lon: 37.61, desc: "Emulates network directories (SMB/NFS) packed with decoy spreadsheets, documents, and fake API configurations.", active: false },
-      { id: "web_decoy", name: "Web Decoy", port: "PORT: 8080", lat: 30.04, lon: 31.23, desc: "Hosts static web portals mimicking typical application vulnerabilities (XSS, directory traversing).", active: true },
-      { id: "default", name: "Default Monitor", port: "PORT: ALL", lat: -1.29, lon: 36.82, desc: "Base passive listener. Collects metadata and feeds logs into the ML ensemble classifier.", active: true }
+    // System decoy nodes configurations mapped to spherical points on 3D Earth
+    const DECOY_NODES = [
+      { id: "credential_trap", name: "Credential Trap", port: "22", lat: 37.77, lon: -122.41, desc: "Traps brute-force attempts on mock SSH ports." },
+      { id: "database_decoy", name: "Database Decoy", port: "3306", lat: 51.50, lon: -0.12, desc: "Deploys responsive MySQL instance exposing dummy schemas." },
+      { id: "shell_trap", name: "Shell Trap", port: "4444", lat: 35.67, lon: 139.65, desc: "Interactive command lines logging recon sequences." },
+      { id: "web_decoy", name: "Web Decoy", port: "8080", lat: -23.55, lon: -46.63, desc: "Hosts static web portal mimicking framework bugs." },
+      { id: "malware_sink", name: "Malware Sink", port: "21", lat: -33.86, lon: 151.20, desc: "Isolates drops to calculate binary checksum hashes." },
+      { id: "filesystem_decoy", name: "Filesystem Decoy", port: "2049", lat: 55.75, lon: 37.61, desc: "SMB share loaded with honeypot documents." },
+      { id: "default", name: "Default Monitor", port: "80", lat: 30.04, lon: 31.23, desc: "Passive endpoint monitoring raw traffic trends." },
+      { id: "port_expansion", name: "Port Expansion", port: "443", lat: -1.29, lon: 36.82, desc: "Dynamically binds listeners during network sweeps." }
     ];
 
-    // Three.js 3D Globe Visualizer implementation
+    // Live UTC Clock
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toISOString().replace('T', ' ').substring(11, 19) + ' UTC';
+      document.getElementById("utcClock").textContent = timeStr;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Stats counting helper
+    function animateValue(id, start, end, duration, formatFn = (x)=>x) {
+      if (start === end) return;
+      const range = end - start;
+      let current = start;
+      const increment = end > start ? 1 : -1;
+      const stepTime = Math.abs(Math.floor(duration / range)) || 1;
+      const obj = document.getElementById(id);
+      
+      const timer = setInterval(() => {
+        current += increment;
+        obj.textContent = formatFn(current);
+        if (current == end) {
+          clearInterval(timer);
+        }
+      }, stepTime);
+    }
+
+    // Three.js Globe configuration
     const canvas = document.getElementById("globe-canvas");
+    const container = canvas.parentElement;
     const scene = new THREE.Scene();
-    
-    // Set up transparent renderer
+    scene.background = null;
+
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    renderer.setSize(container.clientWidth, container.clientHeight);
 
-    const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-    camera.position.z = 7;
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.z = 6.5;
 
-    // Root Globe Group
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0x0a1628, 1.5);
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0x00f5ff, 2.5, 15);
+    pointLight.position.set(5, 3, 5);
+    scene.add(pointLight);
+
     const globeGroup = new THREE.Group();
     scene.add(globeGroup);
 
-    // 1. Wireframe Earth Sphere
-    const globeGeom = new THREE.SphereGeometry(2, 32, 32);
-    const globeMat = new THREE.MeshBasicMaterial({
+    // Earth Base
+    const earthGeom = new THREE.SphereGeometry(2, 48, 48);
+    const earthMat = new THREE.MeshPhongMaterial({
+      color: 0x050e18,
+      emissive: 0x03070d,
+      shininess: 20,
+      flatShading: true
+    });
+    const earthMesh = new THREE.Mesh(earthGeom, earthMat);
+    globeGroup.add(earthMesh);
+
+    // Wireframe Overlay
+    const wireGeom = new THREE.SphereGeometry(2.015, 32, 32);
+    const wireMat = new THREE.MeshBasicMaterial({
       color: 0x00f5ff,
       wireframe: true,
       transparent: true,
-      opacity: 0.25
+      opacity: 0.18
     });
-    const globeMesh = new THREE.Mesh(globeGeom, globeMat);
-    globeGroup.add(globeMesh);
+    const wireMesh = new THREE.Mesh(wireGeom, wireMat);
+    globeGroup.add(wireMesh);
 
-    // 2. Torus Rings (Orbit tracks)
-    const ring1Geom = new THREE.TorusGeometry(2.5, 0.015, 8, 64);
-    const ring1Mat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.15 });
+    // Torus Rings
+    const ring1Geom = new THREE.TorusGeometry(2.8, 0.008, 16, 100);
+    const ring1Mat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.35 });
     const ring1 = new THREE.Mesh(ring1Geom, ring1Mat);
-    ring1.rotation.x = Math.PI / 2 + 0.2;
+    ring1.rotation.x = Math.PI / 2 + 0.25;
     globeGroup.add(ring1);
 
-    const ring2Geom = new THREE.TorusGeometry(2.8, 0.015, 8, 64);
-    const ring2Mat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.15 });
+    const ring2Geom = new THREE.TorusGeometry(2.4, 0.006, 16, 100);
+    const ring2Mat = new THREE.MeshBasicMaterial({ color: 0x00f5ff, transparent: true, opacity: 0.25 });
     const ring2 = new THREE.Mesh(ring2Geom, ring2Mat);
     ring2.rotation.x = Math.PI / 2 - 0.4;
-    ring2.rotation.y = 0.5;
     globeGroup.add(ring2);
 
-    // Helper: Convert lat/lon coordinates to Vector3
-    function latLonToVector3(lat, lon, radius) {
+    // Helper: lat/lon to 3D Cartesian
+    function latLonToVector(lat, lon, r) {
       const phi = (90 - lat) * (Math.PI / 180);
       const theta = (lon + 180) * (Math.PI / 180);
-      const x = -(radius * Math.sin(phi) * Math.sin(theta));
-      const y = radius * Math.cos(phi);
-      const z = radius * Math.sin(phi) * Math.cos(theta);
-      return new THREE.Vector3(x, y, z);
+      return new THREE.Vector3(
+        -(r * Math.sin(phi) * Math.sin(theta)),
+        r * Math.cos(phi),
+        r * Math.sin(phi) * Math.cos(theta)
+      );
     }
 
-    // 3. Floating threat particles orbiting
-    const particleCount = 40;
-    const particles = [];
-    const particleGeom = new THREE.SphereGeometry(0.025, 6, 6);
-    const particleMat = new THREE.MeshBasicMaterial({ color: 0xff6b2b, transparent: true, opacity: 0.8 });
-    
-    for (let i = 0; i < particleCount; i++) {
-      const pMesh = new THREE.Mesh(particleGeom, particleMat);
-      // Random position slightly offset from surface
-      const lat = (Math.random() - 0.5) * 180;
+    // 60 Threat Particles with individual point lights
+    const threatParticles = [];
+    const colors = [0xff6b2b, 0xffd60a, 0xff2d55]; // Orange, Yellow, Red
+    const particleGeom = new THREE.SphereGeometry(0.025, 8, 8);
+
+    for (let i = 0; i < 60; i++) {
+      let colorIdx = 0; // 30 orange
+      if (i >= 30 && i < 50) colorIdx = 1; // 20 yellow
+      else if (i >= 50) colorIdx = 2; // 10 red
+      
+      const mat = new THREE.MeshBasicMaterial({ color: colors[colorIdx] });
+      const mesh = new THREE.Mesh(particleGeom, mat);
+      
+      // Random coordinates
+      const lat = (Math.random() - 0.5) * 160;
       const lon = (Math.random() - 0.5) * 360;
-      const dist = 2.05 + Math.random() * 0.45;
-      const pos = latLonToVector3(lat, lon, dist);
-      pMesh.position.copy(pos);
-      globeGroup.add(pMesh);
-      particles.push({ mesh: pMesh, speed: 0.005 + Math.random() * 0.015, axis: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize() });
+      const pos = latLonToVector(lat, lon, 2.025);
+      mesh.position.copy(pos);
+      globeGroup.add(mesh);
+      
+      // PointLight
+      const pLight = new THREE.PointLight(colors[colorIdx], 0.6, 0.3);
+      mesh.add(pLight);
+      
+      threatParticles.push(mesh);
     }
 
-    // 4. Fixed Decoy Nodes Markers
-    const decoyNodes = [];
-    const decoyMarkerGeom = new THREE.SphereGeometry(0.06, 8, 8);
+    // Decoy Nodes
+    const decoyMeshes = [];
+    const decoyGeom = new THREE.SphereGeometry(0.07, 16, 16);
+    const decoyRingGeom = new THREE.TorusGeometry(0.15, 0.005, 4, 32);
 
-    DECOY_PROFILES.forEach((profile) => {
-      const markerMat = new THREE.MeshBasicMaterial({ color: 0x00f5ff });
-      const marker = new THREE.Mesh(decoyMarkerGeom, markerMat);
-      const pos = latLonToVector3(profile.lat, profile.lon, 2.02);
-      marker.position.copy(pos);
-      globeGroup.add(marker);
-      decoyNodes.push({ id: profile.id, mesh: marker, baseScale: 1.0, pulseTimer: 0 });
+    DECOY_NODES.forEach(node => {
+      const mat = new THREE.MeshBasicMaterial({ color: 0x00f5ff });
+      const mesh = new THREE.Mesh(decoyGeom, mat);
+      const pos = latLonToVector(node.lat, node.lon, 2.02);
+      mesh.position.copy(pos);
+      
+      // Pulsing ring
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f5ff, transparent: true, opacity: 0.5 });
+      const ring = new THREE.Mesh(decoyRingGeom, ringMat);
+      // Align ring to sphere normal
+      ring.lookAt(pos.clone().normalize().multiplyScalar(5));
+      mesh.add(ring);
+      
+      globeGroup.add(mesh);
+      decoyMeshes.push({ id: node.id, mesh, ring, name: node.name, port: node.port });
     });
 
-    // Auto-rotation states
-    let autoRotationSpeed = 0.002;
-    let isHovered = false;
-
-    // Hover check
-    canvas.addEventListener("mouseenter", () => { isHovered = true; });
-    canvas.addEventListener("mouseleave", () => { isHovered = false; });
-
-    // Drag to Rotate logic
-    let isDragging = false;
-    let previousMousePosition = { x: 0, y: 0 };
+    // Shooting Arcs
+    let activeLines = [];
+    function createShootingArc() {
+      if (threatParticles.length < 2) return;
+      const p1 = threatParticles[Math.floor(Math.random() * threatParticles.length)].position;
+      const p2 = threatParticles[Math.floor(Math.random() * threatParticles.length)].position;
+      
+      // Generate midpoint pushed outward for arc curve
+      const mid = p1.clone().add(p2).normalize().multiplyScalar(2.5);
+      
+      const curve = new THREE.QuadraticBezierCurve3(p1, mid, p2);
+      const points = curve.getPoints(24);
+      
+      const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
+      const lineMat = new THREE.LineBasicMaterial({
+        color: 0x00f5ff,
+        transparent: true,
+        opacity: 0.8
+      });
+      
+      const line = new THREE.Line(lineGeom, lineMat);
+      globeGroup.add(line);
+      activeLines.push({ line, creationTime: Date.now() });
+    }
     
-    canvas.addEventListener("mousedown", (e) => {
+    // Shoot new arc every 3 seconds
+    setInterval(createShootingArc, 3000);
+
+    // Auto rotation parameters
+    let baseRotationSpeed = 0.003;
+    let targetRotationX = 0;
+    let targetRotationY = 0;
+    let isDragging = false;
+    let prevMousePos = { x: 0, y: 0 };
+    let currentSpeed = baseRotationSpeed;
+
+    container.addEventListener("mouseenter", () => { currentSpeed = 0.0006; });
+    container.addEventListener("mouseleave", () => { currentSpeed = baseRotationSpeed; });
+
+    // Click interactions
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    container.addEventListener("mousedown", (e) => {
       isDragging = true;
-      previousMousePosition = { x: e.clientX, y: e.clientY };
+      prevMousePos = { x: e.clientX, y: e.clientY };
     });
 
     window.addEventListener("mouseup", () => {
@@ -369,145 +537,238 @@
 
     window.addEventListener("mousemove", (e) => {
       if (!isDragging) return;
-      const deltaMove = { x: e.clientX - previousMousePosition.x, y: e.clientY - previousMousePosition.y };
+      const deltaX = e.clientX - prevMousePos.x;
+      const deltaY = e.clientY - prevMousePos.y;
       
-      // Rotate the group directly
-      globeGroup.rotation.y += deltaMove.x * 0.005;
-      globeGroup.rotation.x += deltaMove.y * 0.005;
+      globeGroup.rotation.y += deltaX * 0.005;
+      globeGroup.rotation.x += deltaY * 0.005;
       
-      previousMousePosition = { x: e.clientX, y: e.clientY };
+      // Reset target rotations to current rotation to prevent snapback
+      targetRotationY = globeGroup.rotation.y;
+      targetRotationX = globeGroup.rotation.x;
+      
+      prevMousePos = { x: e.clientX, y: e.clientY };
     });
 
-    // Pulse highlight controller
-    function highlightGlobeNode(id) {
-      const node = decoyNodes.find(n => n.id === id);
-      if (!node) return;
+    // Node highlight triggered on clicking row or canvas node
+    let activeHighlightTimeout = null;
+    function triggerHighlight(meshObj) {
+      if (activeHighlightTimeout) clearTimeout(activeHighlightTimeout);
       
-      node.mesh.material.color.setHex(0xffffff);
-      node.mesh.scale.set(3, 3, 3);
+      // Reset all meshes
+      decoyMeshes.forEach(d => {
+        d.mesh.material.color.setHex(0x00f5ff);
+        d.mesh.scale.set(1, 1, 1);
+      });
       
-      setTimeout(() => {
-        node.mesh.material.color.setHex(0x00f5ff);
-        node.mesh.scale.set(1, 1, 1);
+      meshObj.mesh.material.color.setHex(0xffffff);
+      meshObj.mesh.scale.set(2, 2, 2);
+      
+      // Position tooltip
+      const tempV = new THREE.Vector3();
+      meshObj.mesh.getWorldPosition(tempV);
+      tempV.project(camera);
+      
+      const x = (tempV.x *  .5 + .5) * canvas.clientWidth;
+      const y = (tempV.y * -.5 + .5) * canvas.clientHeight;
+      
+      const tooltip = document.getElementById("globeTooltip");
+      tooltip.style.left = `${x}px`;
+      tooltip.style.top = `${y}px`;
+      tooltip.innerHTML = `<strong>NODE: ${meshObj.name.toUpperCase()}</strong><br/>PORT: :${meshObj.port}`;
+      tooltip.style.display = "block";
+      
+      activeHighlightTimeout = setTimeout(() => {
+        meshObj.mesh.material.color.setHex(0x00f5ff);
+        meshObj.mesh.scale.set(1, 1, 1);
+        tooltip.style.display = "none";
       }, 2000);
     }
 
-    // Animation Loop
-    function animate(time) {
-      requestAnimationFrame(animate);
+    // Animate camera alignment to face node
+    function rotateToNode(nodeId) {
+      const node = DECOY_NODES.find(n => n.id === nodeId);
+      const meshObj = decoyMeshes.find(d => d.id === nodeId);
+      if (!node || !meshObj) return;
+
+      const pos = latLonToVector(node.lat, node.lon, 2.02);
+      // Compute target Y and X rotation to face camera
+      targetRotationY = Math.atan2(pos.x, pos.z);
+      targetRotationX = -Math.atan2(pos.y, Math.sqrt(pos.x * pos.x + pos.z * pos.z));
       
-      // Handle auto-rotation
-      if (!isDragging) {
-        const speed = isHovered ? autoRotationSpeed * 0.2 : autoRotationSpeed;
-        globeGroup.rotation.y += speed;
-      }
-
-      // Counter rotate rings
-      ring1.rotation.z += 0.003;
-      ring2.rotation.z -= 0.002;
-
-      // Orbit threat particles
-      particles.forEach(p => {
-        p.mesh.position.applyAxisAngle(p.axis, p.speed);
-      });
-
-      // Animate pulsing scale on static decoy nodes
-      decoyNodes.forEach(node => {
-        node.pulseTimer += 0.05;
-        const scaleVal = 1 + Math.sin(node.pulseTimer) * 0.15;
-        // Do not scale if highlighted
-        if (node.mesh.scale.x < 2) {
-          node.mesh.scale.set(scaleVal, scaleVal, scaleVal);
-        }
-      });
-
-      renderer.render(scene, camera);
+      triggerHighlight(meshObj);
     }
 
-    // Handle Window Resizing
-    window.addEventListener("resize", () => {
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-      renderer.setSize(width, height, false);
+    // Raycast selector click
+    canvas.addEventListener("click", (e) => {
+      if (isDragging) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(decoyMeshes.map(d => d.mesh));
+      
+      if (intersects.length > 0) {
+        const clickedMesh = intersects[0].object;
+        const meshObj = decoyMeshes.find(d => d.mesh === clickedMesh);
+        if (meshObj) {
+          selectDecoyRow(meshObj.id);
+        }
+      }
     });
 
-    // Decoy click inspector handler
-    function bindDecoyInspector() {
-      const list = document.getElementById("decoyList");
-      let html = "";
+    // Render loop
+    let ringPulseTime = 0;
+    function animate() {
+      requestAnimationFrame(animate);
       
-      DECOY_PROFILES.forEach((p, idx) => {
-        const portFake = 1000 + idx * 87;
-        const activeClass = p.active ? "active" : "";
+      // Auto rotate when not dragging or target animating
+      if (!isDragging) {
+        if (Math.abs(targetRotationY - globeGroup.rotation.y) < 0.01) {
+          globeGroup.rotation.y += currentSpeed;
+          targetRotationY = globeGroup.rotation.y;
+        } else {
+          // Lerp camera alignment
+          globeGroup.rotation.y += (targetRotationY - globeGroup.rotation.y) * 0.1;
+          globeGroup.rotation.x += (targetRotationX - globeGroup.rotation.x) * 0.1;
+        }
+      }
+      
+      // Counter rotate torus tracks
+      ring1.rotation.z += 0.002;
+      ring2.rotation.z -= 0.003;
+      
+      // Pulse decoy rings scale
+      ringPulseTime += 0.04;
+      const scaleVal = 1 + Math.sin(ringPulseTime) * 0.25;
+      decoyMeshes.forEach(d => {
+        d.ring.scale.set(scaleVal, scaleVal, scaleVal);
+      });
+      
+      // Clean old shooting lines
+      activeLines.forEach((item, index) => {
+        const life = Date.now() - item.creationTime;
+        if (life > 1500) {
+          globeGroup.remove(item.line);
+          activeLines.splice(index, 1);
+        } else {
+          item.line.material.opacity = 1.0 - (life / 1500.0);
+        }
+      });
+      
+      renderer.render(scene, camera);
+    }
+    
+    // Resize handler
+    window.addEventListener("resize", () => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    });
+
+    // Initialize list and stats
+    function bindDecoyList() {
+      const containerList = document.getElementById("matrixList");
+      let html = "";
+      DECOY_NODES.forEach(node => {
         html += `
-          <div class="decoy-port-row ${activeClass}" onclick="selectDecoy('${p.id}', this)">
-            <span class="port-tag">[PORT ${portFake}]</span>
-            <span class="decoy-name">${p.name.toUpperCase()}</span>
-            <span class="decoy-indicator"></span>
+          <div class="decoy-row" id="row_${node.id}" onclick="selectDecoyRow('${node.id}')">
+            <div>
+              <span class="decoy-port-tag">[:${node.port}]</span>
+              <span class="decoy-name">${node.name.toUpperCase()}</span>
+              <div class="decoy-desc">${node.desc}</div>
+            </div>
+            <div class="decoy-status-cell">
+              <span class="pulse-dot"></span> ACTIVE
+            </div>
           </div>
         `;
       });
-      list.innerHTML = html;
+      containerList.innerHTML = html;
     }
 
-    function selectDecoy(id, rowElement) {
-      document.querySelectorAll(".decoy-port-row").forEach(r => r.classList.remove("selected"));
-      rowElement.classList.add("selected");
+    function selectDecoyRow(id) {
+      document.querySelectorAll(".decoy-row").forEach(r => r.classList.remove("selected"));
+      const r = document.getElementById(`row_${id}`);
+      if (r) r.classList.add("selected");
+      rotateToNode(id);
+    }
 
-      const profile = DECOY_PROFILES.find(p => p.id === id);
-      if (profile) {
-        document.getElementById("infoTitle").textContent = profile.name.toUpperCase();
-        document.getElementById("infoDesc").textContent = profile.desc;
-        highlightGlobeNode(id);
+    // Refresh telemetry and sync logs
+    let lastAttacksCount = 0;
+    async function syncTelemetry() {
+      const status = await checkBackendStatus();
+      const pill = document.getElementById("backendStatusPill");
+      const threatPill = document.getElementById("threatStatusPill");
+      
+      if (status) {
+        pill.textContent = "BACKEND: ONLINE";
+        pill.style.background = "rgba(0, 255, 136, 0.15)";
+        pill.style.borderColor = "var(--green)";
+        pill.style.color = "var(--green)";
+      } else {
+        pill.textContent = "BACKEND: OFFLINE";
+        pill.style.background = "rgba(255, 45, 85, 0.15)";
+        pill.style.borderColor = "var(--red)";
+        pill.style.color = "var(--red)";
+        return;
+      }
+      
+      const dash = await fetchers.dashboard();
+      const metrics = await fetchers.research();
+      const logs = await fetchers.logs();
+      
+      // Update Threat Level indicator
+      const avgRisk = dash.avg_risk_score || 0;
+      if (avgRisk > 70) {
+        threatPill.textContent = "THREAT: CRITICAL";
+        threatPill.style.background = "rgba(255, 45, 85, 0.15)";
+        threatPill.style.borderColor = "var(--red)";
+        threatPill.style.color = "var(--red)";
+      } else if (avgRisk >= 40) {
+        threatPill.textContent = "THREAT: ELEVATED";
+        threatPill.style.background = "rgba(255, 214, 10, 0.15)";
+        threatPill.style.borderColor = "var(--yellow)";
+        threatPill.style.color = "var(--yellow)";
+      } else {
+        threatPill.textContent = "THREAT: STABLE";
+        threatPill.style.background = "rgba(0, 255, 136, 0.15)";
+        threatPill.style.borderColor = "var(--green)";
+        threatPill.style.color = "var(--green)";
+      }
+
+      // Populate counters
+      document.getElementById("statAttacks").textContent = dash.total_attacks || 0;
+      document.getElementById("statSessions").textContent = metrics.total_sessions || 0;
+      document.getElementById("statIPs").textContent = dash.unique_ips || 0;
+      document.getElementById("statRisk").textContent = avgRisk;
+      document.getElementById("statDeception").textContent = (dash.avg_deception_score || 0.00).toFixed(2);
+      document.getElementById("statChain").textContent = metrics.new_metrics?.chain_detection_rate 
+        ? (metrics.new_metrics.chain_detection_rate * 100).toFixed(0) + "%" 
+        : "0%";
+
+      // Update Mini logs with recent entries
+      if (logs && logs.length > 0) {
+        const miniLogs = document.getElementById("miniLogs");
+        let logsHtml = "";
+        const sliced = logs.slice(0, 5).reverse();
+        sliced.forEach(l => {
+          const t = new Date(l.timestamp).toLocaleTimeString();
+          logsHtml += `<div class="log-line">[${t}] IP ${l.ip_address} triggered ${l.attack_type.toUpperCase()} (Port ${l.port})</div>`;
+        });
+        miniLogs.innerHTML = logsHtml;
       }
     }
 
-    // Load metrics stats bar values
-    let prevStats = {};
-    async function refreshDashboardMetrics() {
-      const [dash, metrics] = await Promise.all([
-        fetchDashboard(),
-        fetchResearchMetrics()
-      ]);
-
-      const statFields = {
-        statTotalAttacks: dash.total_attacks || 0,
-        statActiveSessions: metrics.total_sessions || 0,
-        statUniqueIPs: dash.unique_ips || 0,
-        statAvgRisk: dash.avg_risk_score ? dash.avg_risk_score.toFixed(2) : "0.00",
-        statAvgDeception: dash.avg_deception_score ? dash.avg_deception_score.toFixed(2) : "0.00",
-        statChainRate: metrics.new_metrics?.chain_detection_rate 
-          ? ((metrics.new_metrics.chain_detection_rate) * 100).toFixed(0) + "%" 
-          : "0%"
-      };
-
-      Object.keys(statFields).forEach(id => {
-        const el = document.getElementById(id);
-        const val = statFields[id];
-        
-        if (el && prevStats[id] !== val) {
-          el.textContent = val;
-          // Upward ticker animation triggers
-          el.style.transform = "translateY(-4px)";
-          el.style.color = "var(--accent-cyan)";
-          el.style.transition = "all 0.15s ease";
-          setTimeout(() => {
-            el.style.transform = "translateY(0)";
-            el.style.color = "";
-          }, 200);
-          prevStats[id] = val;
-        }
-      });
-    }
-
-    // Initialization
     document.addEventListener("DOMContentLoaded", () => {
-      bindDecoyInspector();
-      refreshDashboardMetrics();
+      bindDecoyList();
+      syncTelemetry();
       animate();
-      setInterval(refreshDashboardMetrics, 10000);
+      setInterval(syncTelemetry, 5000);
+      selectDecoyRow("credential_trap");
     });
   </script>
 </body>

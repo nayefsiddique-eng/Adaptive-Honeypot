@@ -3,51 +3,135 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MIRAGE — SOC Dashboard</title>
+  <title>MIRAGE — SOC Operations Center</title>
   
   <!-- CDNs -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="css/style.css">
   
   <style>
-    .dashboard-layout {
+    .soc-grid {
       display: grid;
       grid-template-columns: repeat(12, 1fr);
-      gap: 24px;
-      margin-bottom: 24px;
+      gap: 16px;
+      margin-bottom: 16px;
     }
     
-    .col-4 { grid-column: span 4; }
-    .col-6 { grid-column: span 6; }
-    .col-8 { grid-column: span 8; }
-    .col-12 { grid-column: span 12; }
+    .w-12 { grid-column: span 12; }
+    .w-6  { grid-column: span 6; }
+    .w-5  { grid-column: span 5; }
+    .w-7  { grid-column: span 7; }
+    .w-4  { grid-column: span 4; }
+    .w-8  { grid-column: span 8; }
     
     @media (max-width: 1024px) {
-      .col-4, .col-6, .col-8 { grid-column: span 12; }
+      .w-6, .w-5, .w-7, .w-4, .w-8 { grid-column: span 12; }
     }
     
-    .chart-wrapper {
-      position: relative;
-      height: 200px;
+    .panel-header-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       width: 100%;
     }
     
-    /* Chain progress styling */
-    .chain-session-row {
-      background: rgba(0, 245, 255, 0.02);
-      border: 1px solid rgba(0, 245, 255, 0.1);
-      border-radius: 4px;
-      padding: 12px;
-      margin-bottom: 12px;
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-family: var(--font-hud);
+      font-weight: 700;
+      color: var(--red);
     }
-    .chain-progress-line {
+    
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--red);
+      border-radius: 50%;
+      animation: blinking 1s infinite alternate;
+    }
+    
+    @keyframes blinking {
+      from { opacity: 0.2; }
+      to { opacity: 1; }
+    }
+    
+    .chart-box {
+      position: relative;
+      height: 180px;
+      width: 100%;
+    }
+    
+    .doughnut-label-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    
+    .doughnut-num {
+      font-family: var(--font-hud);
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+    }
+    
+    /* Gauge layout */
+    .gauge-wrapper {
+      position: relative;
+      width: 180px;
+      height: 100px;
+      margin: 12px auto;
+    }
+    
+    .gauge-needle {
+      position: absolute;
+      bottom: 0px;
+      left: 50%;
+      width: 4px;
+      height: 60px;
+      background: var(--cyan);
+      transform-origin: bottom center;
+      transform: translateX(-50%) rotate(-90deg);
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 0 10px var(--cyan);
+      border-radius: 2px;
+    }
+    
+    .gauge-center-cap {
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      background: #fff;
+      border-radius: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    }
+    
+    /* Kill chain progression step lines */
+    .killchain-row {
+      background: rgba(0, 245, 255, 0.015);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+    
+    .killchain-flow {
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: relative;
-      margin-top: 10px;
+      margin-top: 8px;
     }
-    .chain-progress-line::after {
+    
+    .killchain-flow::before {
       content: "";
       position: absolute;
       left: 10%;
@@ -57,36 +141,59 @@
       background: rgba(255, 255, 255, 0.1);
       z-index: 1;
     }
-    .chain-step {
+    
+    .killchain-node {
       display: flex;
       flex-direction: column;
       align-items: center;
       flex: 1;
       z-index: 2;
     }
-    .chain-node {
-      width: 12px;
-      height: 12px;
+    
+    .killchain-circle {
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
-      background: #3b4252;
-      border: 2px solid #4c566a;
+      background: #1a2332;
+      border: 2px solid #3b4252;
       transition: all 0.3s ease;
     }
-    .chain-step.completed .chain-node {
-      background: var(--accent-orange);
-      border-color: var(--accent-orange);
-      box-shadow: 0 0 8px var(--accent-orange);
+    
+    .killchain-node.active .killchain-circle {
+      background: var(--orange);
+      border-color: var(--orange);
+      box-shadow: 0 0 8px var(--orange);
     }
-    .chain-step-lbl {
+    
+    .killchain-label {
       font-family: var(--font-hud);
-      font-size: 9px;
-      letter-spacing: 1px;
-      color: var(--text-muted);
-      text-transform: uppercase;
+      font-size: 8px;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
       margin-top: 4px;
+      text-transform: uppercase;
     }
-    .chain-step.completed .chain-step-lbl {
+    
+    .killchain-node.active .killchain-label {
       color: #fff;
+    }
+    
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+      font-size: 10px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
     }
   </style>
 </head>
@@ -94,34 +201,39 @@
 
   <div class="app-container">
     
-    <!-- 1. HEADER -->
+    <!-- 1. HEADER COCKPIT -->
     <header class="hud-header">
-      <a href="index.html" class="hud-logo">
-        <span class="hud-logo-icon">🛡️</span>
-        <div class="hud-logo-text">
-          <h1>MIRAGE</h1>
-          <span>AI Adaptive Deception</span>
-        </div>
-      </a>
-      
-      <nav>
-        <ul class="hud-nav">
-          <li class="hud-nav-item"><a href="index.html">Portal</a></li>
-          <li class="hud-nav-item active"><a href="dashboard.html">SOC Cockpit</a></li>
-          <li class="hud-nav-item"><a href="sessions.html">Attacker Profiles</a></li>
-          <li class="hud-nav-item"><a href="intel.html">Threat Intel</a></li>
-        </ul>
-      </nav>
+      <a href="index.html" class="hud-logo">◈ MIRAGE</a>
+      <div class="hud-clock" id="utcClock">00:00:00 UTC</div>
+      <div class="hud-nav">
+        <li class="hud-nav-item"><a href="index.html">Portal</a></li>
+        <li class="hud-nav-item active"><a href="dashboard.html">SOC Cockpit</a></li>
+        <li class="hud-nav-item"><a href="sessions.html">Attacker Profiles</a></li>
+        <li class="hud-nav-item"><a href="intel.html">Threat Intel</a></li>
+      </div>
     </header>
 
-    <!-- 2. SOC COCKPIT GRID LAYOUT -->
-    <main class="dashboard-layout">
+    <!-- 2. SOC COCKPIT GRID -->
+    <main class="soc-grid">
       
       <!-- Panel 1: Live Attack Feed -->
-      <section class="glass-card col-12">
-        <h3>🚨 LIVE ATTACK FEED</h3>
-        <div class="table-wrapper">
-          <table class="cyber-table" id="liveFeedTable">
+      <section class="glass-card w-12">
+        <div class="panel-header-toolbar">
+          <h3>◈ LIVE ATTACK FEED</h3>
+          <div style="display:flex; gap:16px; align-items:center;">
+            <div class="live-indicator">
+              <span class="live-dot"></span> LIVE <span id="feedCountBadge" class="badge" style="background:rgba(0,245,255,0.1); color:var(--cyan); margin-left:4px;">0</span>
+            </div>
+            <select id="severityFilter" class="input-control" style="width:120px;" onchange="loadFeedData()">
+              <option value="all">All Levels</option>
+              <option value="critical">Critical (80+)</option>
+              <option value="high">High (60-70)</option>
+              <option value="medium">Medium (40-59)</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrapper" style="max-height: 280px; overflow-y: auto;">
+          <table class="cyber-table">
             <thead>
               <tr>
                 <th>Time</th>
@@ -130,69 +242,77 @@
                 <th>Attack Type</th>
                 <th>Risk Score</th>
                 <th>MITRE ID</th>
-                <th>Chain Badge</th>
+                <th>Chain Status</th>
                 <th>Deception State</th>
               </tr>
             </thead>
-            <tbody id="feedBody">
+            <tbody id="feedRows">
               <tr>
-                <td colspan="8" class="loading-text" style="text-align: center;">Syncing live threat telemetry logs...</td>
+                <td colspan="8" class="loading-text" style="text-align: center;">Mapping live logs...</td>
               </tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- Panel 2: Attack Type Breakdown -->
-      <section class="glass-card col-4">
-        <h3>🍩 ATTACK TYPE DISTRIBUTION</h3>
-        <div class="chart-wrapper">
-          <canvas id="typeDoughnutChart"></canvas>
-        </div>
-      </section>
-
-      <!-- Panel 3: Risk Timeline -->
-      <section class="glass-card col-4">
-        <h3>📈 RISK SCORE TIMELINE</h3>
-        <div class="chart-wrapper">
-          <canvas id="riskLineChart"></canvas>
-        </div>
-      </section>
-
-      <!-- Panel 5: Deception Gauge -->
-      <section class="glass-card col-4">
-        <h3>🎯 DECEPTION EFFECTIVENESS GAUGE</h3>
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-          <div class="chart-wrapper" style="height: 140px; margin-bottom: 10px;">
-            <canvas id="deceptionGaugeCanvas"></canvas>
+      <!-- Panel 2: Attack Distribution -->
+      <section class="glass-card w-4">
+        <h3>◈ ATTACK TYPE DISTRIBUTION</h3>
+        <div class="chart-box">
+          <canvas id="distributionCanvas"></canvas>
+          <div class="doughnut-label-center">
+            <div class="doughnut-num" id="distributionTotal">0</div>
+            <div style="font-size:9px; color:var(--text-dim); text-transform:uppercase;">attacks</div>
           </div>
-          <div id="deceptionGaugeText" style="font-family: var(--font-hud); font-size: 24px; font-weight: 700; color: var(--accent-green);">0.00</div>
+        </div>
+        <div class="legend-grid" id="chartLegend"></div>
+      </section>
+
+      <!-- Panel 3: Risk score timeline -->
+      <section class="glass-card w-8">
+        <h3>◈ RISK SCORE TIMELINE</h3>
+        <div class="chart-box">
+          <canvas id="timelineCanvas"></canvas>
         </div>
       </section>
 
       <!-- Panel 4: Attack Chain Tracker -->
-      <section class="glass-card col-6">
-        <h3>🔗 ACTIVE ATTACK CHAIN TRACKERS</h3>
-        <div id="chainTrackerList" style="max-height: 320px; overflow-y: auto;">
-          <div class="loading-text">Loading chain tracking stages...</div>
+      <section class="glass-card w-6">
+        <h3>◈ KILL CHAIN PROGRESSION</h3>
+        <div id="killchainList" style="max-height: 280px; overflow-y: auto;">
+          <div class="loading-text">Tracking session chains...</div>
+        </div>
+      </section>
+
+      <!-- Panel 5: Deception Gauge -->
+      <section class="glass-card w-6" style="display:flex; flex-direction:column; align-items:center;">
+        <h3 style="width:100%;">◈ DECEPTION SCORE GAUGE</h3>
+        <div class="gauge-wrapper">
+          <canvas id="gaugeCanvas"></canvas>
+          <div class="gauge-needle" id="gaugeNeedle"></div>
+          <div class="gauge-center-cap"></div>
+        </div>
+        <div style="text-align:center; margin-top:-10px;">
+          <div id="gaugeScore" style="font-family:var(--font-hud); font-size:32px; font-weight:700; color:var(--cyan);">0.00</div>
+          <div style="font-family:var(--font-hud); font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Deception Effectiveness</div>
         </div>
       </section>
 
       <!-- Panel 6: TTP Fingerprint Table -->
-      <section class="glass-card col-6">
-        <h3>🧬 ATTACKER TTP FINGERPRINTS</h3>
-        <div class="table-wrapper" style="max-height: 320px; overflow-y: auto;">
+      <section class="glass-card w-12">
+        <h3>◈ ATTACKER TTP FINGERPRINTS</h3>
+        <div class="table-wrapper" style="max-height: 240px; overflow-y: auto;">
           <table class="cyber-table">
             <thead>
               <tr>
-                <th>IP Address</th>
-                <th>Tool Signature</th>
-                <th onclick="sortTtps()" style="cursor: pointer; text-decoration: underline; color: var(--accent-cyan);">Evasion Attempts ↕</th>
-                <th>Chain Stage</th>
-                <th>Last Seen</th>
+                <th onclick="sortTtp('ip_address')" style="cursor:pointer;">IP Address ↕</th>
+                <th onclick="sortTtp('tool_signature')" style="cursor:pointer;">Tool Signature ↕</th>
+                <th onclick="sortTtp('evasion_attempts')" style="cursor:pointer;">Evasion Attempts ↕</th>
+                <th onclick="sortTtp('attack_chain_stage')" style="cursor:pointer;">Chain Stage ↕</th>
+                <th onclick="sortTtp('last_seen')" style="cursor:pointer;">Last Seen ↕</th>
               </tr>
             </thead>
-            <tbody id="ttpBody">
+            <tbody id="ttpRows">
               <tr>
                 <td colspan="5" class="loading-text" style="text-align: center;">Analyzing threat profiles...</td>
               </tr>
@@ -202,60 +322,79 @@
       </section>
 
     </main>
-
   </div>
 
-  <!-- Scripts -->
   <script src="js/api.js"></script>
   <script>
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("utcClock").textContent = now.toISOString().replace('T', ' ').substring(11, 19) + ' UTC';
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
     let doughnutChart = null;
     let lineChart = null;
     let gaugeChart = null;
-    let cachedSessions = [];
-    
+    let rawSessions = [];
+    let currentTtpSortField = 'evasion_attempts';
+    let currentTtpSortAsc = false;
+
+    // Load SOC dashboard data
     async function loadDashboard() {
-      const [dash, sessions, recentLogs] = await Promise.all([
-        fetchDashboard(),
-        fetchSessions(),
-        safeFetch(`${BASE_URL}/api/logs/recent?limit=50`)
-      ]);
+      const dash = await fetchers.dashboard();
+      const sessions = await fetchers.sessions();
+      
+      rawSessions = sessions;
 
-      cachedSessions = sessions;
-
-      renderLiveFeed(recentLogs);
       renderCharts(dash);
-      renderChainTracker(sessions);
+      renderKillChain(sessions);
       renderTtpTable(sessions);
     }
 
-    function renderLiveFeed(logs) {
-      const tbody = document.getElementById("feedBody");
-      if (logs.error || !logs.length) {
-        tbody.innerHTML = `<tr><td colspan="8" class="loading-text" style="text-align: center;">No active attack records found.</td></tr>`;
+    // Load recent logs and map the feed table
+    async function loadFeedData() {
+      const logs = await fetchers.logs();
+      const tbody = document.getElementById("feedRows");
+      const badge = document.getElementById("feedCountBadge");
+      const filter = document.getElementById("severityFilter").value;
+      
+      let filtered = logs;
+      if (filter === "critical") filtered = logs.filter(l => l.risk_score >= 80);
+      else if (filter === "high") filtered = logs.filter(l => l.risk_score >= 60 && l.risk_score < 80);
+      else if (filter === "medium") filtered = logs.filter(l => l.risk_score >= 40 && l.risk_score < 60);
+      
+      badge.textContent = filtered.length;
+
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="loading-text" style="text-align: center;">No threats detected matching current search filter.</td></tr>`;
         return;
       }
 
       let html = "";
-      logs.forEach(log => {
-        const timeStr = new Date(log.timestamp).toLocaleTimeString();
-        const scoreCol = riskColor(log.risk_score);
-        const stateCol = log.session_id ? 'var(--accent-green)' : 'var(--text-muted)';
-        const stateStr = log.session_id ? 'ENGAGED' : 'PASSIVE';
+      filtered.slice(0, 20).forEach(log => {
+        // Calculate relative time
+        const elapsed = Math.round((Date.now() - new Date(log.timestamp)) / 1000);
+        const timeStr = elapsed < 60 ? `${elapsed}s ago` : `${Math.floor(elapsed/60)}m ago`;
+        
+        const isCritical = log.risk_score >= 80 ? "row-critical-flash" : "";
+        const riskBadge = riskBadgeClass(log.risk_score);
         
         const chainBadge = log.chain_name
-          ? `<span class="badge" style="background: rgba(255, 107, 43, 0.12); color: var(--accent-orange); border: 1px solid var(--accent-orange);">${log.chain_name.toUpperCase().replace(/_/g, ' ')}</span>`
-          : `<span style="color:var(--text-muted); font-size:10px;">None</span>`;
+          ? `<span class="badge" style="background:rgba(255, 107, 43, 0.15); color:var(--orange); border-color:var(--orange);">${log.chain_name.toUpperCase().replace(/_/g, ' ')}</span>`
+          : `<span style="color:var(--text-dim); font-size:10px;">Monitor</span>`;
 
         html += `
-          <tr>
-            <td style="color:var(--text-muted); font-family:var(--font-hud);">${timeStr}</td>
-            <td><strong class="text-blue">${log.ip_address}</strong></td>
-            <td>${log.country || 'Unknown'}</td>
+          <tr class="row-new ${isCritical}">
+            <td style="color:var(--text-dim); font-family:var(--font-hud);">${timeStr}</td>
+            <td style="font-family:monospace; color:var(--cyan); font-weight:700;">${log.ip_address}</td>
+            <td>🏳️ ${log.country || 'Unknown'}</td>
             <td><span class="badge badge-${log.attack_type}">${log.attack_type.replace(/_/g, ' ')}</span></td>
-            <td><strong style="color:${scoreCol};">${log.risk_score}</strong></td>
-            <td style="font-family:var(--font-hud); font-weight:700;">${log.mitre_technique || 'T0000'}</td>
+            <td><strong style="color:${riskColor(log.risk_score)};">${log.risk_score}</strong></td>
+            <td><span class="badge badge-medium" style="color:var(--purple); border-color:var(--purple); background:none;">${log.mitre_technique || 'T1595'}</span></td>
             <td>${chainBadge}</td>
-            <td style="color:${stateCol}; font-weight:bold; font-family:var(--font-hud);">${stateStr}</td>
+            <td><span class="badge badge-low" style="color:var(--green); border-color:var(--green); background:none;">${log.deception_state || 'ENGAGED'}</span></td>
           </tr>
         `;
       });
@@ -263,51 +402,68 @@
     }
 
     function renderCharts(dash) {
-      // 1. Doughnut Chart
+      // 1. Doughnut Attack Distribution
       const breakdown = dash.attack_type_breakdown || {};
       const labels = Object.keys(breakdown);
       const data = Object.values(breakdown);
+      const total = data.reduce((a, b) => a + b, 0);
+      document.getElementById("distributionTotal").textContent = total;
 
-      const ctxDoughnut = document.getElementById("typeDoughnutChart").getContext("2d");
+      const colors = ['#00f5ff', '#00ff88', '#ff6b2b', '#ff2d55', '#bf5af2', '#ffd60a'];
+
+      const ctxDoughnut = document.getElementById("distributionCanvas").getContext("2d");
       if (doughnutChart) doughnutChart.destroy();
       
       doughnutChart = new Chart(ctxDoughnut, {
         type: 'doughnut',
         data: {
-          labels: labels.map(l => l.toUpperCase().replace(/_/g, ' ')),
+          labels,
           datasets: [{
             data,
-            backgroundColor: ['#00f5ff', '#00ff88', '#ff6b2b', '#bd00ff', '#eab308', '#ec4899', '#3b4252'],
-            borderWidth: 0
+            backgroundColor: colors,
+            borderWidth: 0,
+            hoverOffset: 4
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          }
+          cutout: '70%',
+          plugins: { legend: { display: false } }
         }
       });
 
+      // Build Legend
+      const legend = document.getElementById("chartLegend");
+      let legendHtml = "";
+      labels.forEach((lbl, idx) => {
+        legendHtml += `
+          <div class="legend-item">
+            <span class="legend-dot" style="background:${colors[idx % colors.length]}"></span>
+            <span style="color:var(--text-primary); font-family:var(--font-hud);">${lbl.toUpperCase().substring(0, 12)} (${data[idx]})</span>
+          </div>
+        `;
+      });
+      legend.innerHTML = legendHtml;
+
       // 2. Risk Score Line Chart
-      const ctxLine = document.getElementById("riskLineChart").getContext("2d");
+      const ctxLine = document.getElementById("timelineCanvas").getContext("2d");
       if (lineChart) lineChart.destroy();
 
-      // Dummy line chart data populated from breakdown risk values
-      const dummyTimelineLabels = ["04:00", "08:00", "12:00", "16:00", "20:00", "24:00"];
-      const dummyRiskData = [20, 35, 65, 45, dash.avg_risk_score || 55, 30];
+      const dummyLabels = Array.from({length: 12}, (_, i) => `${i*2}:00`);
+      const dummyData = Array.from({length: 12}, () => Math.floor(Math.random() * 40) + 30);
+      dummyData[11] = dash.avg_risk_score || 50;
 
       lineChart = new Chart(ctxLine, {
         type: 'line',
         data: {
-          labels: dummyTimelineLabels,
+          labels: dummyLabels,
           datasets: [{
-            data: dummyRiskData,
+            data: dummyData,
             borderColor: '#00f5ff',
-            backgroundColor: 'rgba(0, 245, 255, 0.05)',
-            tension: 0.3,
+            backgroundColor: 'rgba(0, 245, 255, 0.03)',
             fill: true,
+            tension: 0.3,
             borderWidth: 2
           }]
         },
@@ -316,32 +472,29 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { color: 'rgba(0, 245, 255, 0.05)' }, ticks: { color: '#4e6178' } },
-            y: { grid: { color: 'rgba(0, 245, 255, 0.05)' }, ticks: { color: '#4e6178' } }
+            x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: 'rgba(232,244,248,0.5)' } },
+            y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: 'rgba(232,244,248,0.5)' } }
           }
         }
       });
 
-      // 3. Deception Gauge
+      // 3. Deception Gauge (Half-Doughnut)
       const score = dash.avg_deception_score || 0.0;
-      document.getElementById("deceptionGaugeText").textContent = score.toFixed(2);
+      document.getElementById("gaugeScore").textContent = score.toFixed(2);
       
-      let scoreColor = '#00ff88';
-      if (score < 0.34) scoreColor = '#ef4444';
-      else if (score < 0.67) scoreColor = '#eab308';
-      
-      document.getElementById("deceptionGaugeText").style.color = scoreColor;
+      const needle = document.getElementById("gaugeNeedle");
+      const angle = -90 + (score * 180);
+      needle.style.transform = `translateX(-50%) rotate(${angle}deg)`;
 
-      const ctxGauge = document.getElementById("deceptionGaugeCanvas").getContext("2d");
+      const ctxGauge = document.getElementById("gaugeCanvas").getContext("2d");
       if (gaugeChart) gaugeChart.destroy();
 
       gaugeChart = new Chart(ctxGauge, {
         type: 'doughnut',
         data: {
-          labels: ['Score', 'Remaining'],
           datasets: [{
-            data: [score, Math.max(0, 1.0 - score)],
-            backgroundColor: [scoreColor, 'rgba(0, 245, 255, 0.05)'],
+            data: [33, 33, 34],
+            backgroundColor: ['rgba(255,45,85,0.15)', 'rgba(255,214,10,0.15)', 'rgba(0,255,136,0.15)'],
             borderWidth: 0
           }]
         },
@@ -359,43 +512,38 @@
       });
     }
 
-    function renderChainTracker(sessions) {
-      const container = document.getElementById("chainTrackerList");
+    function renderKillChain(sessions) {
+      const container = document.getElementById("killchainList");
       const activeChains = sessions.filter(s => s.attack_chain_name);
 
       if (!activeChains.length) {
-        container.innerHTML = `<div class="loading-text" style="text-align: center; padding: 40px 0;">No active sequential attack chains.</div>`;
+        container.innerHTML = `<div class="loading-text" style="text-align: center; padding: 40px 0;">No active serial attack chains.</div>`;
         return;
       }
 
       let html = "";
       activeChains.forEach(sess => {
-        const chainName = sess.attack_chain_name;
-        const currentProgress = sess.attack_chain_progress || 0;
-        
-        // Define fixed 4 steps of MITRE chain
+        const progress = sess.attack_chain_progress || 0;
         const steps = ["recon", "weaponize", "exploit", "post_exploit"];
         
-        // Custom simple logic: progress level 1 completion, 2 completion, etc.
         let stepsHtml = "";
         steps.forEach((step, idx) => {
-          const completed = currentProgress > idx;
-          const completedClass = completed ? "completed" : "";
+          const active = progress > idx ? "active" : "";
           stepsHtml += `
-            <div class="chain-step ${completedClass}">
-              <div class="chain-node"></div>
-              <span class="chain-step-lbl">${step}</span>
+            <div class="killchain-node ${active}">
+              <div class="killchain-circle"></div>
+              <span class="killchain-label">${step}</span>
             </div>
           `;
         });
 
         html += `
-          <div class="chain-session-row">
-            <div style="display:flex; justify-content:space-between; font-family:var(--font-hud); font-size:11px;">
-              <span>IP: <strong class="text-blue">${sess.ip_address}</strong></span>
-              <span style="color:var(--accent-orange); font-weight:700;">${chainName.toUpperCase().replace(/_/g, ' ')}</span>
+          <div class="killchain-row">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-family:monospace; color:var(--cyan); font-weight:700;">${sess.ip_address}</span>
+              <span class="badge" style="background:rgba(255,107,43,0.1); color:var(--orange); border-color:var(--orange);">${sess.attack_chain_name.toUpperCase()}</span>
             </div>
-            <div class="chain-progress-line">
+            <div class="killchain-flow">
               ${stepsHtml}
             </div>
           </div>
@@ -405,57 +553,70 @@
     }
 
     function renderTtpTable(sessions) {
-      const tbody = document.getElementById("ttpBody");
+      const tbody = document.getElementById("ttpRows");
       if (!sessions.length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="loading-text" style="text-align: center;">No fingerprints analyzed yet.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="loading-text" style="text-align: center;">No attacker signatures logged.</td></tr>`;
         return;
       }
 
+      // Perform client side sorting
+      sessions.sort((a, b) => {
+        let valA = a[currentTtpSortField];
+        let valB = b[currentTtpSortField];
+        
+        if (currentTtpSortField === 'tool_signature' || currentTtpSortField === 'attack_chain_stage') {
+          valA = a.ttp_fingerprint ? a.ttp_fingerprint[currentTtpSortField] : '';
+          valB = b.ttp_fingerprint ? b.ttp_fingerprint[currentTtpSortField] : '';
+        } else if (currentTtpSortField === 'evasion_attempts') {
+          valA = a.ttp_fingerprint ? a.ttp_fingerprint.evasion_attempts : 0;
+          valB = b.ttp_fingerprint ? b.ttp_fingerprint.evasion_attempts : 0;
+        }
+
+        if (valA < valB) return currentTtpSortAsc ? -1 : 1;
+        if (valA > valB) return currentTtpSortAsc ? 1 : -1;
+        return 0;
+      });
+
       let html = "";
       sessions.forEach(sess => {
-        const ttp = sess.ttp_fingerprint || {
-          tool_signature: "custom",
-          evasion_attempts: 0,
-          attack_chain_stage: "recon",
-          timing_pattern: "slow_drip"
+        const ttp = sess.ttp_fingerprint || { tool_signature: "custom", evasion_attempts: 0, attack_chain_stage: "recon" };
+        const toolBadgeColors = {
+          sqlmap: "var(--red)",
+          nmap: "var(--cyan)",
+          hydra: "var(--orange)",
+          metasploit: "var(--purple)"
         };
-        
-        const stageColors = {
-          recon: "badge-unknown",
-          weaponize: "badge-port_scan",
-          exploit: "badge-sql_injection",
-          post_exploit: "badge-command_injection"
-        };
-        const stageClass = stageColors[ttp.attack_chain_stage] || "badge-unknown";
+        const color = toolBadgeColors[ttp.tool_signature] || "var(--text-dim)";
+        const attemptsCol = ttp.evasion_attempts > 3 ? "var(--red)" : "inherit";
 
         html += `
           <tr>
-            <td><strong class="text-blue">${sess.ip_address}</strong></td>
-            <td><span class="badge" style="background: rgba(0, 245, 255, 0.05); color: var(--accent-cyan); border:1px solid rgba(0, 245, 255, 0.2);">${ttp.tool_signature.toUpperCase()}</span></td>
-            <td style="color:var(--accent-red); font-weight:bold; font-family:var(--font-hud); font-size:14px;">${ttp.evasion_attempts}</td>
-            <td><span class="badge ${stageClass}">${ttp.attack_chain_stage.toUpperCase()}</span></td>
-            <td style="color:var(--text-muted);">${new Date(sess.last_seen || sess.first_seen).toLocaleTimeString()}</td>
+            <td style="font-family:monospace; color:var(--cyan); font-weight:700;">${sess.ip_address}</td>
+            <td><span class="badge" style="color:${color}; border-color:${color}; background:none;">${ttp.tool_signature.toUpperCase()}</span></td>
+            <td style="font-family:var(--font-hud); font-weight:700; color:${attemptsCol}; font-size:14px;">${ttp.evasion_attempts}</td>
+            <td><span class="badge badge-low" style="background:none; border-color:var(--text-dim); color:var(--text-dim);">${ttp.attack_chain_stage.toUpperCase()}</span></td>
+            <td style="color:var(--text-dim);">${new Date(sess.last_seen || sess.first_seen).toLocaleTimeString()}</td>
           </tr>
         `;
       });
       tbody.innerHTML = html;
     }
 
-    // Sorting state
-    let sortAsc = false;
-    function sortTtps() {
-      sortAsc = !sortAsc;
-      cachedSessions.sort((a, b) => {
-        const evaA = a.ttp_fingerprint ? a.ttp_fingerprint.evasion_attempts : 0;
-        const evaB = b.ttp_fingerprint ? b.ttp_fingerprint.evasion_attempts : 0;
-        return sortAsc ? (evaA - evaB) : (evaB - evaA);
-      });
-      renderTtpTable(cachedSessions);
+    function sortTtp(field) {
+      if (currentTtpSortField === field) {
+        currentTtpSortAsc = !currentTtpSortAsc;
+      } else {
+        currentTtpSortField = field;
+        currentTtpSortAsc = false;
+      }
+      renderTtpTable(rawSessions);
     }
 
     document.addEventListener("DOMContentLoaded", () => {
       loadDashboard();
-      setInterval(loadDashboard, 10000);
+      loadFeedData();
+      setInterval(loadDashboard, 5000);
+      setInterval(loadFeedData, 5000);
     });
   </script>
 </body>

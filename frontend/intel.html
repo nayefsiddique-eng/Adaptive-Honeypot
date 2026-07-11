@@ -15,63 +15,126 @@
   <link rel="stylesheet" href="css/style.css">
   
   <style>
-    .intel-layout {
+    .intel-grid {
       display: flex;
       flex-direction: column;
-      gap: 24px;
-      margin-bottom: 24px;
+      gap: 16px;
+      margin-bottom: 16px;
     }
     
-    .map-container {
-      height: 380px;
-      width: 100%;
-      background: #03050a;
-      border: 1px solid rgba(0, 245, 255, 0.15);
-      border-radius: 4px;
+    .search-glow:focus {
+      border-color: var(--cyan) !important;
+      box-shadow: 0 0 15px rgba(0, 245, 255, 0.3) !important;
     }
-
-    /* Metric visual design */
-    .metrics-hud-grid {
+    
+    .map-box {
+      height: 400px;
+      width: 100%;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    
+    /* Metrics layout */
+    .research-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+      gap: 16px;
     }
     
     @media (max-width: 768px) {
-      .metrics-hud-grid { grid-template-columns: 1fr; }
+      .research-grid { grid-template-columns: 1fr; }
     }
     
-    .metric-hud-card {
-      background: rgba(0, 245, 255, 0.015);
-      border: 1px solid rgba(0, 245, 255, 0.1);
-      border-radius: 4px;
-      padding: 16px 20px;
+    .research-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     
-    .metric-hud-card.highlight {
-      border: 2px solid var(--accent-cyan);
-      background: rgba(0, 245, 255, 0.04);
-      box-shadow: 0 0 15px rgba(0, 245, 255, 0.15);
+    .research-card.highlight {
+      border: 2px solid var(--cyan);
+      box-shadow: 0 0 15px rgba(0, 245, 255, 0.1);
+      background: rgba(0, 245, 255, 0.05);
     }
     
-    .metric-hud-num {
+    .research-card-label {
+      font-family: var(--font-hud);
+      font-size: 12px;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    
+    .highlight .research-card-label {
+      color: var(--cyan);
+    }
+    
+    .research-card-num {
       font-family: var(--font-hud);
       font-size: 2.2rem;
       font-weight: 700;
       color: #fff;
     }
-    .metric-hud-label {
+
+    /* CSS Progress Bars */
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 3px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+      width: 0%;
+      transition: width 0.8s ease-out;
+    }
+
+    /* CSS Inline Bar Chart */
+    .inline-bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      margin-top: 12px;
+    }
+    .bar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
       font-family: var(--font-hud);
-      font-size: 12px;
-      letter-spacing: 1.5px;
-      color: var(--text-muted);
+      font-size: 11px;
+    }
+    .bar-label {
+      width: 80px;
+      color: var(--text-dim);
       text-transform: uppercase;
     }
-    .highlight .metric-hud-label {
-      color: var(--accent-cyan);
+    .bar-wrapper {
+      flex-grow: 1;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: var(--cyan);
+    }
+    .bar-val {
+      width: 30px;
+      text-align: right;
+      color: #fff;
     }
   </style>
 </head>
@@ -79,78 +142,90 @@
 
   <div class="app-container">
     
-    <!-- 1. HEADER -->
+    <!-- 1. HEADER COCKPIT -->
     <header class="hud-header">
-      <a href="index.html" class="hud-logo">
-        <span class="hud-logo-icon">🛡️</span>
-        <div class="hud-logo-text">
-          <h1>MIRAGE</h1>
-          <span>AI Adaptive Deception</span>
-        </div>
-      </a>
-      
-      <nav>
-        <ul class="hud-nav">
-          <li class="hud-nav-item"><a href="index.html">Portal</a></li>
-          <li class="hud-nav-item"><a href="dashboard.html">SOC Cockpit</a></li>
-          <li class="hud-nav-item"><a href="sessions.html">Attacker Profiles</a></li>
-          <li class="hud-nav-item active"><a href="intel.html">Threat Intel</a></li>
-        </ul>
-      </nav>
+      <a href="index.html" class="hud-logo">◈ MIRAGE</a>
+      <div class="hud-clock" id="utcClock">00:00:00 UTC</div>
+      <div class="hud-nav">
+        <li class="hud-nav-item"><a href="index.html">Portal</a></li>
+        <li class="hud-nav-item"><a href="dashboard.html">SOC Cockpit</a></li>
+        <li class="hud-nav-item"><a href="sessions.html">Attacker Profiles</a></li>
+        <li class="hud-nav-item active"><a href="intel.html">Threat Intel</a></li>
+      </div>
     </header>
 
-    <main class="intel-layout">
-      <!-- 2. SEARCH BAR -->
+    <main class="intel-grid">
+      
+      <!-- Section 1: IP Lookup -->
       <section class="glass-card">
         <h3>🔍 REPUTATION LOOKUP FEED</h3>
-        <div style="display: flex; gap: 12px; margin-top: 12px; max-width: 600px;">
-          <input type="text" id="ipSearchInput" class="input-control" placeholder="Enter target IP (e.g., 8.8.8.8)..." onkeydown="if(event.key==='Enter') searchLogsByIp()">
-          <button onclick="searchLogsByIp()" class="btn btn-primary">Lookup</button>
+        <div style="display: flex; gap: 12px; margin-top: 8px; max-width: 600px;">
+          <input type="text" id="ipLookupInput" class="input-control search-glow" style="border-color:var(--border);" placeholder="Search IP address..." onkeydown="if(event.key==='Enter') lookupIp()">
+          <button onclick="lookupIp()" class="btn btn-primary">Scan</button>
         </div>
         
-        <!-- Log results display container -->
-        <div id="logsResultContainer" class="table-wrapper hidden" style="margin-top: 20px; max-height: 250px; overflow-y: auto;">
-          <table class="cyber-table">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Type</th>
-                <th>Port</th>
-                <th>Protocol</th>
-                <th>Risk</th>
-                <th>Payload</th>
-              </tr>
-            </thead>
-            <tbody id="resultBody"></tbody>
-          </table>
+        <!-- Result grid -->
+        <div id="ipResultBox" class="hidden" style="margin-top: 16px; animation: slideDownIn 0.3s ease-out;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-family:var(--font-hud); font-size:12px;">
+            <span>TOTAL ATTACKS: <strong id="resCount" style="color:var(--cyan);">0</strong></span>
+            <span>FIRST SEEN: <span id="resFirst" style="color:var(--text-dim);">N/A</span></span>
+            <span>LAST SEEN: <span id="resLast" style="color:var(--text-dim);">N/A</span></span>
+          </div>
+          <div style="margin-bottom:12px;">
+            <span style="font-size:10px; color:var(--text-dim); text-transform:uppercase; margin-right:8px;">Attack Types:</span>
+            <span id="resBadges"></span>
+          </div>
+          
+          <div class="table-wrapper" style="max-height: 200px; overflow-y: auto;">
+            <table class="cyber-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Port</th>
+                  <th>Protocol</th>
+                  <th>Risk</th>
+                  <th>Payload</th>
+                </tr>
+              </thead>
+              <tbody id="resRows"></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
-      <!-- 3. GEO HEATMAP WITH CLUSTERING -->
+      <!-- Section 2: Threat Map -->
       <section class="glass-card">
         <h3>🗺️ REAL-TIME GEOLOCATION THREAT MAP (CLUSTERED)</h3>
-        <div id="leafletMap" class="map-container"></div>
+        <div id="threatMap" class="map-box"></div>
       </section>
 
-      <!-- 4. RESEARCH METRICS PANEL -->
+      <!-- Section 3: IEEE Research Metrics -->
       <section class="glass-card">
-        <h3>📊 IEEE RESEARCH METRICS HUB</h3>
-        <div class="metrics-hud-grid" id="metricsHudGrid">
-          <div class="loading-text" style="grid-column: span 2; text-align: center;">Retrieving IEEE evaluation telemetry...</div>
+        <h3>◈ IEEE RESEARCH METRICS</h3>
+        <div class="research-grid" id="metricsGrid">
+          <div class="loading-text" style="grid-column: span 2; text-align: center;">Syncing research evaluation telemetry...</div>
         </div>
       </section>
+
     </main>
 
   </div>
 
-  <!-- Scripts -->
   <script src="js/api.js"></script>
   <script>
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("utcClock").textContent = now.toISOString().replace('T', ' ').substring(11, 19) + ' UTC';
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
     let map = null;
-    let markersLayer = null;
+    let markersGroup = null;
 
     function initMap() {
-      map = L.map('leafletMap', {
+      map = L.map('threatMap', {
         center: [20.0, 0.0],
         zoom: 2,
         zoomControl: true,
@@ -161,98 +236,114 @@
         maxZoom: 18
       }).addTo(map);
 
-      markersLayer = L.markerClusterGroup().addTo(map);
+      markersGroup = L.markerClusterGroup().addTo(map);
     }
 
-    async function loadMapAndMetrics() {
-      // 1. Fetch metrics & populate HUD
-      const metrics = await fetchResearchMetrics();
-      renderResearchMetrics(metrics);
-
-      // 2. Fetch logs and plot points
-      const logs = await fetchLogs();
-      plotMapPoints(logs);
+    async function loadIntelPage() {
+      initMap();
+      
+      const metrics = await fetchers.research();
+      const logs = await fetchers.logs();
+      
+      renderMetrics(metrics);
+      plotThreats(logs);
     }
 
-    async function searchLogsByIp() {
-      const ip = document.getElementById("ipSearchInput").value.trim();
+    async function lookupIp() {
+      const ip = document.getElementById("ipLookupInput").value.trim();
       if (!ip) return;
 
-      const logs = await fetchLogs(ip);
-      const container = document.getElementById("logsResultContainer");
-      const tbody = document.getElementById("resultBody");
-
+      const logs = await fetchers.logs(ip);
+      const box = document.getElementById("ipResultBox");
+      
       if (!logs.length) {
-        container.classList.remove("hidden");
-        tbody.innerHTML = `<tr><td colspan="6" class="loading-text" style="text-align: center;">No local telemetry logs found for IP: ${ip}</td></tr>`;
+        box.classList.remove("hidden");
+        document.getElementById("resCount").textContent = "0";
+        document.getElementById("resFirst").textContent = "N/A";
+        document.getElementById("resLast").textContent = "N/A";
+        document.getElementById("resBadges").innerHTML = "";
+        document.getElementById("resRows").innerHTML = `<tr><td colspan="5" class="loading-text" style="text-align: center;">No matching IP logs found.</td></tr>`;
         return;
       }
 
-      container.classList.remove("hidden");
-      let html = "";
+      box.classList.remove("hidden");
+      document.getElementById("resCount").textContent = logs.length;
+      document.getElementById("resFirst").textContent = new Date(logs[logs.length - 1].timestamp).toLocaleDateString();
+      document.getElementById("resLast").textContent = new Date(logs[0].timestamp).toLocaleDateString();
+
+      // Collect unique badges
+      const types = [...new Set(logs.map(l => l.attack_type))];
+      let badgesHtml = "";
+      types.forEach(t => {
+        badgesHtml += `<span class="badge badge-${t}" style="margin-right:6px;">${t.replace(/_/g, ' ')}</span>`;
+      });
+      document.getElementById("resBadges").innerHTML = badgesHtml;
+
+      // Table rows
+      let rowsHtml = "";
       logs.forEach(l => {
-        const timeStr = new Date(l.timestamp).toLocaleTimeString();
-        html += `
+        rowsHtml += `
           <tr>
-            <td style="color:var(--text-muted); font-family:var(--font-hud);">${timeStr}</td>
-            <td><span class="badge badge-${l.attack_type}">${l.attack_type.replace(/_/g, ' ')}</span></td>
+            <td style="color:var(--text-dim); font-family:var(--font-hud);">${new Date(l.timestamp).toLocaleTimeString()}</td>
             <td>${l.port}</td>
             <td>${l.protocol.toUpperCase()}</td>
             <td><strong style="color:${riskColor(l.risk_score)}">${l.risk_score}</strong></td>
-            <td style="font-family:monospace; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${l.raw_payload || 'No payload logged.'}</td>
+            <td style="font-family:monospace; max-width:400px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${l.raw_payload || 'No payload'}</td>
           </tr>
         `;
       });
-      tbody.innerHTML = html;
+      document.getElementById("resRows").innerHTML = rowsHtml;
     }
 
-    function plotMapPoints(logs) {
-      markersLayer.clearLayers();
-      if (logs.error || !logs.length) return;
+    function plotThreats(logs) {
+      markersGroup.clearLayers();
+      if (!logs.length) return;
 
-      const ipGroups = {};
-      logs.forEach(log => {
-        if (!log.latitude || !log.longitude) return;
-        const ip = log.ip_address;
-        if (!ipGroups[ip]) {
-          ipGroups[ip] = {
-            ip,
-            latitude: log.latitude,
-            longitude: log.longitude,
+      const uniqueIps = {};
+      logs.forEach(l => {
+        if (!l.latitude || !l.longitude) return;
+        
+        if (!uniqueIps[l.ip_address]) {
+          uniqueIps[l.ip_address] = {
+            lat: l.latitude,
+            lon: l.longitude,
             count: 0,
             maxRisk: 0,
-            city: log.city || "Unknown",
-            country: log.country || "Unknown"
+            lastType: l.attack_type,
+            country: l.country || "Unknown"
           };
         }
-        ipGroups[ip].count++;
-        ipGroups[ip].maxRisk = Math.max(ipGroups[ip].maxRisk, log.risk_score);
+        uniqueIps[l.ip_address].count++;
+        uniqueIps[l.ip_address].maxRisk = Math.max(uniqueIps[l.ip_address].maxRisk, l.risk_score);
       });
 
-      Object.values(ipGroups).forEach(g => {
-        const col = riskColor(g.maxRisk);
-        const marker = L.circleMarker([g.latitude, g.longitude], {
-          radius: Math.min(8 + g.count * 1.5, 20),
-          fillColor: col,
-          color: col,
+      Object.keys(uniqueIps).forEach(ip => {
+        const item = uniqueIps[ip];
+        const color = riskColor(item.maxRisk);
+        
+        const marker = L.circleMarker([item.lat, item.lon], {
+          radius: Math.min(8 + (item.count * 1.5), 18),
+          fillColor: color,
+          color: color,
           fillOpacity: 0.5,
           weight: 1
         });
 
-        const pop = `
-          <div style="font-family: Space Grotesk, sans-serif; font-size: 11px; color:#fff; line-height: 1.4;">
-            <strong>IP: ${g.ip}</strong><br/>
-            Location: ${g.city}, ${g.country}<br/>
-            Aggregated Risk: <strong style="color:${col}">${g.maxRisk}</strong>
+        const popup = `
+          <div style="font-family:Space Grotesk, sans-serif; font-size:11px; color:#fff; line-height:1.4;">
+            <strong>IP: ${ip}</strong><br/>
+            Location: ${item.country}<br/>
+            Severity: <strong style="color:${color}">${item.maxRisk}</strong><br/>
+            Attacks Count: ${item.count}
           </div>
         `;
-        marker.bindPopup(pop);
-        markersLayer.addLayer(marker);
+        marker.bindPopup(popup);
+        markersGroup.addLayer(marker);
       });
     }
 
-    function renderResearchMetrics(metrics) {
-      const grid = document.getElementById("metricsHudGrid");
+    function renderMetrics(metrics) {
+      const grid = document.getElementById("metricsGrid");
       if (metrics.error) {
         grid.innerHTML = `<div class="error-text" style="grid-column: span 2; text-align: center;">Failed to retrieve research stats from DB.</div>`;
         return;
@@ -264,31 +355,82 @@
         { label: "Chain Detection Rate", value: nm.chain_detection_rate ? (nm.chain_detection_rate * 100).toFixed(0) + "%" : "0%", highlight: true },
         { label: "Total Ingress Attacks", value: metrics.total_attacks || 0 },
         { label: "Unique Attacker Footprints", value: metrics.total_unique_ips || 0 },
-        { label: "Detection Accuracy (Ens)", value: (metrics.detection_rate_pct || 0) + "%" },
-        { label: "FP Rate Ratio", value: (metrics.false_positive_rate_pct || 0) + "%" },
-        { label: "Adaptation Efficiency Ratio", value: (metrics.adaptation_effectiveness_pct || 0) + "%" },
-        { label: "IP Reputation Cache Hit Rate", value: nm.intel_cache_hit_rate ? (nm.intel_cache_hit_rate * 100).toFixed(0) + "%" : "0%" },
-        { label: "LLM Summary Cache Hit Rate", value: nm.gemini_cache_hit_rate ? (nm.gemini_cache_hit_rate * 100).toFixed(0) + "%" : "0%" },
-        { label: "Mean Ingest Latency", value: (metrics.average_response_time_ms || 0).toFixed(1) + "ms" }
+        { label: "Model Classification (Ens)", value: (metrics.detection_rate_pct || 0) + "%" },
+        { label: "False Positive Ratio", value: (metrics.false_positive_rate_pct || 0) + "%" },
+        { label: "Mean Ingest Latency", value: (metrics.average_response_time_ms || 0).toFixed(1) + "ms" },
+        { label: "Repeat Intruder Ratio", value: nm.repeat_attacker_rate ? (nm.repeat_attacker_rate * 100).toFixed(0) + "%" : "0%" }
       ];
 
       let html = "";
       fields.forEach(f => {
-        const activeClass = f.highlight ? "highlight" : "";
+        const cls = f.highlight ? "highlight" : "";
         html += `
-          <div class="metric-hud-card ${activeClass}">
-            <div class="metric-hud-label">${f.label}</div>
-            <div class="metric-hud-num">${f.value}</div>
+          <div class="research-card ${cls}">
+            <div class="research-card-label">${f.label}</div>
+            <div class="research-card-num">${f.value}</div>
           </div>
         `;
       });
+
+      // Append Cache Hit rates horizontal bars
+      const geminiCache = nm.gemini_cache_hit_rate ? (nm.gemini_cache_hit_rate * 100).toFixed(0) : "0";
+      const intelCache = nm.intel_cache_hit_rate ? (nm.intel_cache_hit_rate * 100).toFixed(0) : "0";
+      
+      html += `
+        <div class="glass-card" style="grid-column: 1 / -1;">
+          <h3>◈ CACHE OPTIMIZATION METRICS</h3>
+          <div style="margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; font-size:11px;">
+              <span>LLM Summary Cache Hit Rate</span>
+              <strong style="color:var(--cyan);">${geminiCache}%</strong>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" style="width:${geminiCache}%;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:11px;">
+              <span>IP Reputation Cache Hit Rate</span>
+              <strong style="color:var(--cyan);">${intelCache}%</strong>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" style="width:${intelCache}%;"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Append Tool Signature breakdown inline CSS bar chart
+      const signatures = nm.unique_tool_signatures || { sqlmap: 0, nmap: 0, hydra: 0, metasploit: 0, custom: 0 };
+      const sigTotal = Object.values(signatures).reduce((a, b) => a + b, 0) || 1;
+      
+      let sigRows = "";
+      Object.keys(signatures).forEach(key => {
+        const pct = ((signatures[key] / sigTotal) * 100).toFixed(0);
+        sigRows += `
+          <div class="bar-row">
+            <span class="bar-label">${key}</span>
+            <div class="bar-wrapper">
+              <div class="bar-fill" style="width:${pct}%;"></div>
+            </div>
+            <span class="bar-val">${signatures[key]}</span>
+          </div>
+        `;
+      });
+
+      html += `
+        <div class="glass-card" style="grid-column: 1 / -1;">
+          <h3>◈ THREAT SIGNATURE SPECTRUM</h3>
+          <div class="inline-bar-chart">
+            ${sigRows}
+          </div>
+        </div>
+      `;
+
       grid.innerHTML = html;
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      initMap();
-      loadMapAndMetrics();
-    });
+    document.addEventListener("DOMContentLoaded", loadIntelPage);
   </script>
 </body>
 </html>

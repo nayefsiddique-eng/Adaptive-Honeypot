@@ -3,65 +3,125 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MIRAGE — Sessions Database</title>
+  <title>MIRAGE — Attacker Profiles</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .timeline-container {
-      background: rgba(0, 0, 0, 0.4);
+    .filter-bar {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    @media (max-width: 768px) {
+      .filter-bar { grid-template-columns: 1fr; }
+    }
+    
+    /* Attacker card deck */
+    .sessions-deck {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    
+    .session-card {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 180px;
+    }
+    
+    .session-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .session-card-middle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 12px 0;
+    }
+    
+    .session-card-risk {
+      font-family: var(--font-hud);
+      font-size: 2.2rem;
+      font-weight: 700;
+    }
+    
+    .session-card-bottom {
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    
+    /* Expanded Timeline player overlay */
+    .timeline-wrapper {
+      grid-column: 1 / -1;
+      background: var(--bg-panel);
+      border: 1px solid var(--cyan);
+      border-radius: 8px;
       padding: 20px;
-      border: 1px solid rgba(0, 245, 255, 0.1);
-      border-radius: 4px;
-      margin: 10px 0;
+      margin-top: 8px;
+      box-shadow: 0 0 15px rgba(0, 245, 255, 0.1);
+      display: none;
     }
     
-    .timeline-list {
+    .vertical-timeline {
+      position: relative;
+      padding-left: 32px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      position: relative;
-      padding-left: 20px;
+      gap: 16px;
+      margin-top: 16px;
     }
-    .timeline-list::after {
+    
+    .vertical-timeline::before {
       content: "";
       position: absolute;
-      left: 6px;
-      top: 5px;
-      bottom: 5px;
+      left: 10px;
+      top: 4px;
+      bottom: 4px;
       width: 2px;
-      background: rgba(0, 245, 255, 0.15);
+      background: var(--border);
     }
     
-    .timeline-item {
+    .timeline-node {
+      position: relative;
       display: flex;
       flex-direction: column;
-      position: relative;
     }
-    .timeline-item::after {
-      content: "";
+    
+    .timeline-node-dot {
       position: absolute;
-      left: -18px;
-      top: 6px;
+      left: -26px;
+      top: 4px;
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: var(--accent-cyan);
-      box-shadow: 0 0 6px var(--accent-cyan);
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
     }
     
-    .timeline-meta {
+    .timeline-node-time {
       font-family: var(--font-hud);
       font-size: 10px;
-      letter-spacing: 1px;
-      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
     }
-    .timeline-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--accent-cyan);
-    }
-    .timeline-detail {
-      font-size: 12px;
-      color: #94a3b8;
+    
+    .timeline-node-content {
+      background: rgba(0, 245, 255, 0.01);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -69,166 +129,195 @@
 
   <div class="app-container">
     
-    <!-- 1. HEADER -->
+    <!-- 1. HEADER COCKPIT -->
     <header class="hud-header">
-      <a href="index.html" class="hud-logo">
-        <span class="hud-logo-icon">🛡️</span>
-        <div class="hud-logo-text">
-          <h1>MIRAGE</h1>
-          <span>AI Adaptive Deception</span>
-        </div>
-      </a>
-      
-      <nav>
-        <ul class="hud-nav">
-          <li class="hud-nav-item"><a href="index.html">Portal</a></li>
-          <li class="hud-nav-item"><a href="dashboard.html">SOC Cockpit</a></li>
-          <li class="hud-nav-item active"><a href="sessions.html">Attacker Profiles</a></li>
-          <li class="hud-nav-item"><a href="intel.html">Threat Intel</a></li>
-        </ul>
-      </nav>
+      <a href="index.html" class="hud-logo">◈ MIRAGE</a>
+      <div class="hud-clock" id="utcClock">00:00:00 UTC</div>
+      <div class="hud-nav">
+        <li class="hud-nav-item"><a href="index.html">Portal</a></li>
+        <li class="hud-nav-item"><a href="dashboard.html">SOC Cockpit</a></li>
+        <li class="hud-nav-item active"><a href="sessions.html">Attacker Profiles</a></li>
+        <li class="hud-nav-item"><a href="intel.html">Threat Intel</a></li>
+      </div>
     </header>
 
-    <!-- 2. SESSIONS DATABASE -->
-    <section class="glass-card">
-      <h3>📟 COCKPIT SESSION DB</h3>
-      <div class="table-wrapper">
-        <table class="cyber-table">
-          <thead>
-            <tr>
-              <th>Session ID</th>
-              <th>IP Address</th>
-              <th>Country</th>
-              <th>Attack Count</th>
-              <th>Risk Score</th>
-              <th>Deception Score</th>
-              <th>Chain Name</th>
-              <th>Depth</th>
-              <th>Last Seen</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="sessionsBody">
-            <tr>
-              <td colspan="10" class="loading-text" style="text-align: center;">Retrieving active attacker session histories...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- 2. FILTER CONTROLS -->
+    <section class="glass-card filter-bar">
+      <input type="text" id="filterIp" class="input-control" placeholder="Search IP address..." oninput="filterSessions()">
+      <select id="filterStatus" class="input-control" onchange="filterSessions()">
+        <option value="all">All States</option>
+        <option value="active">Active Sessions</option>
+        <option value="closed">Closed Sessions</option>
+      </select>
+      <select id="filterRisk" class="input-control" onchange="filterSessions()">
+        <option value="all">All Risk Levels</option>
+        <option value="critical">Critical (80+)</option>
+        <option value="high">High (60-70)</option>
+        <option value="medium">Medium (40-59)</option>
+      </select>
+    </section>
+
+    <!-- 3. CARDS DECK GRID -->
+    <section class="sessions-deck" id="deckContainer">
+      <div class="loading-text" style="grid-column: 1 / -1; text-align: center;">Syncing session nodes...</div>
     </section>
 
   </div>
 
-  <!-- Scripts -->
   <script src="js/api.js"></script>
   <script>
-    let openSessionId = null;
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("utcClock").textContent = now.toISOString().replace('T', ' ').substring(11, 19) + ' UTC';
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-    async function loadSessions() {
-      const sessions = await fetchSessions();
-      renderSessions(sessions);
+    let allSessions = [];
+    let expandedSessionId = null;
+
+    async function loadSessionsPage() {
+      allSessions = await fetchers.sessions();
+      renderDeck(allSessions);
     }
 
-    function renderSessions(sessions) {
-      const tbody = document.getElementById("sessionsBody");
+    function renderDeck(sessions) {
+      const deck = document.getElementById("deckContainer");
       if (!sessions.length) {
-        tbody.innerHTML = `<tr><td colspan="10" class="loading-text" style="text-align: center;">No recorded session history.</td></tr>`;
+        deck.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1; text-align: center;">No threat sessions matches the active logs filters.</div>`;
         return;
       }
 
       let html = "";
       sessions.forEach(sess => {
         const truncId = sess.session_id.substring(0, 8);
-        const col = riskColor(sess.risk_score);
-        const deceptionScore = sess.deception_score_avg ? sess.deception_score_avg.toFixed(2) : "0.00";
+        const activeBadge = sess.is_active 
+          ? `<span class="badge badge-low">ACTIVE</span>` 
+          : `<span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-dim); border-color:var(--border);">CLOSED</span>`;
         
-        let statusBadge = `<span class="badge" style="background:rgba(0, 255, 136, 0.12); color:var(--accent-green); border:1px solid var(--accent-green);">Active</span>`;
-        if (sess.is_active === false) {
-          statusBadge = `<span class="badge" style="background:rgba(78, 97, 120, 0.12); color:var(--text-muted); border:1px solid var(--text-muted);">Closed</span>`;
-        }
+        const chainBadge = sess.attack_chain_name
+          ? `<span class="badge badge-high" style="margin-left:8px;">${sess.attack_chain_name.toUpperCase()}</span>`
+          : "";
 
-        const chainStr = sess.attack_chain_name
-          ? `<span class="badge" style="background:rgba(255, 107, 43, 0.1); color:var(--accent-orange); border:1px solid var(--accent-orange);">${sess.attack_chain_name.toUpperCase().replace(/_/g, ' ')}</span>`
-          : `<span style="color:var(--text-muted);">None</span>`;
+        const decScore = (sess.deception_score_avg || 0.00).toFixed(2);
 
         html += `
-          <tr style="cursor:pointer;" onclick="toggleSession('${sess.session_id}')">
-            <td style="font-family:var(--font-hud); font-weight:700; color:var(--accent-cyan);">#${truncId}</td>
-            <td><strong>${sess.ip_address}</strong></td>
-            <td>${sess.country || 'Unknown'}</td>
-            <td style="font-family:var(--font-hud); font-size:14px; font-weight:700;">${sess.attack_count}</td>
-            <td><strong style="color:${col};">${sess.risk_score}</strong></td>
-            <td style="font-family:var(--font-hud); font-size:14px; font-weight:700;">${deceptionScore}</td>
-            <td>${chainStr}</td>
-            <td style="font-family:var(--font-hud);">${sess.interaction_depth}/4</td>
-            <td style="color:var(--text-secondary);">${new Date(sess.last_seen || sess.first_seen).toLocaleTimeString()}</td>
-            <td>${statusBadge}</td>
-          </tr>
-          <tr id="timelineRow_${sess.session_id}" class="hidden">
-            <td colspan="10">
-              <div class="timeline-container" id="timelineBox_${sess.session_id}">
-                <div class="loading-text">Loading sequential timeline details...</div>
+          <div class="glass-card session-card" id="card_${sess.session_id}" onclick="expandSession('${sess.session_id}')">
+            <div class="session-card-header">
+              <span style="font-family:monospace; color:var(--cyan); font-weight:700;">#${truncId}</span>
+              <div>🏳️ ${sess.country || 'Unknown'} ${activeBadge}</div>
+            </div>
+            
+            <div class="session-card-middle">
+              <div class="session-card-risk" style="color:${riskColor(sess.risk_score)}">${sess.risk_score}</div>
+              <div style="text-align:right;">
+                <div style="font-family:var(--font-hud); font-size:16px; font-weight:700; color:#fff;">${sess.attack_count}</div>
+                <div style="font-size:9px; color:var(--text-dim); text-transform:uppercase;">attacks ${chainBadge}</div>
               </div>
-            </td>
-          </tr>
+            </div>
+            
+            <div class="session-card-bottom">
+              <span>DECP: <strong>${decScore}</strong></span>
+              <span>DEPTH: <strong>${sess.interaction_depth}/4</strong></span>
+              <span>DUR: <strong>${(sess.session_duration || 0).toFixed(0)}s</strong></span>
+            </div>
+          </div>
+          
+          <div class="timeline-wrapper" id="timeline_${sess.session_id}">
+            <!-- Expanded Timeline player container -->
+          </div>
         `;
       });
-      tbody.innerHTML = html;
+      deck.innerHTML = html;
     }
 
-    async function toggleSession(sessionId) {
-      const row = document.getElementById(`timelineRow_${sessionId}`);
-      const box = document.getElementById(`timelineBox_${sessionId}`);
-      
-      if (openSessionId === sessionId) {
-        row.classList.add("hidden");
-        openSessionId = null;
+    async function expandSession(id) {
+      const prevWrapper = document.getElementById(`timeline_${expandedSessionId}`);
+      if (prevWrapper) {
+        prevWrapper.style.display = "none";
+      }
+
+      if (expandedSessionId === id) {
+        expandedSessionId = null;
         return;
       }
 
-      if (openSessionId) {
-        const prev = document.getElementById(`timelineRow_${openSessionId}`);
-        if (prev) prev.classList.add("hidden");
-      }
-
-      openSessionId = sessionId;
-      row.classList.remove("hidden");
+      expandedSessionId = id;
+      const wrapper = document.getElementById(`timeline_${id}`);
+      wrapper.style.display = "block";
+      wrapper.innerHTML = `<div class="loading-text">Reconstructing vertical threat path...</div>`;
       
-      box.innerHTML = `<div class="loading-text">Extracting sequential interaction timeline delta records...</div>`;
-      
-      const timeline = await fetchBehaviorTimeline(sessionId);
-      renderTimeline(box, timeline);
+      const timeline = await fetchers.timeline(id);
+      renderTimeline(wrapper, timeline);
     }
 
-    function renderTimeline(container, timeline) {
+    function renderTimeline(wrapper, timeline) {
       if (!timeline.length) {
-        container.innerHTML = `<div class="loading-text">No timeline trace logs found.</div>`;
+        wrapper.innerHTML = `<div class="loading-text">No interaction path traces logged for this session node.</div>`;
         return;
       }
 
-      let itemsHtml = "";
+      let nodesHtml = "";
       timeline.forEach(t => {
         const delta = t.delta_seconds || 0;
-        const mitreStr = t.mitre_technique ? `MITRE ID: ${t.mitre_technique}` : "MITRE: None";
+        const mitre = t.mitre_technique ? `MITRE ID: ${t.mitre_technique}` : "MITRE: Monitor";
+        const riskCol = riskColor(t.risk_score);
         
-        itemsHtml += `
-          <div class="timeline-item">
-            <div class="timeline-meta">+${delta}s — ${mitreStr}</div>
-            <div class="timeline-title">${t.attack_type.toUpperCase().replace(/_/g, ' ')}</div>
-            <div class="timeline-detail">Adaptive State: <strong class="text-green">${t.deception_state.toUpperCase()}</strong> | Risk Index: <strong style="color:${riskColor(t.risk_score)}">${t.risk_score}</strong></div>
+        nodesHtml += `
+          <div class="timeline-node">
+            <span class="timeline-node-dot" style="background:${riskCol}; box-shadow: 0 0 8px ${riskCol};"></span>
+            <div class="timeline-node-time">T+${delta}s | ${mitre}</div>
+            <div class="timeline-node-content">
+              <div style="font-family:var(--font-hud); font-weight:700; color:var(--cyan); font-size:12px; display:flex; justify-content:space-between;">
+                <span>${t.attack_type.toUpperCase().replace(/_/g, ' ')}</span>
+                <span style="color:${riskCol}">RISK: ${t.risk_score}</span>
+              </div>
+              <div style="font-size:10px; color:var(--text-dim); margin-top:2px;">
+                Deception State: <strong style="color:var(--green)">${t.deception_state.toUpperCase()}</strong>
+              </div>
+            </div>
           </div>
         `;
       });
 
-      container.innerHTML = `
-        <div style="font-family:var(--font-hud); font-weight:700; color:var(--accent-cyan); margin-bottom:12px; font-size:12px; letter-spacing:1px; text-transform:uppercase;">Attacker Interaction Delta Timeline</div>
-        <div class="timeline-list">
-          ${itemsHtml}
+      wrapper.innerHTML = `
+        <h3>◈ ATTACK TIMELINE</h3>
+        <div class="vertical-timeline">
+          ${nodesHtml}
         </div>
       `;
     }
 
-    document.addEventListener("DOMContentLoaded", loadSessions);
+    function filterSessions() {
+      const ip = document.getElementById("filterIp").value.trim().toLowerCase();
+      const status = document.getElementById("filterStatus").value;
+      const risk = document.getElementById("filterRisk").value;
+
+      let filtered = allSessions;
+      
+      if (ip) {
+        filtered = filtered.filter(s => s.ip_address.toLowerCase().includes(ip));
+      }
+      
+      if (status === "active") {
+        filtered = filtered.filter(s => s.is_active);
+      } else if (status === "closed") {
+        filtered = filtered.filter(s => !s.is_active);
+      }
+
+      if (risk === "critical") {
+        filtered = filtered.filter(s => s.risk_score >= 80);
+      } else if (risk === "high") {
+        filtered = filtered.filter(s => s.risk_score >= 60 && s.risk_score < 80);
+      } else if (risk === "medium") {
+        filtered = filtered.filter(s => s.risk_score >= 40 && s.risk_score < 60);
+      }
+
+      renderDeck(filtered);
+    }
+
+    document.addEventListener("DOMContentLoaded", loadSessionsPage);
   </script>
 </body>
 </html>
