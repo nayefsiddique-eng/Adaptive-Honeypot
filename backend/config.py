@@ -1,4 +1,7 @@
-from pydantic_settings import BaseSettings
+try:
+    from pydantic_settings import BaseSettings
+except ModuleNotFoundError:
+    from pydantic import BaseSettings
 
 class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./honeypot.db"
