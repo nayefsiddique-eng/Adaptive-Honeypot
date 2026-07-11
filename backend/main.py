@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.api import logs, decisions, geoip, threat_intel, timeline, sessions, research, dashboard, attacks, admin, digital_twin
+from backend.api import logs, decisions, geoip, threat_intel, timeline, sessions, research, dashboard, attacks, admin, digital_twin, deception_diagnostics
 from backend.database import init_db, SessionLocal
 from backend.services.classifier import load_models
 from backend.api.adaptive import router as adaptive_router
@@ -70,6 +70,7 @@ app.include_router(logs.router, prefix="/api/logs", tags=["Logs"])
 app.include_router(decisions.router, prefix="/api/decisions", tags=["Decisions"])
 app.include_router(sessions.router)
 app.include_router(digital_twin.router)
+app.include_router(deception_diagnostics.router)
 app.include_router(admin.router)
 app.include_router(adaptive_router)
 app.include_router(geoip.router)
