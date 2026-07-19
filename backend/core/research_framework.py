@@ -88,16 +88,17 @@ class PRAETORResearchFramework:
         """
         Measures processing latency, throughput, and system stability under load.
         """
+        from backend.core.cooperative_rl_engine import choose_rl_action
         latencies = []
-        start_time = time.time()
+        start_time = time.perf_counter()
         
-        for _ in range(session_count):
-            step_start = time.time()
-            # Lightweight simulation trace to log processing delta
-            time.sleep(random.uniform(0.001, 0.003))
-            latencies.append((time.time() - step_start) * 1000.0)
+        for i in range(session_count):
+            step_start = time.perf_counter()
+            # Execute the actual CMARL coordination decision path
+            choose_rl_action(self.db, "brute_force", i + 1, "medium")
+            latencies.append((time.perf_counter() - step_start) * 1000.0)
             
-        total_duration = time.time() - start_time
+        total_duration = time.perf_counter() - start_time
         throughput = session_count / total_duration
         
         return {
