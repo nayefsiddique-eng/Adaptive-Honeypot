@@ -1,11 +1,11 @@
 Method,Path,Status Code,Response Time (ms),Result Status
-GET,/,200,62.78,OK
-GET,/api/logs,200,39.18,OK
-GET,/api/logs/recent,200,22.99,OK
-GET,/api/sessions,200,26.53,OK
-GET,/api/sessions/clusters,200,12.99,OK
-GET,/api/research/metrics,200,81.9,OK
-GET,/api/research/learning-curve,200,14.99,OK
-GET,/api/research/benchmark,200,766.47,OK
-GET,/api/diagnostics/policies,200,9.01,OK
-GET,/api/diagnostics/enterprise-profiles,200,7.0,OK
+GET,/,200,954.57,OK
+GET,/api/logs,200,181.82,OK
+GET,/api/logs/recent,200,64.31,OK
+GET,/api/sessions,200,59.65,OK
+GET,/api/sessions/clusters,200,9323.22,OK
+GET,/api/research/metrics,200,179.73,OK
+GET,/api/research/learning-curve,200,33.23,OK
+GET,/api/research/benchmark,200,1488.4,OK
+GET,/api/diagnostics/policies,200,33.97,OK
+GET,/api/diagnostics/enterprise-profiles,200,14.99,OK

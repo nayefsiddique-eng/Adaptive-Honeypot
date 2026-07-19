@@ -777,25 +777,32 @@
       btn.textContent = "⌛ Running Demo...";
       statusText.style.color = "var(--cyan)";
       
-      const steps = [
-        "Starting attack simulation...",
-        "Generating attack events...",
-        "Running ML classification...",
-        "Executing RL adaptation...",
-        "Updating dashboard..."
-      ];
+      // Step 1: Initializing Demo...
+      statusText.textContent = "◈ Initializing Demo...";
+      await new Promise(r => setTimeout(r, 800));
       
-      // Animate progress text
-      for (let i = 0; i < steps.length; i++) {
-        statusText.textContent = `◈ ${steps[i]}`;
-        await new Promise(r => setTimeout(r, 600));
-      }
+      // Step 2: Generating Attack Traffic...
+      statusText.textContent = "◈ Generating Attack Traffic...";
+      await new Promise(r => setTimeout(r, 800));
       
       try {
         const response = await fetch(`${BASE_URL}/api/demo/start`, { method: "POST" });
         if (response.ok) {
           const data = await response.json();
-          statusText.textContent = `◈ Demo completed successfully! Generated ${data.events_generated} events.`;
+          
+          // Step 3: Running Threat Classification...
+          statusText.textContent = "◈ Running Threat Classification...";
+          await new Promise(r => setTimeout(r, 800));
+          
+          // Step 4: Executing Reinforcement Learning...
+          statusText.textContent = "◈ Executing Reinforcement Learning...";
+          await new Promise(r => setTimeout(r, 800));
+          
+          // Step 5: Updating Dashboard...
+          statusText.textContent = "◈ Updating Dashboard...";
+          await new Promise(r => setTimeout(r, 800));
+          
+          statusText.textContent = `◈ Demo completed successfully! Ingested ${data.events_generated} security events. ✓`;
           statusText.style.color = "var(--green)";
         } else {
           statusText.textContent = "◈ Demo execution failed.";
