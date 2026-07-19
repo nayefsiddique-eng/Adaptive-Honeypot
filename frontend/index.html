@@ -221,6 +221,11 @@
     <!-- 1. HEADER COCKPIT -->
     <header class="hud-header">
       <a href="index.html" class="hud-logo">◈ MIRAGE</a>
+      <div style="display: flex; gap: 8px; align-items: center; margin-left: 20px;">
+        <button id="startDemoBtn" class="btn" style="background:var(--cyan); color:#000; border:none; padding:6px 12px; border-radius:4px; font-family:var(--font-hud); font-size:11px; font-weight:bold; cursor:pointer;" onclick="runLiveDemo()">▶ Start Live Demo</button>
+        <button id="resetDemoBtn" class="btn" style="background:rgba(255, 45, 85, 0.15); color:var(--red); border:1px solid var(--red); padding:6px 12px; border-radius:4px; font-family:var(--font-hud); font-size:11px; font-weight:bold; cursor:pointer;" onclick="resetDemo()">Reset Demo</button>
+        <span id="demoStatusText" style="color:var(--text-dim); font-size:10px; font-family:monospace; margin-left:10px;"></span>
+      </div>
       <div class="hud-clock" id="utcClock">00:00:00 UTC</div>
       <div class="hud-status-bar">
         <span class="badge" id="backendStatusPill" style="background:rgba(255, 45, 85, 0.15); color:var(--red); border-color:var(--red);">BACKEND: OFFLINE</span>
@@ -761,6 +766,88 @@
         });
         miniLogs.innerHTML = logsHtml;
       }
+    }
+
+    async function runLiveDemo() {
+      const btn = document.getElementById("startDemoBtn");
+      const statusText = document.getElementById("demoStatusText");
+      
+      btn.disabled = true;
+      btn.style.opacity = 0.5;
+      btn.textContent = "⌛ Running Demo...";
+      statusText.style.color = "var(--cyan)";
+      
+      const steps = [
+        "Starting attack simulation...",
+        "Generating attack events...",
+        "Running ML classification...",
+        "Executing RL adaptation...",
+        "Updating dashboard..."
+      ];
+      
+      // Animate progress text
+      for (let i = 0; i < steps.length; i++) {
+        statusText.textContent = `◈ ${steps[i]}`;
+        await new Promise(r => setTimeout(r, 600));
+      }
+      
+      try {
+        const response = await fetch(`${BASE_URL}/api/demo/start`, { method: "POST" });
+        if (response.ok) {
+          const data = await response.json();
+          statusText.textContent = `◈ Demo completed successfully! Generated ${data.events_generated} events.`;
+          statusText.style.color = "var(--green)";
+        } else {
+          statusText.textContent = "◈ Demo execution failed.";
+          statusText.style.color = "var(--red)";
+        }
+      } catch (e) {
+        statusText.textContent = `◈ Connection error: ${e.message}`;
+        statusText.style.color = "var(--red)";
+      }
+      
+      // Force UI sync
+      await syncTelemetry();
+      
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.style.opacity = 1.0;
+        btn.textContent = "▶ Start Live Demo";
+      }, 3000);
+    }
+
+    async function resetDemo() {
+      const btn = document.getElementById("resetDemoBtn");
+      const statusText = document.getElementById("demoStatusText");
+      
+      btn.disabled = true;
+      btn.style.opacity = 0.5;
+      btn.textContent = "⌛ Resetting...";
+      statusText.style.color = "var(--yellow)";
+      statusText.textContent = "◈ Clearing demo data...";
+      
+      try {
+        const response = await fetch(`${BASE_URL}/api/demo/reset`, { method: "POST" });
+        if (response.ok) {
+          statusText.textContent = "◈ Demo reset complete. Dashboard cleared.";
+          statusText.style.color = "var(--green)";
+        } else {
+          statusText.textContent = "◈ Reset failed.";
+          statusText.style.color = "var(--red)";
+        }
+      } catch (e) {
+        statusText.textContent = `◈ Connection error: ${e.message}`;
+        statusText.style.color = "var(--red)";
+      }
+      
+      // Force UI sync
+      await syncTelemetry();
+      
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.style.opacity = 1.0;
+        btn.textContent = "Reset Demo";
+      }, 3000);
     }
 
     document.addEventListener("DOMContentLoaded", () => {

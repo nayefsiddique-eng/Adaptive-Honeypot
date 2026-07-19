@@ -189,6 +189,20 @@ Open `frontend/index.html` directly in any web browser. It operates on `file://`
 
 ---
 
+## 🖥️ Running a Live Demonstration
+
+To run an automated live presentation for a faculty committee:
+1. **Start the Backend:** Boot the FastAPI server (`python -m uvicorn backend.main:app --port 8000`).
+2. **Open the Dashboard:** Open `frontend/index.html` in your web browser.
+3. **Click ▶ Start Live Demo:** Near the dashboard header, click the prominent **Start Live Demo** button. The system will automatically:
+   * Disable the dashboard triggers and display progress updates.
+   * Trigger the 15-event multi-stage attack playbook via the backend `POST /api/demo/start` endpoint.
+   * Classify, evaluate, and learn coordinated CMARL responses.
+   * Auto-refresh all charts, maps, timelines, and metrics indicators on completion.
+4. **Reset Demo:** Click the **Reset Demo** button to clear database states and reset dashboard counters to zero.
+
+---
+
 ## 📡 API Endpoint Reference
 
 | Method | Path | Description |

