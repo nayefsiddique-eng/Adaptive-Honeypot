@@ -12,12 +12,17 @@ _features = None
 
 def load_models():
     global _rf, _xgb, _iso, _le, _features
-    _rf = joblib.load(f"{MODEL_DIR}/random_forest.pkl")
-    _xgb = joblib.load(f"{MODEL_DIR}/xgboost.pkl")
-    _iso = joblib.load(f"{MODEL_DIR}/isolation_forest.pkl")
-    _le = joblib.load(f"{MODEL_DIR}/label_encoder.pkl")
-    _features = joblib.load(f"{MODEL_DIR}/feature_names.pkl")
-    print("ML models loaded successfully")
+    try:
+        _rf = joblib.load(f"{MODEL_DIR}/random_forest.pkl")
+        _xgb = joblib.load(f"{MODEL_DIR}/xgboost.pkl")
+        _iso = joblib.load(f"{MODEL_DIR}/isolation_forest.pkl")
+        _le = joblib.load(f"{MODEL_DIR}/label_encoder.pkl")
+        _features = joblib.load(f"{MODEL_DIR}/feature_names.pkl")
+        print("ML models loaded successfully")
+    except FileNotFoundError:
+        print("ML model files not found — running in heuristic-only mode")
+    except Exception as e:
+        print(f"ML model loading failed: {e} — running in heuristic-only mode")
 
 def models_loaded():
     return _rf is not None
