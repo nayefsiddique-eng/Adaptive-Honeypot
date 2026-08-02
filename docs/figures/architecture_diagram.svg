@@ -1,0 +1,99 @@
+<svg width="850" height="520" viewBox="0 0 850 520" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100%" height="100%" fill="#0a0f1d"/>
+    
+    <!-- Title -->
+    <text x="30" y="40" font-family="monospace" font-size="18" font-weight="bold" fill="#00ff88">SYSTEM ARCHITECTURE: ADAPTIVE AI HONEYPOT</text>
+    <text x="30" y="60" font-family="monospace" font-size="11" fill="#64748b">IEEE RESEARCH FIGURE - MODULE INTERACTION &amp; DATAFLOW</text>
+
+    <!-- Source block -->
+    <rect x="30" y="190" width="100" height="150" rx="6" fill="#131a35" stroke="#ff3b30" stroke-width="1.5"/>
+    <text x="80" y="240" font-family="monospace" font-size="12" font-weight="bold" fill="#e2e8f0" text-anchor="middle">ATTACKER</text>
+    <text x="80" y="260" font-family="monospace" font-size="10" fill="#64748b" text-anchor="middle">HTTP/TCP/UDP</text>
+    <text x="80" y="280" font-family="monospace" font-size="10" fill="#ff3b30" text-anchor="middle">INTRUSIONS</text>
+    
+    <!-- Connector Arrow -->
+    <path d="M 130 265 L 180 265" fill="none" stroke="#ff3b30" stroke-width="2" marker-end="url(#arrow-red)"/>
+
+    <!-- Ingestion Block -->
+    <rect x="180" y="190" width="120" height="150" rx="6" fill="#131a35" stroke="#00f0ff" stroke-width="1.5"/>
+    <text x="240" y="230" font-family="monospace" font-size="11" font-weight="bold" fill="#e2e8f0" text-anchor="middle">API INGESTION</text>
+    <text x="240" y="250" font-family="monospace" font-size="9" fill="#64748b" text-anchor="middle">FastAPI Gateway</text>
+    <line x1="195" y1="270" x2="285" y2="270" stroke="#232e58"/>
+    <text x="240" y="295" font-family="monospace" font-size="10" fill="#00ff88" text-anchor="middle">TRAFFIC LOGGER</text>
+    <text x="240" y="315" font-family="monospace" font-size="9" fill="#64748b" text-anchor="middle">JSONL Logs File</text>
+
+    <!-- Ingest to feature extractor -->
+    <path d="M 300 265 L 350 265" fill="none" stroke="#00f0ff" stroke-width="1.5" marker-end="url(#arrow-cyan)"/>
+
+    <!-- Feature Extractor -->
+    <rect x="350" y="190" width="120" height="150" rx="6" fill="#131a35" stroke="#ff9900" stroke-width="1.5"/>
+    <text x="410" y="230" font-family="monospace" font-size="11" font-weight="bold" fill="#e2e8f0" text-anchor="middle">FEATURE</text>
+    <text x="410" y="245" font-family="monospace" font-size="11" font-weight="bold" fill="#e2e8f0" text-anchor="middle">EXTRACTOR</text>
+    <line x1="365" y1="265" x2="455" y2="265" stroke="#232e58"/>
+    <text x="410" y="290" font-family="monospace" font-size="9" fill="#64748b" text-anchor="middle">Port/Protocol/Size</text>
+    <text x="410" y="305" font-family="monospace" font-size="9" fill="#64748b" text-anchor="middle">Regex Signatures</text>
+    <text x="410" y="320" font-family="monospace" font-size="9" fill="#64748b" text-anchor="middle">Login/Scan Counts</text>
+
+    <!-- Splitter -->
+    <path d="M 470 265 L 530 265" fill="none" stroke="#ff9900" stroke-width="1.5"/>
+    <!-- Branch to ML -->
+    <path d="M 500 265 L 500 120 L 530 120" fill="none" stroke="#af52de" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+    <!-- Branch to Threat Intel -->
+    <path d="M 500 265 L 500 410 L 530 410" fill="none" stroke="#ffcc00" stroke-width="1.5" marker-end="url(#arrow-yellow)"/>
+
+    <!-- ML Layer -->
+    <rect x="530" y="50" width="140" height="140" rx="6" fill="#131a35" stroke="#af52de" stroke-width="1.5"/>
+    <text x="600" y="80" font-family="monospace" font-size="11" font-weight="bold" fill="#e2e8f0" text-anchor="middle">ML CLASSIFIER</text>
+    <text x="600" y="105" font-family="monospace" font-size="9" fill="#00ff88" text-anchor="middle">Random Forest</text>
+    <text x="600" y="125" font-family="monospace" font-size="9" fill="#00f0ff" text-anchor="middle">XGBoost Ensemble</text>
+    <text x="600" y="145" font-family="monospace" font-size="9" fill="#ff9900" text-anchor="middle">Isolation Forest (AD)</text>
+    <text x="600" y="165" font-family="monospace" font-size="9" fill="#64748b" text-anchor="middle">MITRE ATT&amp;CK Mapper</text>
+
+    <!-- Threat Intel Layer -->
+    <rect x="530" y="340" width="140" height="140" rx="6" fill="#131a35" stroke="#ffcc00" stroke-width="1.5"/>
+    <text x="600" y="370" font-family="monospace" font-size="11" font-weight="bold" fill="#e2e8f0" text-anchor="middle">THREAT INTEL &amp; GEO</text>
+    <text x="600" y="395" font-family="monospace" font-size="9" fill="#e2e8f0" text-anchor="middle">GeoIP Enrichment</text>
+    <text x="600" y="415" font-family="monospace" font-size="9" fill="#64748b" text-anchor="middle">AbuseIPDB Feed Check</text>
+    <text x="600" y="435" font-family="monospace" font-size="9" fill="#64748b" text-anchor="middle">AlienVault OTX pulses</text>
+    <text x="600" y="455" font-family="monospace" font-size="9" fill="#ffcc00" text-anchor="middle">Reputation Scoring</text>
+
+    <!-- Joins to Decision Engine -->
+    <path d="M 670 120 L 700 120 L 700 190" fill="none" stroke="#af52de" stroke-width="1.5"/>
+    <path d="M 670 410 L 700 410 L 700 340" fill="none" stroke="#ffcc00" stroke-width="1.5"/>
+    
+    <!-- Main input to Decision Engine -->
+    <path d="M 700 265 L 720 265" fill="none" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+    <!-- Adaptive Decision Engine & Profiles -->
+    <rect x="720" y="190" width="100" height="150" rx="6" fill="#131a35" stroke="#00ff88" stroke-width="1.5"/>
+    <text x="770" y="220" font-family="monospace" font-size="10" font-weight="bold" fill="#e2e8f0" text-anchor="middle">ADAPTIVE</text>
+    <text x="770" y="235" font-family="monospace" font-size="10" font-weight="bold" fill="#e2e8f0" text-anchor="middle">ENGINE</text>
+    <line x1="735" y1="250" x2="805" y2="250" stroke="#232e58"/>
+    <text x="770" y="270" font-family="monospace" font-size="9" fill="#00ff88" text-anchor="middle">SSH / SQLi</text>
+    <text x="770" y="285" font-family="monospace" font-size="9" fill="#00f0ff" text-anchor="middle">Malware Sink</text>
+    <text x="770" y="300" font-family="monospace" font-size="9" fill="#ff9900" text-anchor="middle">Port Exposure</text>
+    <text x="770" y="315" font-family="monospace" font-size="8" fill="#ffcc00" text-anchor="middle">Session Recorder</text>
+
+    <!-- Feedback loop to Attacker (Simulated Response) -->
+    <path d="M 770 340 L 770 495 L 80 495 L 80 340" fill="none" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrow-green)"/>
+    <text x="425" y="488" font-family="monospace" font-size="9" fill="#00ff88" text-anchor="middle">SIMULATED DECEPTION RESPONSE FEEDBACK (SSH SSH-2.0-OpenSSH / HTML WebApp / Payload Sinks)</text>
+
+    <!-- Markers definition -->
+    <defs>
+        <marker id="arrow-red" markerWidth="6" markerHeight="6" refX="2" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 Z" fill="#ff3b30"/>
+        </marker>
+        <marker id="arrow-cyan" markerWidth="6" markerHeight="6" refX="2" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 Z" fill="#00f0ff"/>
+        </marker>
+        <marker id="arrow-purple" markerWidth="6" markerHeight="6" refX="2" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 Z" fill="#af52de"/>
+        </marker>
+        <marker id="arrow-yellow" markerWidth="6" markerHeight="6" refX="2" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 Z" fill="#ffcc00"/>
+        </marker>
+        <marker id="arrow-green" markerWidth="6" markerHeight="6" refX="2" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 Z" fill="#00ff88"/>
+        </marker>
+    </defs>
+    </svg>

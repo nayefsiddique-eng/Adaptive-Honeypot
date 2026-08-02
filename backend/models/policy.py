@@ -1,0 +1,12 @@
+from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy.sql import func
+from backend.database import Base
+
+class RLPolicy(Base):
+    __tablename__ = "rl_policies"
+
+    id = Column(Integer, primary_key=True, index=True)
+    state = Column(String, index=True, nullable=False)
+    action = Column(String, index=True, nullable=False)
+    q_value = Column(Float, default=0.0)
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

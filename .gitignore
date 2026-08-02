@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Database
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# ML Models
+ml/models/*.pkl
+ml/models/*.joblib
+ml/models/*.bin
+*.pkl
+
+# Logs
+logs/
+*.log
+
+# Environment Variables
+.env
+.env.*
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# GeoIP DB
+*.mmdb
