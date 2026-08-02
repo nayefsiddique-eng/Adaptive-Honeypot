@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  praetor-backend:
+    build: .
+    container_name: praetor-backend-service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - DATABASE_URL=sqlite:///./honeypot.db
+      - SECRET_KEY=default-docker-secret-key-change-me
+      - LOG_DIR=logs/
+    restart: unless-stopped
