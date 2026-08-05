@@ -3,177 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PRAETOR — Attacker Profiles</title>
+  <title>PRAETOR — Sessions</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
+    /* Minimal page-specific styles */
+    .page-header {
+      margin-bottom: 24px;
+    }
+    .page-header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: var(--text-primary);
+    }
+    .page-header .subtitle {
+      margin: 4px 0 0 0;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
     .filter-bar {
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-    
-    @media (max-width: 768px) {
-      .filter-bar { grid-template-columns: 1fr; }
-    }
-    
-    /* Attacker card deck */
-    .sessions-deck {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 16px;
-    }
-    
-    .session-card {
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 180px;
-    }
-    
-    .session-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    
-    .session-card-middle {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 12px 0;
-    }
-    
-    .session-card-risk {
-      font-family: var(--font-hud);
-      font-size: 2.2rem;
-      font-weight: 700;
-    }
-    
-    .session-card-bottom {
-      display: flex;
-      justify-content: space-between;
-      border-top: 1px solid var(--border);
-      padding-top: 8px;
-      font-size: 11px;
-      color: var(--text-dim);
-    }
-    
-    /* Expanded Timeline player overlay */
-    .timeline-wrapper {
-      grid-column: 1 / -1;
-      background: var(--bg-panel);
-      border: 1px solid var(--cyan);
-      border-radius: 8px;
-      padding: 20px;
-      margin-top: 8px;
-      box-shadow: 0 0 15px rgba(0, 245, 255, 0.1);
-      display: none;
-    }
-    
-    .vertical-timeline {
-      position: relative;
-      padding-left: 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-top: 16px;
-    }
-    
-    .vertical-timeline::before {
-      content: "";
-      position: absolute;
-      left: 10px;
-      top: 4px;
-      bottom: 4px;
-      width: 2px;
-      background: var(--border);
-    }
-    
-    .timeline-node {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .timeline-node-dot {
-      position: absolute;
-      left: -26px;
-      top: 4px;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--cyan);
-      box-shadow: 0 0 8px var(--cyan);
-    }
-    
-    .timeline-node-time {
-      font-family: var(--font-hud);
-      font-size: 10px;
-      letter-spacing: 0.5px;
-      color: var(--text-dim);
-    }
-    
-    .timeline-node-content {
-      background: rgba(0, 245, 255, 0.01);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 10px;
-      margin-top: 4px;
+      margin-bottom: 24px;
     }
   </style>
 </head>
 <body>
 
-  <div class="app-container">
-    
-    <!-- 1. HEADER COCKPIT -->
-    <header class="hud-header">
-      <a href="index.html" class="hud-logo">◈ PRAETOR</a>
-      <div class="hud-clock" id="utcClock">00:00:00 UTC</div>
-      <div class="hud-nav">
-        <li class="hud-nav-item"><a href="index.html">Portal</a></li>
-        <li class="hud-nav-item"><a href="dashboard.html">SOC Cockpit</a></li>
-        <li class="hud-nav-item active"><a href="sessions.html">Attacker Profiles</a></li>
-        <li class="hud-nav-item"><a href="intel.html">Threat Intel</a></li>
-      </div>
-    </header>
+  <div class="app-shell">
+    <!-- Sidebar Mount -->
+    <div id="sidebarMount"></div>
 
-    <!-- 2. FILTER CONTROLS -->
-    <section class="glass-card filter-bar">
-      <input type="text" id="filterIp" class="input-control" placeholder="Search IP address..." oninput="filterSessions()">
-      <select id="filterStatus" class="input-control" onchange="filterSessions()">
-        <option value="all">All States</option>
-        <option value="active">Active Sessions</option>
-        <option value="closed">Closed Sessions</option>
-      </select>
-      <select id="filterRisk" class="input-control" onchange="filterSessions()">
-        <option value="all">All Risk Levels</option>
-        <option value="critical">Critical (80+)</option>
-        <option value="high">High (60-70)</option>
-        <option value="medium">Medium (40-59)</option>
-      </select>
-    </section>
+    <div class="main-wrapper">
+      <!-- Minimal Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <!-- Page context -->
+        </div>
+      </header>
 
-    <!-- 3. CARDS DECK GRID -->
-    <section class="sessions-deck" id="deckContainer">
-      <div class="loading-text" style="grid-column: 1 / -1; text-align: center;">Syncing session nodes...</div>
-    </section>
+      <main class="page-content">
+        <!-- Page Header -->
+        <div class="page-header">
+          <h1>Session forensics</h1>
+          <p class="subtitle">Attacker behavior profiles and interaction timelines</p>
+        </div>
 
+        <!-- 2. FILTER CONTROLS -->
+        <section class="filter-bar">
+          <input type="text" id="filterIp" class="input" placeholder="Search IP address..." oninput="filterSessions()">
+          <select id="filterStatus" class="input" onchange="filterSessions()">
+            <option value="all">All States</option>
+            <option value="active">Active Sessions</option>
+            <option value="closed">Closed Sessions</option>
+          </select>
+          <select id="filterRisk" class="input" onchange="filterSessions()">
+            <option value="all">All Risk Levels</option>
+            <option value="critical">Critical (80+)</option>
+            <option value="high">High (60-70)</option>
+            <option value="medium">Medium (40-59)</option>
+          </select>
+        </section>
+
+        <!-- 3. CARDS DECK GRID -->
+        <section class="session-grid" id="deckContainer">
+          <div class="empty-state" style="grid-column: 1 / -1; text-align: center;">Syncing session nodes...</div>
+        </section>
+      </main>
+    </div>
   </div>
 
   <script src="js/api.js"></script>
   <script>
-    // Live Clock
-    function updateClock() {
-      const now = new Date();
-      document.getElementById("utcClock").textContent = now.toISOString().replace('T', ' ').substring(11, 19) + ' UTC';
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
     let allSessions = [];
     let expandedSessionId = null;
 
@@ -182,10 +80,17 @@
       renderDeck(allSessions);
     }
 
+    function getRiskColorToken(score) {
+      if (score >= 80) return 'var(--severity-critical)';
+      if (score >= 60) return 'var(--severity-high)';
+      if (score >= 40) return 'var(--severity-medium)';
+      return 'var(--severity-low)';
+    }
+
     function renderDeck(sessions) {
       const deck = document.getElementById("deckContainer");
       if (!sessions.length) {
-        deck.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1; text-align: center;">No threat sessions matches the active logs filters.</div>`;
+        deck.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1; text-align: center;">No threat sessions matches the active filters.</div>`;
         return;
       }
 
@@ -194,37 +99,38 @@
         const truncId = sess.session_id.substring(0, 8);
         const activeBadge = sess.is_active 
           ? `<span class="badge badge-low">ACTIVE</span>` 
-          : `<span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-dim); border-color:var(--border);">CLOSED</span>`;
+          : `<span class="badge badge-neutral" style="background:var(--surface-2); color:var(--text-tertiary); border:1px solid var(--border-subtle);">CLOSED</span>`;
         
         const chainBadge = sess.attack_chain_name
           ? `<span class="badge badge-high" style="margin-left:8px;">${sess.attack_chain_name.toUpperCase()}</span>`
           : "";
 
         const decScore = (sess.deception_score_avg || 0.00).toFixed(2);
+        const riskColor = getRiskColorToken(sess.risk_score);
 
         html += `
-          <div class="glass-card session-card" id="card_${sess.session_id}" onclick="expandSession('${sess.session_id}')">
+          <div class="session-card" id="card_${sess.session_id}" onclick="expandSession('${sess.session_id}')">
             <div class="session-card-header">
-              <span style="font-family:monospace; color:var(--cyan); font-weight:700;">#${truncId}</span>
-              <div>🏳️ ${sess.country || 'Unknown'} ${activeBadge}</div>
+              <span style="font-family:var(--font-mono); color:var(--accent); font-weight:700;">#${truncId}</span>
+              <div style="display:flex; align-items:center; gap:8px;">${sess.country || 'Unknown'} ${activeBadge}</div>
             </div>
             
-            <div class="session-card-middle">
-              <div class="session-card-risk" style="color:${riskColor(sess.risk_score)}">${sess.risk_score}</div>
+            <div class="session-card-body" style="display:flex; justify-content:space-between; align-items:center; margin:12px 0;">
+              <div style="font-family:var(--font-mono); font-size:2.2rem; font-weight:700; color:${riskColor};">${sess.risk_score}</div>
               <div style="text-align:right;">
-                <div style="font-family:var(--font-hud); font-size:16px; font-weight:700; color:#fff;">${sess.attack_count}</div>
-                <div style="font-size:9px; color:var(--text-dim); text-transform:uppercase;">attacks ${chainBadge}</div>
+                <div style="font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--text-primary);">${sess.attack_count}</div>
+                <div style="font-size:9px; color:var(--text-tertiary); text-transform:uppercase;">attacks ${chainBadge}</div>
               </div>
             </div>
             
-            <div class="session-card-bottom">
-              <span>DECP: <strong>${decScore}</strong></span>
-              <span>DEPTH: <strong>${sess.interaction_depth}/4</strong></span>
-              <span>DUR: <strong>${(sess.session_duration || 0).toFixed(0)}s</strong></span>
+            <div class="session-card-footer" style="display:flex; justify-content:space-between; border-top:1px solid var(--border-subtle); padding-top:8px; font-size:11px; color:var(--text-tertiary);">
+              <span>DECP: <strong style="color:var(--text-secondary);">${decScore}</strong></span>
+              <span>DEPTH: <strong style="color:var(--text-secondary);">${sess.interaction_depth}/4</strong></span>
+              <span>DUR: <strong style="color:var(--text-secondary);">${(sess.session_duration || 0).toFixed(0)}s</strong></span>
             </div>
           </div>
           
-          <div class="timeline-wrapper" id="timeline_${sess.session_id}">
+          <div class="card" id="timeline_${sess.session_id}" style="grid-column: 1 / -1; display: none; padding: 20px; margin-top: 8px; margin-bottom: 16px;">
             <!-- Expanded Timeline player container -->
           </div>
         `;
@@ -246,7 +152,7 @@
       expandedSessionId = id;
       const wrapper = document.getElementById(`timeline_${id}`);
       wrapper.style.display = "block";
-      wrapper.innerHTML = `<div class="loading-text">Reconstructing vertical threat path...</div>`;
+      wrapper.innerHTML = `<div class="empty-state">Reconstructing vertical threat path...</div>`;
       
       const timeline = await fetchers.timeline(id);
       renderTimeline(wrapper, timeline);
@@ -254,7 +160,7 @@
 
     function renderTimeline(wrapper, timeline) {
       if (!timeline.length) {
-        wrapper.innerHTML = `<div class="loading-text">No interaction path traces logged for this session node.</div>`;
+        wrapper.innerHTML = `<div class="empty-state">No interaction path traces logged for this session node.</div>`;
         return;
       }
 
@@ -262,19 +168,19 @@
       timeline.forEach(t => {
         const delta = t.delta_seconds || 0;
         const mitre = t.mitre_technique ? `MITRE ID: ${t.mitre_technique}` : "MITRE: Monitor";
-        const riskCol = riskColor(t.risk_score);
+        const riskColor = getRiskColorToken(t.risk_score);
         
         nodesHtml += `
-          <div class="timeline-node">
-            <span class="timeline-node-dot" style="background:${riskCol}; box-shadow: 0 0 8px ${riskCol};"></span>
-            <div class="timeline-node-time">T+${delta}s | ${mitre}</div>
-            <div class="timeline-node-content">
-              <div style="font-family:var(--font-hud); font-weight:700; color:var(--cyan); font-size:12px; display:flex; justify-content:space-between;">
+          <div class="vtimeline-node">
+            <span class="vtimeline-dot" style="background-color:${riskColor};"></span>
+            <div class="vtimeline-time">T+${delta}s | ${mitre}</div>
+            <div class="vtimeline-content">
+              <div style="font-family:var(--font-mono); font-weight:700; color:var(--accent); font-size:12px; display:flex; justify-content:space-between;">
                 <span>${t.attack_type.toUpperCase().replace(/_/g, ' ')}</span>
-                <span style="color:${riskCol}">RISK: ${t.risk_score}</span>
+                <span style="color:${riskColor}">RISK: ${t.risk_score}</span>
               </div>
-              <div style="font-size:10px; color:var(--text-dim); margin-top:2px;">
-                Deception State: <strong style="color:var(--green)">${t.deception_state.toUpperCase()}</strong>
+              <div style="font-size:10px; color:var(--text-tertiary); margin-top:4px;">
+                Deception state: <strong style="color:var(--severity-low)">${t.deception_state.toUpperCase()}</strong>
               </div>
             </div>
           </div>
@@ -282,8 +188,8 @@
       });
 
       wrapper.innerHTML = `
-        <h3>◈ ATTACK TIMELINE</h3>
-        <div class="vertical-timeline">
+        <h3 class="card-title" style="margin-top:0; margin-bottom:16px;">Attack timeline</h3>
+        <div class="vtimeline">
           ${nodesHtml}
         </div>
       `;
@@ -317,7 +223,12 @@
       renderDeck(filtered);
     }
 
-    document.addEventListener("DOMContentLoaded", loadSessionsPage);
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.renderSidebar) {
+        renderSidebar('sessions');
+      }
+      loadSessionsPage();
+    });
   </script>
 </body>
 </html>

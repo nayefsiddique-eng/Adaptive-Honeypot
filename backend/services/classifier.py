@@ -31,7 +31,8 @@ def predict(features: dict) -> dict:
     if not models_loaded():
         return {"attack_type": "unknown", "confidence": 0.0, "is_anomaly": False, "model": "none"}
 
-    X = np.array([[features.get(f, 0) for f in _features]])
+    import pandas as pd
+    X = pd.DataFrame([[features.get(f, 0) for f in _features]], columns=_features)
 
     rf_pred = _rf.predict(X)[0]
     rf_proba = _rf.predict_proba(X)[0]

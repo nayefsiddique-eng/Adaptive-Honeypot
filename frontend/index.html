@@ -3,112 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PRAETOR — Portal Overview</title>
+  <title>PRAETOR — Overview</title>
   <link rel="stylesheet" href="css/style.css">
-  <style>
-    .portal-hero {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-  </style>
 </head>
 <body>
 
   <div class="app-shell">
     
     <!-- LEFT SIDEBAR -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <a href="index.html" class="brand-logo">
-          <div class="brand-icon">P</div>
-          <span>PRAETOR XDR</span>
-        </a>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">Security Operations</div>
-        <a href="index.html" class="nav-item active">
-          <span class="nav-item-icon">🌐</span> Portal Overview
-        </a>
-        <a href="dashboard.html" class="nav-item">
-          <span class="nav-item-icon">📊</span> SOC Dashboard
-        </a>
-        <a href="sessions.html" class="nav-item">
-          <span class="nav-item-icon">🛡️</span> Attacker Profiles
-        </a>
-        <a href="intel.html" class="nav-item">
-          <span class="nav-item-icon">📡</span> Threat Intelligence
-        </a>
-      </div>
-    </aside>
+    <div id="sidebarMount"></div>
 
     <!-- MAIN VIEWPORT -->
     <div class="main-wrapper">
       
       <!-- TOPBAR -->
-      <header class="topbar">
-        <div class="topbar-stats">
-          <div class="topbar-stat-item">
-            <span class="topbar-stat-label">System Health</span>
-            <span class="status-badge status-badge-success" id="topHealth">● ONLINE (100%)</span>
+      <header class="topbar" style="display: flex; justify-content: space-between; align-items: center; padding: 0 16px; height: 60px; border-bottom: 1px solid var(--border-subtle);">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span class="badge badge-neutral" id="topHealth">● ONLINE (100%)</span>
+          <span class="badge badge-info" id="topAiStatus">CMARL ACTIVE</span>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+            <span style="color: var(--text-secondary);">Total Ingested Attacks:</span>
+            <span style="color: var(--text-primary); font-family: var(--font-mono); font-weight: bold;" id="statAttacks">0</span>
           </div>
-          <div class="topbar-stat-item">
-            <span class="topbar-stat-label">AI Status</span>
-            <span class="status-badge status-badge-info" id="topAiStatus">CMARL ACTIVE</span>
-          </div>
-          <div class="topbar-stat-item">
-            <span class="topbar-stat-label">Total Ingested Attacks</span>
-            <span class="topbar-stat-val" id="statAttacks">0</span>
-          </div>
-          <div class="topbar-stat-item">
-            <span class="topbar-stat-label">Active Sessions</span>
-            <span class="topbar-stat-val" id="statSessions">0</span>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+            <span style="color: var(--text-secondary);">Active Sessions:</span>
+            <span style="color: var(--text-primary); font-family: var(--font-mono); font-weight: bold;" id="statSessions">0</span>
           </div>
         </div>
 
-        <div class="topbar-actions">
-          <span id="demoStatusText" style="color:var(--text-secondary); font-size:11px; font-family:var(--font-mono);">SYSTEM READY</span>
-          <button id="startDemoBtn" class="btn btn-primary" onclick="runLiveDemo()">▶ START DEMONSTRATION</button>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span id="demoStatusText" style="color: var(--text-secondary); font-size: 11px; font-family: var(--font-mono);">SYSTEM READY</span>
+          <button id="startDemoBtn" class="btn btn-primary" onclick="runLiveDemo()">Start Demo</button>
           <button id="resetDemoBtn" class="btn btn-danger" onclick="resetDemo()">Reset</button>
         </div>
       </header>
 
       <!-- PAGE CONTENT VIEWPORT -->
-      <main class="page-content">
+      <main class="page-content" style="padding: 24px;">
         
-        <div class="portal-hero">
+        <div class="kpi-row" style="margin-bottom: 24px;">
+          <div class="kpi-card">
+            <div class="kpi-label">Total Attacks</div>
+            <div class="kpi-value" id="heroAttacks" style="color: var(--accent);">0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Active Sessions</div>
+            <div class="kpi-value" id="heroSessions" style="color: var(--severity-low);">0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Unique IPs</div>
+            <div class="kpi-value" id="heroIPs" style="color: var(--severity-medium);">0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Avg Risk</div>
+            <div class="kpi-value" id="heroAvgRisk" style="color: var(--severity-critical);">0.0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Deception Score</div>
+            <div class="kpi-value" id="heroDeception" style="color: var(--purple);">0.00</div>
+          </div>
+        </div>
+
+        <div class="grid grid-12">
           
-          <section class="card col-8">
+          <section class="card col-span-8">
             <div class="card-header">
-              <div>
-                <div class="card-title"><span class="card-title-icon">📊</span> PLATFORM TELEMETRY & ATTACK DISTRIBUTIONS</div>
-                <div class="card-subtitle">Real-time statistics consumed live from Python backend APIs</div>
-              </div>
+              <div class="card-title">Recent activity</div>
+              <div class="card-subtitle">Real-time statistics consumed live from Python backend APIs</div>
             </div>
 
-            <div class="subcard-grid-4" style="margin-bottom:16px;">
-              <div class="subcard">
-                <div class="subcard-label">Total Attacks</div>
-                <div class="subcard-val" id="heroAttacks" style="color:var(--accent-primary)">0</div>
-              </div>
-              <div class="subcard">
-                <div class="subcard-label">Active Sessions</div>
-                <div class="subcard-val" id="heroSessions" style="color:var(--color-success)">0</div>
-              </div>
-              <div class="subcard">
-                <div class="subcard-label">Unique Threat IPs</div>
-                <div class="subcard-val" id="heroIPs" style="color:var(--color-warning)">0</div>
-              </div>
-              <div class="subcard">
-                <div class="subcard-label">Deception Score</div>
-                <div class="subcard-val" id="heroDeception" style="color:var(--color-purple)">0.00</div>
-              </div>
-            </div>
-
-            <div class="card-title" style="margin-bottom:10px;"><span class="card-title-icon">⚡</span> RECENT THREAT EVENTS STREAM</div>
-            <div class="table-container" style="max-height: 260px; overflow-y: auto;">
-              <table class="enterprise-table">
+            <div style="max-height: 320px; overflow-y: auto;">
+              <table class="data-table">
                 <thead>
                   <tr>
                     <th>Timestamp</th>
@@ -120,33 +85,35 @@
                 </thead>
                 <tbody id="portalFeedRows">
                   <tr>
-                    <td colspan="5" style="text-align: center; color:var(--text-muted); padding:20px;">Syncing portal telemetry...</td>
+                    <td colspan="5">
+                      <div class="empty-state">Syncing portal telemetry...</div>
+                    </td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </section>
 
-          <section class="card col-4">
+          <section class="card col-span-4">
             <div class="card-header">
-              <div class="card-title"><span class="card-title-icon">🛡️</span> ACTIVE DECOY MATRIX</div>
+              <div class="card-title">Active decoys</div>
             </div>
-            <div style="display:flex; flex-direction:column; gap:8px;" id="matrixContainer">
-              <div class="subcard">
-                <div class="subcard-label">Credential Trap (SSH : 22)</div>
-                <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">Traps brute-force attempts on SSH listeners.</div>
+            <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px;" id="matrixContainer">
+              <div class="metric-cell">
+                <div class="metric-cell-label">Credential Trap (SSH : 22)</div>
+                <div class="metric-cell-value" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: normal;">Traps brute-force attempts on SSH listeners.</div>
               </div>
-              <div class="subcard">
-                <div class="subcard-label">Database Decoy (MySQL : 3306)</div>
-                <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">Deploys responsive MySQL instance exposing dummy schemas.</div>
+              <div class="metric-cell">
+                <div class="metric-cell-label">Database Decoy (MySQL : 3306)</div>
+                <div class="metric-cell-value" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: normal;">Deploys responsive MySQL instance exposing dummy schemas.</div>
               </div>
-              <div class="subcard">
-                <div class="subcard-label">Shell Trap (CLI : 4444)</div>
-                <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">Interactive command line logging keystrokes.</div>
+              <div class="metric-cell">
+                <div class="metric-cell-label">Shell Trap (CLI : 4444)</div>
+                <div class="metric-cell-value" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: normal;">Interactive command line logging keystrokes.</div>
               </div>
-              <div class="subcard">
-                <div class="subcard-label">Web Decoy (HTTP : 8080)</div>
-                <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">Hosts static web portal mimicking framework vulnerabilities.</div>
+              <div class="metric-cell">
+                <div class="metric-cell-label">Web Decoy (HTTP : 8080)</div>
+                <div class="metric-cell-value" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: normal;">Hosts static web portal mimicking framework vulnerabilities.</div>
               </div>
             </div>
           </section>
@@ -172,24 +139,25 @@
       document.getElementById("heroAttacks").textContent = dash.total_attacks || 0;
       document.getElementById("heroSessions").textContent = dash.total_sessions || 0;
       document.getElementById("heroIPs").textContent = dash.unique_ips || 0;
+      document.getElementById("heroAvgRisk").textContent = dash.avg_risk ? dash.avg_risk.toFixed(1) : "0.0";
       document.getElementById("heroDeception").textContent = (dash.avg_deception_score || 0.0).toFixed(2);
 
       const tbody = document.getElementById("portalFeedRows");
-      if (!logs.length) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color:var(--text-muted); padding:20px;">No telemetry events captured yet. Click '▶ START DEMONSTRATION'.</td></tr>`;
+      if (!logs || !logs.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No telemetry events captured yet. Click 'Start Demo'.</div></td></tr>`;
         return;
       }
 
       let html = "";
       logs.slice(0, 8).forEach(l => {
-        const badge = l.risk_score >= 80 ? 'status-badge-critical' : l.risk_score >= 60 ? 'status-badge-warning' : 'status-badge-info';
+        const badge = l.risk_score >= 80 ? 'badge-critical' : l.risk_score >= 60 ? 'badge-medium' : 'badge-info';
         html += `
           <tr>
-            <td style="color:var(--text-muted); font-family:var(--font-mono);">${l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : 'Just now'}</td>
-            <td style="font-family:var(--font-mono); color:var(--accent-primary); font-weight:600;">${l.ip_address}</td>
-            <td><span class="status-badge status-badge-info">${l.attack_type.replace(/_/g, ' ')}</span></td>
-            <td><span class="status-badge ${badge}">${l.risk_score}</span></td>
-            <td><span style="font-family:var(--font-mono); color:var(--color-purple); font-weight:600;">${l.mitre_technique || 'T1595'}</span></td>
+            <td style="color: var(--text-tertiary); font-family: var(--font-mono);">${l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : 'Just now'}</td>
+            <td style="font-family: var(--font-mono); color: var(--accent); font-weight: 600;">${l.ip_address}</td>
+            <td><span class="badge badge-info">${l.attack_type.replace(/_/g, ' ')}</span></td>
+            <td><span class="badge ${badge}">${l.risk_score}</span></td>
+            <td><span style="font-family: var(--font-mono); color: var(--purple); font-weight: 600;">${l.mitre_technique || 'T1595'}</span></td>
           </tr>
         `;
       });
@@ -198,21 +166,27 @@
 
     async function runLiveDemo() {
       document.getElementById("demoStatusText").textContent = "SIMULATING DEMO...";
-      document.getElementById("demoStatusText").style.color = "var(--color-warning)";
-      await fetchers.startDemo();
+      document.getElementById("demoStatusText").style.color = "var(--severity-medium)";
+      const res = await fetchers.startDemo();
       await syncPortal();
       document.getElementById("demoStatusText").textContent = "DEMO COMPLETE ✓";
-      document.getElementById("demoStatusText").style.color = "var(--color-success)";
+      document.getElementById("demoStatusText").style.color = "var(--severity-low)";
+      if (typeof showToast === 'function') {
+        showToast(`Simulation complete: ${res.events_generated || 10} events generated across session nodes`, 'success');
+      }
     }
 
     async function resetDemo() {
       await fetchers.resetDemo();
       document.getElementById("demoStatusText").textContent = "ENVIRONMENT RESET";
-      document.getElementById("demoStatusText").style.color = "var(--color-success)";
+      document.getElementById("demoStatusText").style.color = "var(--severity-low)";
       syncPortal();
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+      if (typeof renderSidebar === 'function') {
+        renderSidebar('overview');
+      }
       syncPortal();
       setInterval(syncPortal, 3000);
     });
