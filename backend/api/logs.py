@@ -1,4 +1,4 @@
-﻿import time
+import time
 import hashlib
 import logging
 from datetime import datetime, timedelta

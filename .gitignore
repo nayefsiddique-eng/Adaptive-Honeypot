@@ -9,3 +9,5 @@ __pycache__/
 logs/*.jsonl
 ml/models/*.pkl
 node_modules/
+
+backend/honeypot/ssh_host_key
