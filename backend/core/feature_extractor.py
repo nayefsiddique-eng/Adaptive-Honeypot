@@ -13,23 +13,34 @@ def extract_features(ip: str, port: int, protocol: str, payload: str, metadata: 
     features["is_http"] = int(port in [80, 8080])
     features["is_ftp"] = int(port == 21)
     features["is_rdp"] = int(port == 3389)
+    # Base protocol flags
+    features["protocol_tcp"] = int(protocol.upper() in ["TCP", "SSH", "TELNET", "HTTP"])
+    features["protocol_udp"] = int(protocol.upper() == "UDP")
+    features["protocol_ssh"] = int(protocol.upper() == "SSH" or port in [22, 2222])
+    features["protocol_telnet"] = int(protocol.upper() == "TELNET" or port in [23, 2323])
+    features["protocol_http"] = int(protocol.upper() == "HTTP" or port in [80, 8080, 443])
+    features["protocol_dns"] = int(protocol.upper() == "DNS" or port == 53)
+
     payload_lower = payload.lower() if payload else ""
+    event_type = metadata.get("event", "")
+
     features["payload_length"] = len(payload) if payload else 0
-    features["has_common_password"] = int(any(p in payload_lower for p in COMMON_PASSWORDS))
+    features["has_common_password"] = int(any(p in payload_lower for p in COMMON_PASSWORDS) or event_type == "login_attempt")
     features["has_malware_extension"] = int(any(ext in payload_lower for ext in MALWARE_EXTENSIONS))
     features["has_sql_injection"] = int(any(kw in payload_lower for kw in ["select ", "union ", "drop ", "insert ", "' or ", "1=1"]))
     features["has_xss"] = int(any(kw in payload_lower for kw in ["<script", "javascript:", "onerror=", "onload="]))
-    features["has_path_traversal"] = int("../" in payload or "..\\" in payload) if payload else 0
-    features["has_command_injection"] = int(any(kw in payload_lower for kw in ["; ls", "; cat", "| whoami", "&& id", "`id`"]))
-    features["protocol_tcp"] = int(protocol.upper() == "TCP")
-    features["protocol_udp"] = int(protocol.upper() == "UDP")
-    features["protocol_ssh"] = int(protocol.upper() == "SSH")
-    features["protocol_http"] = int(protocol.upper() == "HTTP")
-    features["protocol_dns"] = int(protocol.upper() == "DNS")
-    features["login_attempts"] = metadata.get("login_attempts", 0)
-    features["unique_usernames"] = metadata.get("unique_usernames", 0)
-    features["unique_passwords"] = metadata.get("unique_passwords", 0)
-    features["commands_executed"] = metadata.get("commands_executed", 0)
+    features["has_path_traversal"] = int("../" in payload or "..\\" in payload or "/etc/passwd" in payload_lower or "/etc/shadow" in payload_lower) if payload else 0
+    features["has_command_injection"] = int(
+        any(kw in payload_lower for kw in [
+            "; ls", "; cat", "| whoami", "&& id", "`id`", "whoami", "id", "uname", "uptime", "ps aux", "ifconfig", "ip a"
+        ]) or (event_type == "command" and bool(payload_lower.strip()))
+    )
+    features["is_ssh_login"] = int(event_type == "login_attempt" and (features["protocol_ssh"] or features["protocol_telnet"]))
+    features["is_shell_command"] = int(event_type == "command" or any(c in payload_lower for c in ["whoami", "cat /etc", "wget", "curl", "chmod", "sudo", "ls -l"]))
+    features["login_attempts"] = metadata.get("login_attempts", 1 if event_type == "login_attempt" else 0)
+    features["unique_usernames"] = metadata.get("unique_usernames", 1 if event_type == "login_attempt" else 0)
+    features["unique_passwords"] = metadata.get("unique_passwords", 1 if event_type == "login_attempt" else 0)
+    features["commands_executed"] = metadata.get("commands_executed", 1 if event_type == "command" else 0)
     features["files_requested"] = metadata.get("files_requested", 0)
     features["ports_scanned"] = metadata.get("ports_scanned", 0)
 
@@ -136,7 +147,9 @@ def extract_features(ip: str, port: int, protocol: str, payload: str, metadata: 
 
 
 def classify_attack_heuristic(features: Dict[str, Any]) -> str:
-    if features.get("has_command_injection"):
+    if features.get("has_malware_extension") or any(kw in str(features.get("payload", "")).lower() for kw in ["wget", "curl", "chmod +x", "tftp"]):
+        return "malware_delivery"
+    if features.get("has_command_injection") or features.get("is_shell_command"):
         return "command_injection"
     if features.get("has_sql_injection"):
         return "sql_injection"
@@ -144,8 +157,6 @@ def classify_attack_heuristic(features: Dict[str, Any]) -> str:
         return "xss"
     if features.get("has_path_traversal"):
         return "path_traversal"
-    if features.get("has_malware_extension"):
-        return "malware_delivery"
     # Route Feature 6 heuristics
     if features.get("has_ssrf"):
         return "ssrf"
@@ -157,7 +168,9 @@ def classify_attack_heuristic(features: Dict[str, Any]) -> str:
         return "dns_tunneling"
     if features.get("login_attempts", 0) > 20 and features.get("unique_usernames", 0) > 10:
         return "credential_stuffing"
-    if features.get("login_attempts", 0) > 5 or features.get("has_common_password"):
+    if features.get("login_attempts", 0) > 0 or features.get("has_common_password") or features.get("is_ssh_login"):
+        return "brute_force"
+    if features.get("protocol_ssh") or features.get("protocol_telnet"):
         return "brute_force"
     if features.get("ports_scanned", 0) > 3 or features.get("is_known_vuln_port"):
         return "port_scan"

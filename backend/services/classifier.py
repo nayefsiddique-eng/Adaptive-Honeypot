@@ -56,6 +56,14 @@ def predict(features: dict) -> dict:
         final_confidence = xgb_confidence
         winning_model = "xgboost"
 
+    # If ML ensemble yields 'unknown' or very low confidence on live protocol traffic, fallback to heuristic classification
+    if final_label == "unknown" or final_confidence < 0.35:
+        from backend.core.feature_extractor import classify_attack_heuristic
+        heuristic_label = classify_attack_heuristic(features)
+        if heuristic_label != "unknown":
+            final_label = heuristic_label
+            winning_model = f"{winning_model}+heuristic"
+
     return {
         "attack_type": final_label,
         "confidence": round(final_confidence, 4),
