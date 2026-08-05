@@ -1,195 +1,236 @@
-<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PRAETOR — Overview</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRAETOR — Adaptive Deception Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/console.css">
 </head>
 <body>
 
-  <div class="app-shell">
-    
-    <!-- LEFT SIDEBAR -->
-    <div id="sidebarMount"></div>
+<header class="topbar">
+  <div class="shell topbar-inner">
+    <div class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13 2c5 3 9 4 9 4v7c0 6-4 9-9 11-5-2-9-5-9-11V6s4-1 9-4Z" stroke="#e8a13a" stroke-width="1.3" fill="rgba(232,161,58,0.08)"/>
+          <circle cx="13" cy="12.5" r="2.6" fill="#f7c463"/>
+        </svg>
+      </span>
+      <span class="brand-name">PRAETOR</span>
+      <span class="brand-tag">deception engine</span>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-view="overview"><span class="dot"></span>Overview</button>
+      <button class="nav-btn" data-view="feed"><span class="dot"></span>Live Capture</button>
+      <button class="nav-btn" data-view="sessions"><span class="dot"></span>Specimens</button>
+      <button class="nav-btn" data-view="intel"><span class="dot"></span>Intelligence</button>
+      <button class="nav-btn" data-view="admin"><span class="dot"></span>Admin</button>
+    </nav>
+    <div class="gauge-wrap">
+      <div class="gauge">
+        <svg class="gauge-dial" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="11" cy="11" r="9.5" stroke="#3a2a17" stroke-width="1.4" fill="none"/>
+          <path d="M4 15 A 9 9 0 0 1 18 15" stroke="#3a2a17" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+          <line id="gaugeNeedle" class="needle" x1="11" y1="11" x2="11" y2="4" stroke="#e8a13a" stroke-width="1.6" stroke-linecap="round" style="transform:rotate(-90deg)"/>
+          <circle cx="11" cy="11" r="1.4" fill="#f7c463"/>
+        </svg>
+        <span id="gaugeLed" class="gauge-led"></span>
+        <span id="gaugeLabel">connecting…</span>
+      </div>
+    </div>
+  </div>
+</header>
 
-    <!-- MAIN VIEWPORT -->
-    <div class="main-wrapper">
-      
-      <!-- TOPBAR -->
-      <header class="topbar" style="display: flex; justify-content: space-between; align-items: center; padding: 0 16px; height: 60px; border-bottom: 1px solid var(--border-subtle);">
-        <div style="display: flex; align-items: center; gap: 16px;">
-          <span class="badge badge-neutral" id="topHealth">● ONLINE (100%)</span>
-          <span class="badge badge-info" id="topAiStatus">CMARL ACTIVE</span>
-          <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
-            <span style="color: var(--text-secondary);">Total Ingested Attacks:</span>
-            <span style="color: var(--text-primary); font-family: var(--font-mono); font-weight: bold;" id="statAttacks">0</span>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
-            <span style="color: var(--text-secondary);">Active Sessions:</span>
-            <span style="color: var(--text-primary); font-family: var(--font-mono); font-weight: bold;" id="statSessions">0</span>
-          </div>
-        </div>
+<main class="shell">
 
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <span id="demoStatusText" style="color: var(--text-secondary); font-size: 11px; font-family: var(--font-mono);">SYSTEM READY</span>
-          <button id="startDemoBtn" class="btn btn-primary" onclick="runLiveDemo()">Start Demo</button>
-          <button id="resetDemoBtn" class="btn btn-danger" onclick="resetDemo()">Reset</button>
-        </div>
-      </header>
-
-      <!-- PAGE CONTENT VIEWPORT -->
-      <main class="page-content" style="padding: 24px;">
-        
-        <div class="kpi-row" style="margin-bottom: 24px;">
-          <div class="kpi-card">
-            <div class="kpi-label">Total Attacks</div>
-            <div class="kpi-value" id="heroAttacks" style="color: var(--accent);">0</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Active Sessions</div>
-            <div class="kpi-value" id="heroSessions" style="color: var(--severity-low);">0</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Unique IPs</div>
-            <div class="kpi-value" id="heroIPs" style="color: var(--severity-medium);">0</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Avg Risk</div>
-            <div class="kpi-value" id="heroAvgRisk" style="color: var(--severity-critical);">0.0</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Deception Score</div>
-            <div class="kpi-value" id="heroDeception" style="color: var(--purple);">0.00</div>
-          </div>
-        </div>
-
-        <div class="grid grid-12">
-          
-          <section class="card col-span-8">
-            <div class="card-header">
-              <div class="card-title">Recent activity</div>
-              <div class="card-subtitle">Real-time statistics consumed live from Python backend APIs</div>
-            </div>
-
-            <div style="max-height: 320px; overflow-y: auto;">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Timestamp</th>
-                    <th>IP Address</th>
-                    <th>Classification</th>
-                    <th>Risk Score</th>
-                    <th>MITRE Tech</th>
-                  </tr>
-                </thead>
-                <tbody id="portalFeedRows">
-                  <tr>
-                    <td colspan="5">
-                      <div class="empty-state">Syncing portal telemetry...</div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section class="card col-span-4">
-            <div class="card-header">
-              <div class="card-title">Active decoys</div>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px;" id="matrixContainer">
-              <div class="metric-cell">
-                <div class="metric-cell-label">Credential Trap (SSH : 22)</div>
-                <div class="metric-cell-value" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: normal;">Traps brute-force attempts on SSH listeners.</div>
-              </div>
-              <div class="metric-cell">
-                <div class="metric-cell-label">Database Decoy (MySQL : 3306)</div>
-                <div class="metric-cell-value" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: normal;">Deploys responsive MySQL instance exposing dummy schemas.</div>
-              </div>
-              <div class="metric-cell">
-                <div class="metric-cell-label">Shell Trap (CLI : 4444)</div>
-                <div class="metric-cell-value" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: normal;">Interactive command line logging keystrokes.</div>
-              </div>
-              <div class="metric-cell">
-                <div class="metric-cell-label">Web Decoy (HTTP : 8080)</div>
-                <div class="metric-cell-value" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: normal;">Hosts static web portal mimicking framework vulnerabilities.</div>
-              </div>
-            </div>
-          </section>
-
-        </div>
-
-      </main>
+  <!-- OVERVIEW -->
+  <section id="view-overview" class="view active">
+    <div class="page-head">
+      <div>
+        <p class="page-eyebrow">// field station status</p>
+        <h1 class="page-title">The trap, at a glance</h1>
+        <p class="page-sub">PRAETOR watches every probe that touches the honeypot, classifies it, and reshapes the fake surface underneath the attacker's feet in real time. Every figure below is read live from the API — nothing is precomputed.</p>
+      </div>
     </div>
 
+    <div class="grid grid-4" id="ovStats">
+      <div class="card stat-card pinned">
+        <p class="stat-label">Specimens captured</p>
+        <p class="stat-value amber" id="statTotal">—</p>
+      </div>
+      <div class="card stat-card pinned">
+        <p class="stat-label">Distinct origins</p>
+        <p class="stat-value" id="statIPs">—</p>
+      </div>
+      <div class="card stat-card pinned">
+        <p class="stat-label">Mean risk pressure</p>
+        <p class="stat-value rust" id="statRisk">—</p>
+      </div>
+      <div class="card stat-card pinned">
+        <p class="stat-label">Mean deception yield</p>
+        <p class="stat-value moss" id="statDeception">—</p>
+      </div>
+    </div>
+
+    <div class="card section-gap">
+      <div class="card-head"><p class="card-title">Capture rate — last few minutes</p></div>
+      <canvas id="traceCanvas" class="trace-canvas"></canvas>
+    </div>
+
+    <div class="card section-gap">
+      <div class="card-head"><p class="card-title">Detection → deception cycle</p></div>
+      <div class="pipeline">
+        <div class="pipe-step on"><div class="pipe-node">1</div><div class="pipe-label">Ingest</div><div class="pipe-desc">Raw connection logged with payload &amp; metadata</div></div>
+        <div class="pipe-step on"><div class="pipe-node">2</div><div class="pipe-label">Classify</div><div class="pipe-desc">Model tags the technique being attempted</div></div>
+        <div class="pipe-step on"><div class="pipe-node">3</div><div class="pipe-label">Enrich</div><div class="pipe-desc">GeoIP and reputation feeds are checked</div></div>
+        <div class="pipe-step on"><div class="pipe-node">4</div><div class="pipe-label">Decide</div><div class="pipe-desc">Policy selects a deception strategy</div></div>
+        <div class="pipe-step on"><div class="pipe-node">5</div><div class="pipe-label">Deceive</div><div class="pipe-desc">Fake services, banners &amp; delays applied</div></div>
+        <div class="pipe-step on"><div class="pipe-node">6</div><div class="pipe-label">Learn</div><div class="pipe-desc">Outcome updates the policy for next time</div></div>
+      </div>
+    </div>
+
+    <div class="grid grid-2 section-gap">
+      <div class="card">
+        <div class="card-head"><p class="card-title">Severity breakdown</p></div>
+        <div id="sevBreakdown" class="sev-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><p class="card-title">Highest-risk origins</p></div>
+        <div id="topIpsList" class="sev-list"></div>
+      </div>
+    </div>
+
+    <div class="card section-gap">
+      <div class="card-head"><p class="card-title">Technique breakdown</p></div>
+      <div id="typeBreakdown" class="sev-list"></div>
+    </div>
+
+    <div class="notice section-gap">
+      <span>ⓘ</span>
+      <span>Traffic shown here is whatever is currently pointed at the ingest endpoint on this deployment — lab traffic, a scripted exercise, or live exposure if this instance is reachable from the internet. Read these numbers as a picture of this station's current capture, not a fixed benchmark.</span>
+    </div>
+  </section>
+
+  <!-- LIVE CAPTURE -->
+  <section id="view-feed" class="view">
+    <div class="page-head">
+      <div>
+        <p class="page-eyebrow">// realtime</p>
+        <h1 class="page-title">Live capture</h1>
+        <p class="page-sub">Polls <span class="mono">/api/logs/recent</span> every 5 seconds. Most recent probe first.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div id="feedList" class="feed"></div>
+    </div>
+  </section>
+
+  <!-- SPECIMENS (sessions) -->
+  <section id="view-sessions" class="view">
+    <div class="page-head">
+      <div>
+        <p class="page-eyebrow">// held for study</p>
+        <h1 class="page-title">Specimens &amp; deception state</h1>
+        <p class="page-sub">Each row is one attacker session, grouped by origin IP and a 30-minute activity window.</p>
+      </div>
+      <div class="btn-row">
+        <input class="field" id="ipFilter" placeholder="Filter by IP, press Enter…" style="width:220px">
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Origin</th><th>Status</th><th>Techniques</th><th>Count</th>
+            <th>Risk</th><th>Honeypot state</th><th>Deception avg</th><th>Last seen</th>
+          </tr></thead>
+          <tbody id="sessionsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTELLIGENCE -->
+  <section id="view-intel" class="view">
+    <div class="page-head">
+      <div>
+        <p class="page-eyebrow">// fusion</p>
+        <h1 class="page-title">Threat intelligence</h1>
+        <p class="page-sub">ATT&amp;CK technique coverage, capture radar by origin, and fused reputation scoring.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><p class="card-title">Capture radar</p></div>
+      <div class="radar-wrap">
+        <svg id="radarSvg" class="radar-svg" width="280" height="280" viewBox="0 0 280 280"></svg>
+        <div class="radar-legend">
+          <div class="radar-legend-row"><span class="radar-dot" style="background:var(--rust)"></span>Critical risk</div>
+          <div class="radar-legend-row"><span class="radar-dot" style="background:var(--amber-bright)"></span>High risk</div>
+          <div class="radar-legend-row"><span class="radar-dot" style="background:var(--brass)"></span>Medium risk</div>
+          <div class="radar-legend-row"><span class="radar-dot" style="background:var(--moss)"></span>Low risk</div>
+          <p class="stat-foot">Each mark is one active origin. Distance from center falls as risk score rises — the closer in, the hotter the specimen.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-3 section-gap">
+      <div class="card">
+        <div class="card-head"><p class="card-title">ATT&amp;CK techniques</p></div>
+        <div id="mitreList" class="sev-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><p class="card-title">Top origins</p></div>
+        <div id="intelTopIps" class="sev-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><p class="card-title">Fused threat scores</p></div>
+        <div id="topThreats" class="sev-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section id="view-admin" class="view">
+    <div class="page-head">
+      <div>
+        <p class="page-eyebrow">// operator controls</p>
+        <h1 class="page-title">Admin</h1>
+        <p class="page-sub">Destructive operations. Requires the <span class="mono">X-Admin-Key</span> configured on the backend (<span class="mono">ADMIN_API_KEY</span> in your <span class="mono">.env</span>).</p>
+      </div>
+    </div>
+    <div class="card" style="max-width:520px">
+      <div class="card-head"><p class="card-title">Admin key</p></div>
+      <input class="field" id="adminKey" type="password" placeholder="X-Admin-Key value" style="width:100%" autocomplete="off">
+      <div class="btn-row section-gap">
+        <button class="btn" id="btnGuidedDemo">Run scripted scenario</button>
+        <button class="btn" id="btnCloseSessions">Close active sessions</button>
+        <button class="btn btn-danger" id="btnResetDemo">Clear all captured data</button>
+      </div>
+      <p class="stat-foot" style="margin-top:14px">Kept only in this tab's session storage — never sent anywhere but this backend, never logged.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="shell-foot">
+  <div class="shell" style="display:flex;justify-content:space-between;width:100%;flex-wrap:wrap;gap:8px">
+    <span>PRAETOR adaptive deception engine</span>
+    <span id="footClock"></span>
   </div>
+</footer>
 
-  <script src="js/api.js"></script>
-  <script>
-    async function syncPortal() {
-      const [dash, logs, sessions] = await Promise.all([
-        fetchers.dashboard(),
-        fetchers.recentLogs(10),
-        fetchers.sessions()
-      ]);
+<div class="toast-host" id="toastHost"></div>
 
-      document.getElementById("statAttacks").textContent = dash.total_attacks || 0;
-      document.getElementById("statSessions").textContent = dash.total_sessions || 0;
-      document.getElementById("heroAttacks").textContent = dash.total_attacks || 0;
-      document.getElementById("heroSessions").textContent = dash.total_sessions || 0;
-      document.getElementById("heroIPs").textContent = dash.unique_ips || 0;
-      document.getElementById("heroAvgRisk").textContent = dash.avg_risk ? dash.avg_risk.toFixed(1) : "0.0";
-      document.getElementById("heroDeception").textContent = (dash.avg_deception_score || 0.0).toFixed(2);
-
-      const tbody = document.getElementById("portalFeedRows");
-      if (!logs || !logs.length) {
-        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No telemetry events captured yet. Click 'Start Demo'.</div></td></tr>`;
-        return;
-      }
-
-      let html = "";
-      logs.slice(0, 8).forEach(l => {
-        const badge = l.risk_score >= 80 ? 'badge-critical' : l.risk_score >= 60 ? 'badge-medium' : 'badge-info';
-        html += `
-          <tr>
-            <td style="color: var(--text-tertiary); font-family: var(--font-mono);">${l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : 'Just now'}</td>
-            <td style="font-family: var(--font-mono); color: var(--accent); font-weight: 600;">${l.ip_address}</td>
-            <td><span class="badge badge-info">${l.attack_type.replace(/_/g, ' ')}</span></td>
-            <td><span class="badge ${badge}">${l.risk_score}</span></td>
-            <td><span style="font-family: var(--font-mono); color: var(--purple); font-weight: 600;">${l.mitre_technique || 'T1595'}</span></td>
-          </tr>
-        `;
-      });
-      tbody.innerHTML = html;
-    }
-
-    async function runLiveDemo() {
-      document.getElementById("demoStatusText").textContent = "SIMULATING DEMO...";
-      document.getElementById("demoStatusText").style.color = "var(--severity-medium)";
-      const res = await fetchers.startDemo();
-      await syncPortal();
-      document.getElementById("demoStatusText").textContent = "DEMO COMPLETE ✓";
-      document.getElementById("demoStatusText").style.color = "var(--severity-low)";
-      if (typeof showToast === 'function') {
-        showToast(`Simulation complete: ${res.events_generated || 10} events generated across session nodes`, 'success');
-      }
-    }
-
-    async function resetDemo() {
-      await fetchers.resetDemo();
-      document.getElementById("demoStatusText").textContent = "ENVIRONMENT RESET";
-      document.getElementById("demoStatusText").style.color = "var(--severity-low)";
-      syncPortal();
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      if (typeof renderSidebar === 'function') {
-        renderSidebar('overview');
-      }
-      syncPortal();
-      setInterval(syncPortal, 3000);
-    });
-  </script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script>
+  setInterval(() => {
+    document.getElementById('footClock').textContent = new Date().toLocaleString();
+  }, 1000);
+</script>
 </body>
 </html>

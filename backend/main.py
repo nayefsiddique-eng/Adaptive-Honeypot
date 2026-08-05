@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from fastapi import FastAPI, Request
@@ -11,6 +11,7 @@ from backend.services.classifier import load_models
 from backend.api.adaptive import router as adaptive_router
 from backend.models.session import AttackerSession
 from backend.core.cooperative_rl_engine import update_q_table_for_session
+from backend.config import settings
 
 async def session_reaper():
     """
@@ -58,13 +59,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Adaptive AI Honeypot", version="1.0.0", lifespan=lifespan)
 
-# Setup CORS to allow React dev ports, local file execution, and external connections
+# Restrict CORS to known-good local/dashboard origins. A wildcard origin on an
+# app that exposes admin/reset endpoints lets any website on the internet
+# script requests against a locally-running honeypot from the victim's browser.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins_list,
     allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"]
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "X-Admin-Key"]
 )
 
 # Register API Routers

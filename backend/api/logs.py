@@ -1,4 +1,4 @@
-import time
+﻿import time
 import hashlib
 import logging
 from datetime import datetime, timedelta
@@ -37,15 +37,13 @@ def calculate_risk_score(features: dict, attack_type: str, confidence: float) ->
         "brute_force": 60, "port_scan": 40, "sql_injection": 80,
         "xss": 70, "command_injection": 90, "malware_delivery": 95,
         "path_traversal": 65, "unknown": 20,
-        # Feature 6 - Additional Attack Types
         "ldap_injection": 85, "ssrf": 75, "deserialization": 90,
         "dns_tunneling": 70, "credential_stuffing": 65
     }
     score = severity_map.get(attack_type, 20)
     score += min(features.get("login_attempts", 0) * 2, 20)
     score += min(features.get("ports_scanned", 0) * 3, 15)
-    
-    # Baseline confidence scaling
+
     conf_factor = 0.5 + 0.5 * confidence if confidence > 0 else 0.6
     score = score * conf_factor
     return min(round(score, 2), 100.0)
@@ -53,11 +51,9 @@ def calculate_risk_score(features: dict, attack_type: str, confidence: float) ->
 @router.post("/ingest")
 async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
     start_time = time.time()
-    
-    # 1. Log Raw Traffic
+
     raw_event = log_event(req.ip_address, req.port, req.protocol, req.payload, req.metadata)
-    
-    # 2. Extract Features & Predict Attack Class
+
     features = extract_features(req.ip_address, req.port, req.protocol, req.payload, req.metadata)
     ttp_fingerprint = features.pop("ttp_fingerprint", None)
 
@@ -76,14 +72,11 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
     mitre = map_to_mitre(attack_type)
     risk_score = calculate_risk_score(features, attack_type, confidence)
 
-    # 3. GeoIP Enrichment
     geo = enrich_ip(req.ip_address)
 
-    # 4. Threat Intel Evaluation
     intel = await evaluate_ip_threat(req.ip_address)
 
     try:
-        # 5. Maintain Attacker Reputation Profile
         reputation = db.query(AttackerReputation).filter(AttackerReputation.ip_address == req.ip_address).first()
         if not reputation:
             reputation = AttackerReputation(
@@ -103,19 +96,16 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
             db.add(reputation)
         else:
             reputation.attack_count += 1
-            
-            # Handle JSON mutation detection in SQLAlchemy
+
             prev_attacks = list(reputation.previous_attack_types)
             if attack_type not in prev_attacks:
                 prev_attacks.append(attack_type)
                 reputation.previous_attack_types = prev_attacks
-                
-            # Recalculate combined reputation (local frequency + intelligence feeds)
+
             local_freq_penalty = min(reputation.attack_count * 2.0, 40.0)
             external_feed_penalty = intel["reputation_score"] * 0.60
             reputation.reputation_score = max(0.0, round(100.0 - local_freq_penalty - external_feed_penalty, 2))
-            
-            # Ensure coordinates are saved if not present
+
             if reputation.latitude == 0.0 and geo["latitude"] != 0.0:
                 reputation.latitude = geo["latitude"]
                 reputation.longitude = geo["longitude"]
@@ -123,19 +113,16 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
                 reputation.city = geo["city"]
                 reputation.isp = geo["isp"]
 
-        # 6. Session Lifecycle & Recording Updates
         time_limit = datetime.utcnow() - timedelta(minutes=30)
         session = db.query(AttackerSession).filter(
             AttackerSession.ip_address == req.ip_address,
             AttackerSession.is_active == True,
-            # Compare SQLite timestamps safely
             AttackerSession.last_seen >= time_limit
         ).first()
 
         now_dt = datetime.utcnow()
 
         if not session:
-            # Create a new session
             session_id = raw_event["session_id"]
             session = AttackerSession(
                 ip_address=req.ip_address,
@@ -160,16 +147,14 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
         else:
             session_id = session.session_id
             session.attack_count += 1
-            
-            # Update attack type list
+
             sess_types = list(session.attack_types) if session.attack_types else []
             if attack_type not in sess_types:
                 sess_types.append(attack_type)
                 session.attack_types = sess_types
-                
+
             session.risk_score = max(session.risk_score or 0.0, risk_score)
-            
-            # Calculate session duration safely
+
             if session.first_seen:
                 if isinstance(session.first_seen, str):
                     try:
@@ -185,7 +170,6 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
                 session.first_seen = now_dt
                 session.session_duration = 0.0
 
-        # Record command execution inputs (CLI-based payloads)
         session_commands = list(session.commands_issued)
         if attack_type == "command_injection" and req.payload:
             session_commands.append(req.payload.strip())
@@ -193,7 +177,6 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
             session_commands.append(f"AUTHENTICATION TRY: {req.payload.strip()}")
         session.commands_issued = session_commands
 
-        # Append payload hashes
         session_hashes = list(session.payload_hashes)
         if req.payload:
             p_hash = hashlib.sha256(req.payload.encode()).hexdigest()
@@ -201,7 +184,6 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
                 session_hashes.append(p_hash)
         session.payload_hashes = session_hashes
 
-        # 7. Execute Autonomous Decision Engine & Behavior Intelligence Pipeline
         current_depth = session.interaction_depth or 0
         depth_map = {0: "low", 1: "low", 2: "medium", 3: "high", 4: "high"}
         current_level = depth_map.get(current_depth, "low")
@@ -214,18 +196,18 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
         selected = decision_eval["agents_decisions"]
         policy_confidence = decision_eval["confidence_score"]
         state_str = serialize_state(attack_type, get_history_bucket(reputation.total_sessions), current_level)
-        
+
         session.rl_state = state_str
         session.rl_action = action_str
         session.rl_network_action = selected.get("network", "default:medium")
         session.rl_intel_action = selected.get("intel", "delayed_response")
-        
+
         parts = action_str.split(":")
         profile_key = parts[0]
         level = parts[1] if len(parts) > 1 else "low"
-        
+
         profile = decision_eval["profile_details"]
-        
+
         action_map = {"low": "monitor", "medium": "active_deception", "high": "full_deception"}
         deception = {
             "action": action_map.get(level, "monitor"),
@@ -242,8 +224,7 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
             "expected_attacker_objective": decision_eval["expected_attacker_objective"],
             "deception_score": 0.0
         }
-        
-        # Calculate deception score
+
         from backend.core.adaptive_engine import calculate_deception_score
         deception["deception_score"] = calculate_deception_score(
             level,
@@ -253,28 +234,23 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
         )
         session.rl_deception_score = deception["deception_score"]
 
-        # Update session details from adaptive engine
         session.honeypot_state = deception["honeypot_state"]
         session.fake_services = deception["fake_services"]
-        
+
         depth_levels = {"low": 1, "medium": 2, "high": 3}
         session.interaction_depth = max(current_depth, depth_levels.get(level, 1))
         session.last_seen = now_dt
 
-        # Feature 2 - Update Deception Score Average
         current_count = session.attack_count
         prev_avg = session.deception_score_avg or 0.0
         session.deception_score_avg = round((prev_avg * (current_count - 1) + deception["deception_score"]) / current_count, 4)
 
-        # Feature 3 - Attack Chain Detection
         chain_result = detect_attack_chain(reputation.previous_attack_types)
         session.attack_chain_name = chain_result["chain_name"]
         session.attack_chain_progress = chain_result["chain_progress"]
 
-        # Measure API Response Latency
         response_time_ms = round((time.time() - start_time) * 1000.0, 3)
 
-        # 8. Save Log to SQLite
         log = AttackLog(
             session_id=session_id,
             ip_address=req.ip_address,
@@ -362,26 +338,26 @@ def get_recent_logs(limit: int = 50, db: Session = Depends(get_db)):
     for l in logs:
         sess = db.query(AttackerSession).filter(AttackerSession.session_id == l.session_id).first() if l.session_id else None
         chain_name = sess.attack_chain_name if sess else None
-        
+
         state_val = sess.honeypot_state if sess and sess.honeypot_state else "default:low"
         action_val = sess.rl_action if sess and sess.rl_action else "default:low"
-        
+
         deception_info = {
             "honeypot_state": state_val,
             "deception_score": sess.deception_score_avg if sess else 0.0,
             "action": action_val
         }
-        
+
         ai_info = {
             "recommended_strategy": action_val,
-            "confidence_score": 0.95,
+            "confidence_score": l.confidence if l.confidence is not None else 0.0,
             "reasoning_trace": f"Autonomous decision engine applied strategy '{action_val}' based on active session telemetry.",
-            "predicted_next_ttp": "T1046",
+            "predicted_next_ttp": sess.attack_chain_name if sess and sess.attack_chain_name else "unknown",
             "threat_fusion": {
                 "threat_actor_profile": "Script Kiddie" if l.risk_score < 60 else "APT Threat Actor"
             }
         }
-        
+
         res.append({
             "id": l.id,
             "session_id": l.session_id,
