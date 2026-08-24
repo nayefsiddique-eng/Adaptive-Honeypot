@@ -19,8 +19,19 @@ import logging
 import os
 from datetime import datetime, timezone
 
-import asyncssh
-import httpx
+# asyncssh and httpx are optional at import time so that tests can import
+# dispatch_command (a pure function) without requiring these heavy packages.
+try:
+    import asyncssh
+    _HAS_ASYNCSSH = True
+except ImportError:
+    _HAS_ASYNCSSH = False
+
+try:
+    import httpx
+    _HAS_HTTPX = True
+except ImportError:
+    _HAS_HTTPX = False
 
 from backend.honeypot.fake_filesystem import FakeFilesystem, HOSTNAME
 
@@ -43,12 +54,13 @@ WEAK_CREDENTIALS = {
     ("user", "user"), ("guest", "guest"),
 }
 
-_http_client: httpx.AsyncClient | None = None
+_http_client = None
 
 
-async def get_http_client() -> httpx.AsyncClient:
+async def get_http_client():
     global _http_client
     if _http_client is None:
+        import httpx
         _http_client = httpx.AsyncClient(timeout=3.0)
     return _http_client
 
@@ -71,41 +83,44 @@ async def report_event(ip: str, port: int, payload: str, metadata: dict):
         logger.warning(f"Failed to report event to backend ({BACKEND_INGEST_URL}): {e}")
 
 
-class HoneypotSSHServer(asyncssh.SSHServer):
-    def connection_made(self, conn: asyncssh.SSHServerConnection):
-        self.conn = conn
-        peer = conn.get_extra_info("peername")
-        self.peer_ip = peer[0] if peer else "unknown"
-        self.peer_port = peer[1] if peer else 0
-        self.attempt_count = 0
-        logger.info(f"[+] Incoming SSH connection from {self.peer_ip}:{self.peer_port}")
+# The SSH server class is only defined when asyncssh is available.
+# Tests that only import dispatch_command will skip this block.
+if _HAS_ASYNCSSH:
+    class HoneypotSSHServer(asyncssh.SSHServer):
+        def connection_made(self, conn):
+            self.conn = conn
+            peer = conn.get_extra_info("peername")
+            self.peer_ip = peer[0] if peer else "unknown"
+            self.peer_port = peer[1] if peer else 0
+            self.attempt_count = 0
+            logger.info(f"[+] Incoming SSH connection from {self.peer_ip}:{self.peer_port}")
 
-    def connection_lost(self, exc):
-        logger.info(f"[-] Connection closed: {self.peer_ip}")
+        def connection_lost(self, exc):
+            logger.info(f"[-] Connection closed: {self.peer_ip}")
 
-    def begin_auth(self, username: str) -> bool:
-        self.username = username
-        return True  # True = auth is required (password prompt shown)
+        def begin_auth(self, username: str) -> bool:
+            self.username = username
+            return True  # True = auth is required (password prompt shown)
 
-    def password_auth_supported(self) -> bool:
-        return True
+        def password_auth_supported(self) -> bool:
+            return True
 
-    def validate_password(self, username: str, password: str) -> bool:
-        self.attempt_count += 1
-        accepted = (username, password) in WEAK_CREDENTIALS
+        def validate_password(self, username: str, password: str) -> bool:
+            self.attempt_count += 1
+            accepted = (username, password) in WEAK_CREDENTIALS
 
-        asyncio.create_task(report_event(
-            self.peer_ip, LISTEN_PORT,
-            f"{username}:{password}",
-            {
-                "event": "login_attempt",
-                "accepted": accepted,
-                "attempt_number": self.attempt_count,
-            },
-        ))
+            asyncio.create_task(report_event(
+                self.peer_ip, LISTEN_PORT,
+                f"{username}:{password}",
+                {
+                    "event": "login_attempt",
+                    "accepted": accepted,
+                    "attempt_number": self.attempt_count,
+                },
+            ))
 
-        logger.info(f"[AUTH] {self.peer_ip} tried {username}:{password} -> {'ACCEPTED' if accepted else 'rejected'}")
-        return accepted
+            logger.info(f"[AUTH] {self.peer_ip} tried {username}:{password} -> {'ACCEPTED' if accepted else 'rejected'}")
+            return accepted
 
 
 COMMAND_HELP_ECHO = {
@@ -254,7 +269,7 @@ def dispatch_command(fs: FakeFilesystem, line: str) -> str | None:
     return f"-bash: {cmd}: command not found"
 
 
-async def handle_session(process: asyncssh.SSHServerProcess):
+async def handle_session(process):
     peer = process.get_extra_info("peername")
     ip = peer[0] if peer else "unknown"
     username = process.get_extra_info("username") or "unknown"
@@ -286,7 +301,7 @@ async def handle_session(process: asyncssh.SSHServerProcess):
                 break
             if output:
                 process.stdout.write(output + "\r\n")
-    except asyncssh.BreakReceived:
+    except (asyncssh.BreakReceived if _HAS_ASYNCSSH else Exception):
         pass
     except Exception as e:
         logger.warning(f"Session error for {ip}: {e}")
@@ -295,6 +310,9 @@ async def handle_session(process: asyncssh.SSHServerProcess):
 
 
 async def start_server():
+    if not _HAS_ASYNCSSH:
+        raise ImportError("asyncssh is required to run the SSH honeypot server. Install it with: pip install asyncssh")
+
     if not os.path.exists(HOST_KEY_PATH):
         raise FileNotFoundError(
             f"Host key not found at {HOST_KEY_PATH}. Generate it first (see Step 2)."
