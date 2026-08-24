@@ -73,6 +73,10 @@ def migrate_db():
                 conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN rl_deception_score FLOAT"))
             if 'rl_reward' not in columns:
                 conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN rl_reward FLOAT"))
+            if 'fingerprinting_attempts' not in columns:
+                conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN fingerprinting_attempts INTEGER NOT NULL DEFAULT 0"))
+            if 'download_attempts' not in columns:
+                conn.execute(text("ALTER TABLE attacker_sessions ADD COLUMN download_attempts INTEGER NOT NULL DEFAULT 0"))
 
 def get_db():
     db = SessionLocal()

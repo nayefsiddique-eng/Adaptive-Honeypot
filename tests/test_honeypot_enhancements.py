@@ -110,3 +110,55 @@ def test_joint_reward_calculation_bounds():
     )
     reward_bad = calculate_joint_reward(session_bad, 0.1)
     assert -20.0 <= reward_bad <= 5.0
+
+def test_schema_migration_old_table():
+    """
+    Creates an old-style attacker_sessions schema lacking fingerprinting_attempts and download_attempts,
+    runs migrate_db(), and verifies that both columns are added with default value 0.
+    """
+    import sqlite3
+    from sqlalchemy import create_engine, inspect, text
+    from sqlalchemy.orm import sessionmaker
+    from backend.database import migrate_db, Base
+
+    # 1. Setup in-memory engine and build old-style table manually
+    test_engine = create_engine("sqlite:///:memory:")
+    
+    with test_engine.begin() as conn:
+        conn.execute(text("""
+            CREATE TABLE attacker_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ip_address VARCHAR,
+                session_id VARCHAR UNIQUE,
+                attack_count INTEGER DEFAULT 0,
+                risk_score FLOAT DEFAULT 0.0,
+                is_active BOOLEAN DEFAULT 1
+            )
+        """))
+        # Insert a sample old record
+        conn.execute(text("""
+            INSERT INTO attacker_sessions (ip_address, session_id, attack_count, risk_score, is_active)
+            VALUES ('192.168.1.100', 'old_sess_123', 5, 45.0, 1)
+        """))
+
+    # 2. Patch database module engine temporarily to run migrate_db() on test_engine
+    import backend.database as db_module
+    orig_engine = db_module.engine
+    try:
+        db_module.engine = test_engine
+        migrate_db()
+    finally:
+        db_module.engine = orig_engine
+
+    # 3. Verify columns exist via Inspector
+    inspector = inspect(test_engine)
+    cols = [c['name'] for c in inspector.get_columns('attacker_sessions')]
+    assert "fingerprinting_attempts" in cols
+    assert "download_attempts" in cols
+
+    # 4. Verify existing record populated default 0 for both columns
+    with test_engine.connect() as conn:
+        row = conn.execute(text("SELECT fingerprinting_attempts, download_attempts FROM attacker_sessions WHERE session_id = 'old_sess_123'")).fetchone()
+        assert row is not None
+        assert row[0] == 0  # fingerprinting_attempts
+        assert row[1] == 0  # download_attempts

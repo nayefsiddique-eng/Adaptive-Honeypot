@@ -51,7 +51,9 @@ def list_sessions(limit: int = 50, db: Session = Depends(get_db)):
             "attack_chain_progress": s.attack_chain_progress,
             "attack_chain": chain_res,
             "llm_summary": s.llm_summary,
-            "ttp_fingerprint": ttp
+            "ttp_fingerprint": ttp,
+            "fingerprinting_attempts": getattr(s, "fingerprinting_attempts", 0) or 0,
+            "download_attempts": getattr(s, "download_attempts", 0) or 0
         })
     return res
 
