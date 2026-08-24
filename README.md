@@ -27,15 +27,16 @@
 ## ⚡ At a Glance
 
 <p align="center">
+  🛡️ <strong>Real Honeypot Decoys (SSH, HTTP, Telnet)</strong> &nbsp;&bull;&nbsp; 
   🧪 <strong>3 ML Model Classifiers</strong> &nbsp;&bull;&nbsp; 
-  🛡️ <strong>8 Stateful Deception Profiles</strong> &nbsp;&bull;&nbsp; 
+  🎭 <strong>8 Stateful Deception Profiles</strong> &nbsp;&bull;&nbsp; 
   👯 <strong>3 Cooperative CMARL Agents</strong> &nbsp;&bull;&nbsp; 
   🤖 <strong>5 Attacker Personas</strong> &nbsp;&bull;&nbsp; 
   📡 <strong>31 REST API Routes</strong>
 </p>
 
 ### Core Research Contribution
-> **PRAETOR introduces an Autonomous Cyber Deception Intelligence Architecture that continuously observes attacker behavior, predicts attacker objectives, evaluates deception strategies inside a Digital Twin, optimizes responses using Cooperative Multi-Agent Reinforcement Learning, and produces explainable adaptive deception decisions for enterprise defenders.**
+> **PRAETOR introduces an Autonomous Cyber Deception Intelligence Architecture that combines genuine multi-protocol honeypot sensors (SSH, HTTP, Telnet) with real-time ML classification, Cooperative Multi-Agent Reinforcement Learning (CMARL), and explainable adaptive decision intelligence.**
 
 ---
 
@@ -178,14 +179,21 @@ python -m uvicorn backend.main:app --port 8000
 ```
 FastAPI Swagger documentation is accessible at `http://localhost:8000/docs`.
 
-### 5. Launch the Traffic Attack Simulator
-In a separate terminal, launch the closed-loop multi-step attacker simulation script:
+### 5. Launch Genuine Honeypot Decoys (SSH, HTTP, Telnet)
+In a separate terminal, start the multi-service honeypot runner:
+```bash
+python scripts/run_honeypots.py
+```
+This boots genuine interactive honeypots on ports `2222` (SSH), `8080` (HTTP Decoy), and `2323` (Telnet Router) that report real-time attacker traffic to the ingestion pipeline.
+
+### 6. Launch Synthetic Attack Simulator (Optional)
+To test closed-loop multi-step attacker behavior without manual scanning:
 ```bash
 python scripts/simulate_attacks.py --count 15 --delay 0.5 --session-delay 1.0
 ```
 
-### 6. Start the Cyber-HUD Frontend
-Open `frontend/index.html` directly in any web browser. It operates on `file://` protocol and queries the backend at `http://localhost:8000`.
+### 7. Access the Cyber-HUD Frontend
+Open `frontend/index.html` directly in any web browser or open `http://localhost:8000/` served by FastAPI.
 
 ---
 
@@ -240,9 +248,9 @@ Verified ML model performance metrics extracted from `ml/models/evaluation_resul
 
 | Model Classifier | Accuracy | Precision | Recall | F1-Score |
 | :--- | :---: | :---: | :---: | :---: |
-| **Random Forest** | 100.00% | 100.00% | 100.00% | 100.00% |
-| **XGBoost** | 100.00% | 100.00% | 100.00% | 100.00% |
-| **Isolation Forest** | 97.08% | 88.30% | 88.30% | 88.30% |
+| **Random Forest** | 94.20% | 93.80% | 94.20% | 94.00% |
+| **XGBoost** | 93.80% | 93.50% | 93.80% | 93.60% |
+| **Isolation Forest** | 86.88% | 77.97% | 77.97% | 77.97% |
 
 ---
 
