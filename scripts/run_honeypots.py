@@ -41,11 +41,15 @@ async def start_ssh_service():
         key.write_private_key(HOST_KEY_PATH)
 
     logger.info(f"[+] Starting SSH Honeypot Service on port {SSH_PORT}...")
+    from backend.honeypot.ssh_server import handle_session
     await asyncssh.create_server(
         HoneypotSSHServer,
         "0.0.0.0",
         SSH_PORT,
-        server_host_keys=[HOST_KEY_PATH]
+        server_host_keys=[HOST_KEY_PATH],
+        process_factory=handle_session,
+        session_factory=handle_session,
+        server_version="SSH-2.0-OpenSSH_8.9p1"
     )
 
 

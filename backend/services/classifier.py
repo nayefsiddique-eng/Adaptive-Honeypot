@@ -56,13 +56,17 @@ def predict(features: dict) -> dict:
         final_confidence = xgb_confidence
         winning_model = "xgboost"
 
-    # If ML ensemble yields 'unknown' or very low confidence on live protocol traffic, fallback to heuristic classification
-    if final_label == "unknown" or final_confidence < 0.35:
-        from backend.core.feature_extractor import classify_attack_heuristic
-        heuristic_label = classify_attack_heuristic(features)
-        if heuristic_label != "unknown":
-            final_label = heuristic_label
-            winning_model = f"{winning_model}+heuristic"
+    # If ML ensemble yields 'unknown' or misclassifies live protocol traffic as generic port_scan, fallback to heuristic classification
+    from backend.core.feature_extractor import classify_attack_heuristic
+    heuristic_label = classify_attack_heuristic(features)
+    if heuristic_label != "unknown":
+        if final_label in ["unknown", "port_scan"] or final_confidence < 0.35:
+            if final_label == "port_scan" and (features.get("is_ssh_login") or features.get("is_shell_command") or features.get("has_common_password") or features.get("protocol_http") or features.get("protocol_telnet") or features.get("protocol_ssh")):
+                final_label = heuristic_label
+                winning_model = f"{winning_model}+heuristic"
+            elif final_label == "unknown" or final_confidence < 0.35:
+                final_label = heuristic_label
+                winning_model = f"{winning_model}+heuristic"
 
     return {
         "attack_type": final_label,

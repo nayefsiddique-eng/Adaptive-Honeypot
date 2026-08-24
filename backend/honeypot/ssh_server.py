@@ -225,6 +225,7 @@ async def start_server():
         port=LISTEN_PORT,
         server_host_keys=[HOST_KEY_PATH],
         process_factory=handle_session,
+        session_factory=handle_session,
         server_version="SSH-2.0-OpenSSH_8.9p1",  # matches a real Ubuntu 22.04 banner
     )
     logger.info(f"PRAETOR SSH honeypot listening on 0.0.0.0:{LISTEN_PORT}")
