@@ -240,7 +240,8 @@ To run an automated live presentation for a faculty committee:
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
-| `GET` | `/` | API Health verification and honeypot active check. |
+| `GET` | `/` | API active check. |
+| `GET` | `/health` | Subsystem status check (API, Database, ML, RL, SSH, HTTP, Telnet). |
 | `POST` | `/api/logs/ingest` | Ingests traffic logs, processes predictions, geolocates, and updates CMARL. |
 | `GET` | `/api/logs` | Fetch all logs (supports filter: `?ip={ip_address}`). |
 | `GET` | `/api/logs/recent` | Retrieve recent logs. |
@@ -251,6 +252,7 @@ To run an automated live presentation for a faculty committee:
 | `GET` | `/api/sessions` | Fetch all attacker sessions. |
 | `GET` | `/api/sessions/clusters` | K-Means clustering configurations. |
 | `GET` | `/api/sessions/{session_id}` | Retrieve single session state details. |
+| `GET` | `/api/sessions/{session_id}/transitions` | Chronological deception state transitions, risk shifts, and step rewards. |
 | `GET` | `/api/sessions/{session_id}/recording` | Keystroke timeline capture. |
 | `GET` | `/api/sessions/{session_id}/summary` | Retrieve LLM analyst summary brief. |
 | `GET` | `/api/sessions/{session_id}/behavior_timeline` | Reconstruct attacker behavior timeline. |

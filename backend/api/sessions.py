@@ -64,15 +64,29 @@ def get_attacker_clusters(db: Session = Depends(get_db)):
     """
     return cluster_attacker_ips(db)
 
-@router.get("/{session_id}")
-def get_session(session_id: str, db: Session = Depends(get_db)):
+@router.get("/{session_id}/transitions")
+def get_session_transitions(session_id: str, db: Session = Depends(get_db)):
     """
-    Get detailed metrics of a specific session.
+    Retrieve chronological deception state transitions for a given session.
     """
-    session = db.query(AttackerSession).filter(AttackerSession.session_id == session_id).first()
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
-    return session
+    from backend.models.policy import DeceptionTransition
+    transitions = db.query(DeceptionTransition).filter(DeceptionTransition.session_id == session_id).order_by(DeceptionTransition.timestamp.asc()).all()
+    return [
+        {
+            "id": t.id,
+            "session_id": t.session_id,
+            "trigger_event": t.trigger_event,
+            "prev_profile": t.prev_profile,
+            "action_taken": t.action_taken,
+            "next_profile": t.next_profile,
+            "risk_before": t.risk_before,
+            "risk_after": t.risk_after,
+            "reward": t.reward,
+            "interaction_depth": t.interaction_depth,
+            "timestamp": t.timestamp
+        }
+        for t in transitions
+    ]
 
 @router.get("/{session_id}/recording")
 def get_session_recording(session_id: str, db: Session = Depends(get_db)):
@@ -86,6 +100,43 @@ def get_session_recording(session_id: str, db: Session = Depends(get_db)):
 
     events = db.query(AttackLog).filter(AttackLog.session_id == session_id).order_by(AttackLog.timestamp.asc()).all()
 
+    return {
+        "session_id": session_id,
+        "ip_address": session.ip_address,
+        "first_seen": session.first_seen,
+        "last_seen": session.last_seen,
+        "session_duration": session.session_duration,
+        "attack_count": session.attack_count,
+        "attack_types": session.attack_types,
+        "risk_score": session.risk_score,
+        "honeypot_state": session.honeypot_state,
+        "interaction_depth": session.interaction_depth,
+        "events": [
+            {
+                "id": ev.id,
+                "timestamp": ev.timestamp,
+                "port": ev.port,
+                "protocol": ev.protocol,
+                "attack_type": ev.attack_type,
+                "risk_score": ev.risk_score,
+                "payload": ev.payload,
+                "raw_payload": ev.raw_payload,
+                "is_anomalous": ev.is_anomalous,
+                "ttp_fingerprint": ev.ttp_fingerprint
+            }
+            for ev in events
+        ]
+    }
+
+@router.get("/{session_id}")
+def get_session(session_id: str, db: Session = Depends(get_db)):
+    """
+    Get detailed metrics of a specific session.
+    """
+    session = db.query(AttackerSession).filter(AttackerSession.session_id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    events = db.query(AttackLog).filter(AttackLog.session_id == session_id).all()
     return {
         "session_id": session_id,
         "ip_address": session.ip_address,

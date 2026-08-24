@@ -129,7 +129,8 @@ async def handle_request(request: web.Request) -> web.Response:
     
     suspicious_paths = [
         "/.env", "/config.env", "/admin", "/login", "/wp-login.php",
-        "/phpmyadmin", "/actuator", "/server-status", "/wp-config.php", "/config.yaml"
+        "/phpmyadmin", "/actuator", "/server-status", "/wp-config.php", "/config.yaml",
+        "/robots.txt", "/api", "/wp-admin"
     ]
     if any(sp in path for sp in suspicious_paths):
         metadata["event"] = "reconnaissance" if method == "GET" else "exploit_attempt"
@@ -142,6 +143,12 @@ async def handle_request(request: web.Request) -> web.Response:
         elif path == "/actuator":
             asyncio.create_task(report_event(client_ip, LISTEN_PORT, full_payload, metadata))
             return web.Response(text='{"_links":{"self":{"href":"http://localhost:8080/actuator","templated":false},"health":{"href":"http://localhost:8080/actuator/health","templated":false},"info":{"href":"http://localhost:8080/actuator/info","templated":false}}}', content_type="application/json", status=200, headers=headers)
+        elif path == "/robots.txt":
+            asyncio.create_task(report_event(client_ip, LISTEN_PORT, full_payload, metadata))
+            return web.Response(text="User-agent: *\nDisallow: /admin/\nDisallow: /login/\nDisallow: /.env\nDisallow: /backup/\n", content_type="text/plain", status=200, headers=headers)
+        elif path in ["/api", "/api/v1"]:
+            asyncio.create_task(report_event(client_ip, LISTEN_PORT, full_payload, metadata))
+            return web.Response(text='{"status":"online","version":"v1.4.2","environment":"production"}', content_type="application/json", status=200, headers=headers)
 
     if path in ["/login", "/admin/login", "/admin", "/wp-login.php"] and method == "POST":
         post_data = {}

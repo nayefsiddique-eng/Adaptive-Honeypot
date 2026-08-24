@@ -119,7 +119,7 @@ class AutonomousDecisionEngine:
     def __init__(self, db: Session):
         self.db = db
 
-    def evaluate_decision_state(self, ip_address: str, current_session_id: str, attack_type: str, confidence: float) -> Dict[str, Any]:
+    def evaluate_decision_state(self, ip_address: str, current_session_id: str, attack_type: str, confidence: float, prev_profile: str = "default", prev_risk: float = 0.0) -> Dict[str, Any]:
         # 1. Gather all fusion intelligence signals
         intel_profile = threat_fusion.fuse_attacker_intelligence(self.db, ip_address, current_session_id)
         
@@ -151,6 +151,39 @@ class AutonomousDecisionEngine:
             f"Cooperative agents selected strategy '{coexistence_action}' (Network Agent level: '{chosen_level}'). "
             f"Deception is targeted at mitigating expected '{expected_obj}' objectives."
         )
+
+        # 7. Log DeceptionTransition record for state transition history
+        try:
+            from backend.models.policy import DeceptionTransition
+            from backend.models.session import AttackerSession
+            sess_obj = self.db.query(AttackerSession).filter(AttackerSession.session_id == current_session_id).first()
+            
+            # Post-decision state values
+            next_prof = profile_details.get("state", "default")
+            post_risk = sess_obj.risk_score if sess_obj else prev_risk
+            depth_val = sess_obj.interaction_depth if sess_obj else 1
+            
+            # Calculate step reward directly using current session metrics and profile effectiveness
+            step_reward = coop_rl.calculate_joint_reward(
+                sess_obj if sess_obj else AttackerSession(session_duration=1.0, interaction_depth=depth_val),
+                0.90 if chosen_profile == attack_type else 0.40
+            )
+
+            transition = DeceptionTransition(
+                session_id=current_session_id,
+                trigger_event=attack_type,
+                prev_profile=prev_profile or "default",
+                action_taken=coexistence_action,
+                next_profile=next_prof,
+                risk_before=prev_risk,
+                risk_after=post_risk,
+                reward=step_reward,
+                interaction_depth=depth_val
+            )
+            self.db.add(transition)
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
 
         return {
             "recommended_strategy": coexistence_action,

@@ -195,9 +195,15 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
         depth_map = {0: "low", 1: "low", 2: "medium", 3: "high", 4: "high"}
         current_level = depth_map.get(current_depth, "low")
 
+        prev_profile_val = session.honeypot_state or "default"
+        prev_risk_val = session.risk_score or 0.0
+
         from backend.core.decision_engine import AutonomousDecisionEngine
         decision_engine = AutonomousDecisionEngine(db)
-        decision_eval = decision_engine.evaluate_decision_state(req.ip_address, session_id, attack_type, confidence)
+        decision_eval = decision_engine.evaluate_decision_state(
+            req.ip_address, session_id, attack_type, confidence,
+            prev_profile=prev_profile_val, prev_risk=prev_risk_val
+        )
 
         action_str = decision_eval["recommended_strategy"]
         selected = decision_eval["agents_decisions"]

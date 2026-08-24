@@ -112,6 +112,15 @@ def get_research_metrics(db: Session = Depends(get_db)):
     intel_hits = getattr(threat_intel, "intel_cache_hits", 0)
     intel_cache_hit_rate = round(intel_hits / intel_queries, 2) if intel_queries > 0 else 0.0
 
+    avg_interaction_depth = db.query(func.avg(AttackerSession.interaction_depth)).scalar() or 1.0
+    avg_rl_reward = db.query(func.avg(AttackerSession.rl_reward)).scalar() or 0.0
+
+    fingerprinting_sessions = db.query(AttackerSession).filter(AttackerSession.fingerprinting_attempts > 0).count()
+    fingerprinting_detection_rate = round(fingerprinting_sessions / total_sessions * 100.0, 2) if total_sessions > 0 else 0.0
+
+    download_sessions = db.query(AttackerSession).filter(AttackerSession.download_attempts > 0).count()
+    payload_attempt_rate = round(download_sessions / total_sessions * 100.0, 2) if total_sessions > 0 else 0.0
+
     return {
         "total_attacks": total_attacks,
         "total_sessions": total_sessions,
@@ -132,6 +141,10 @@ def get_research_metrics(db: Session = Depends(get_db)):
             "unique_tool_signatures": unique_tool_signatures,
             "repeat_attacker_rate": repeat_attacker_rate,
             "avg_session_duration_seconds": avg_session_duration_seconds,
+            "avg_interaction_depth": round(float(avg_interaction_depth), 2),
+            "avg_rl_reward": round(float(avg_rl_reward), 4),
+            "fingerprinting_detection_rate_pct": fingerprinting_detection_rate,
+            "payload_attempt_rate_pct": payload_attempt_rate,
             "gemini_cache_hit_rate": gemini_cache_hit_rate,
             "intel_cache_hit_rate": intel_cache_hit_rate
         }

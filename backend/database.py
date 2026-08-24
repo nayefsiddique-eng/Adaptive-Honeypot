@@ -18,7 +18,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 def init_db():
-    from backend.models import attack, session, reputation  # noqa
+    from backend.models import attack, session, reputation, policy  # noqa
     Base.metadata.create_all(bind=engine)
     migrate_db()
 
