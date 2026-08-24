@@ -112,18 +112,90 @@ COMMAND_HELP_ECHO = {
     "whoami": lambda fs: "root",
     "id": lambda fs: "uid=0(root) gid=0(root) groups=0(root)",
     "uname -a": lambda fs: f"Linux {HOSTNAME} 5.15.0-91-generic #101-Ubuntu SMP x86_64 GNU/Linux",
+    "uname -r": lambda fs: "5.15.0-91-generic",
     "uname": lambda fs: "Linux",
     "hostname": lambda fs: HOSTNAME,
+    "hostnamectl": lambda fs: (
+        f" Static hostname: {HOSTNAME}\n"
+        "       Icon name: computer-vm\n"
+        "         Chassis: vm\n"
+        "      Machine ID: d8a9e2f41b2c4d5e6f7a8b9c0d1e2f3a\n"
+        "       Boot ID: 3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d\n"
+        "Virtualization: kvm\n"
+        "Operating System: Ubuntu 22.04.4 LTS\n"
+        "          Kernel: Linux 5.15.0-91-generic\n"
+        "    Architecture: x86-64"
+    ),
     "uptime": lambda fs: " 14:23:07 up 62 days,  3:41,  1 user,  load average: 0.08, 0.05, 0.01",
+    "date": lambda fs: "Mon Aug 24 14:23:07 UTC 2026",
+    "df -h": lambda fs: (
+        "Filesystem      Size  Used Avail Use% Mounted on\n"
+        "/dev/sda1        40G   14G   25G  36% /\n"
+        "tmpfs           1.9G     0  1.9G   0% /dev/shm\n"
+        "/dev/sda15      124M   11M  114M   9% /boot/efi"
+    ),
+    "df": lambda fs: (
+        "Filesystem     1K-blocks     Used Available Use% Mounted on\n"
+        "/dev/sda1       41251136 14210452  24921444  37% /\n"
+        "tmpfs            1987524        0   1987524   0% /dev/shm"
+    ),
+    "free -h": lambda fs: (
+        "               total        used        free      shared  buff/cache   available\n"
+        "Mem:           3.8Gi       1.1Gi       1.4Gi        12Mi       1.3Gi       2.4Gi\n"
+        "Swap:          2.0Gi          0B       2.0Gi"
+    ),
+    "free": lambda fs: (
+        "               total        used        free      shared  buff/cache   available\n"
+        "Mem:         3975048     1153436     1468012       12288     1353600     2514300\n"
+        "Swap:        2097148           0     2097148"
+    ),
+    "ip addr": lambda fs: (
+        "1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000\n"
+        "    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00\n"
+        "    inet 127.0.0.1/8 scope host lo\n"
+        "2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000\n"
+        "    link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff\n"
+        "    inet 10.0.0.14/24 brd 10.0.0.255 scope global eth0"
+    ),
+    "ip a": lambda fs: (
+        "1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN\n"
+        "    inet 127.0.0.1/8 scope host lo\n"
+        "2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP\n"
+        "    inet 10.0.0.14/24 brd 10.0.0.255 scope global eth0"
+    ),
+    "ip route": lambda fs: (
+        "default via 10.0.0.1 dev eth0 proto dhcp src 10.0.0.14 metric 100\n"
+        "10.0.0.0/24 dev eth0 proto kernel scope link src 10.0.0.14 metric 100"
+    ),
+    "ss -tulpn": lambda fs: (
+        "Netid State  Recv-Q Send-Q Local Address:Port  Peer Address:Port Process\n"
+        "tcp   LISTEN 0      128          0.0.0.0:22         0.0.0.0:*     users:((\"sshd\",pid=842,fd=3))\n"
+        "tcp   LISTEN 0      511          0.0.0.0:80         0.0.0.0:*     users:((\"nginx\",pid=1203,fd=6))"
+    ),
+    "ss": lambda fs: (
+        "Netid State  Recv-Q Send-Q Local Address:Port  Peer Address:Port\n"
+        "tcp   LISTEN 0      128          0.0.0.0:22         0.0.0.0:*\n"
+        "tcp   LISTEN 0      511          0.0.0.0:80         0.0.0.0:*"
+    ),
     "ps": lambda fs: "  PID TTY          TIME CMD\n    1 ?        00:00:03 systemd\n  842 ?        00:00:00 sshd\n 1911 pts/0    00:00:00 bash",
     "ps aux": lambda fs: (
-        "USER       PID %CPU %MEM COMMAND\n"
-        "root         1  0.0  0.1 /sbin/init\n"
-        "root       842  0.0  0.2 /usr/sbin/sshd -D\n"
-        "www-data  1203  0.1  1.4 nginx: worker process\n"
+        "USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\n"
+        "root         1  0.0  0.1 168240  9612 ?        Ss   Jun23   0:03 /sbin/init\n"
+        "root       842  0.0  0.2  15816  8204 ?        Ss   Jun23   0:00 /usr/sbin/sshd -D\n"
+        "www-data  1203  0.1  1.4  55280 14210 ?        S    Jun23   1:12 nginx: worker process\n"
+        "root      1911  0.0  0.1  10072  5124 pts/0    Ss+  14:20   0:00 -bash"
     ),
-    "ifconfig": lambda fs: "eth0: flags=4163  inet 10.0.0.14  netmask 255.255.255.0  broadcast 10.0.0.255",
-    "ip a": lambda fs: "2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> inet 10.0.0.14/24 scope global eth0",
+    "env": lambda fs: (
+        "SHELL=/bin/bash\n"
+        "PWD=" + fs.pwd() + "\n"
+        "LOGNAME=root\n"
+        "HOME=/root\n"
+        "LANG=en_US.UTF-8\n"
+        "USER=root\n"
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n"
+        "TERM=xterm-256color"
+    ),
+    "ifconfig": lambda fs: "eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500\n        inet 10.0.0.14  netmask 255.255.255.0  broadcast 10.0.0.255",
     "history": lambda fs: "",
     "clear": lambda fs: "\x1b[H\x1b[2J",
 }
@@ -150,21 +222,30 @@ def dispatch_command(fs: FakeFilesystem, line: str) -> str | None:
         return fs.pwd()
     if cmd == "cd":
         return fs.cd(args[0] if args else "")
+    if cmd == "mkdir":
+        return fs.mkdir(args[0] if args else "")
+    if cmd == "touch":
+        return fs.touch(args[0] if args else "")
+    if cmd == "chmod":
+        if len(args) >= 2:
+            return fs.chmod(args[0], args[1])
+        return "chmod: missing operand"
     if cmd == "ls":
-        show_all = any(a in ("-a", "-la", "-al", "-al") for a in args)
+        show_all = any(a in ("-a", "-la", "-al", "-l") or "a" in a for a in args if a.startswith("-"))
+        long_format = any("l" in a for a in args if a.startswith("-"))
         path_args = [a for a in args if not a.startswith("-")]
-        return fs.ls(path_args[0] if path_args else "", show_all=show_all)
+        return fs.ls(path_args[0] if path_args else "", show_all=show_all, long_format=long_format)
     if cmd == "cat":
         if not args:
             return "cat: missing operand"
         return fs.cat(args[0])
     if cmd in ("wget", "curl"):
         url = args[-1] if args else ""
-        # This is the payload-delivery moment real botnets use to drop
-        # malware. We record the exact URL, "succeed" the download, but
-        # never actually fetch anything - the honeypot must never make
-        # outbound requests to attacker infrastructure.
-        return f"Saving to: 'download'\n{url} ... 100% downloaded"
+        filename = url.split("/")[-1] if "/" in url else "download"
+        if not filename or filename.startswith("-"):
+            filename = "download"
+        fs.write_marker(filename, f"# Simulated download content from {url}\n")
+        return f"Saving to: '{filename}'\n{url} ... 100% downloaded"
     if cmd == "sudo":
         return f"{fs.pwd()}: sudo: effective uid is not 0, is /usr/bin/sudo on a file system with the 'nosuid' option set?"
     if cmd == "echo":

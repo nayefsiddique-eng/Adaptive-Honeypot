@@ -44,6 +44,20 @@ def extract_features(ip: str, port: int, protocol: str, payload: str, metadata: 
     features["files_requested"] = metadata.get("files_requested", 0)
     features["ports_scanned"] = metadata.get("ports_scanned", 0)
 
+    # Fingerprinting & Download Attempt Indicators
+    FINGERPRINT_COMMANDS = [
+        "cat /proc/version", "cat /proc/1/cmdline", "uname -a", "ls /proc", "ls /sys",
+        "systemctl", "mount", "dmesg", "iptables -l", "iptables", "ps aux", "ss -tulpn"
+    ]
+    features["is_fingerprinting_attempt"] = int(
+        any(cmd in payload_lower for cmd in FINGERPRINT_COMMANDS) or metadata.get("event") == "fingerprinting_attempt"
+    )
+
+    DOWNLOAD_COMMANDS = ["wget", "curl", "tftp", "ftp", "certutil", "bitsadmin", "fetch"]
+    features["is_payload_download_attempt"] = int(
+        any(kw in payload_lower for kw in DOWNLOAD_COMMANDS) or metadata.get("event") == "payload_download_attempt"
+    )
+
     # Feature 6 - Additional Attack Heuristics
     features["has_ssrf"] = int(any(kw in payload_lower for kw in ["localhost", "169.254.169.254", "file://", "dict://"]))
     features["has_ldap_injection"] = int(any(kw in payload_lower for kw in [")(", "*)(", "ldap://"]))

@@ -175,7 +175,14 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
             session_commands.append(req.payload.strip())
         elif attack_type == "brute_force" and req.payload:
             session_commands.append(f"AUTHENTICATION TRY: {req.payload.strip()}")
+        elif req.payload:
+            session_commands.append(req.payload.strip())
         session.commands_issued = session_commands
+
+        if features.get("is_fingerprinting_attempt"):
+            session.fingerprinting_attempts = (session.fingerprinting_attempts or 0) + 1
+        if features.get("is_payload_download_attempt"):
+            session.download_attempts = (session.download_attempts or 0) + 1
 
         session_hashes = list(session.payload_hashes)
         if req.payload:

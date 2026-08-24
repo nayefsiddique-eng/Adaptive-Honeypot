@@ -197,6 +197,31 @@ Open `frontend/index.html` directly in any web browser or open `http://localhost
 
 ---
 
+## 🔒 Safe Local Testing
+
+> **Important Security Boundary:** This honeypot is designed for research, simulation, and controlled sandbox testing. It should **NOT** be exposed directly to the public Internet without network isolation (such as Docker sandboxing or firewalling).
+
+### Local Port Mapping
+* **API / Dashboard:** `8000`
+* **SSH Honeypot:** `2222`
+* **HTTP Web Decoy:** `8080`
+* **Telnet Honeypot:** `2323`
+
+### Execution Commands
+
+```bash
+# Terminal 1 - Backend API
+python -m uvicorn backend.main:app --port 8000
+
+# Terminal 2 - Multi-Service Honeypot Decoys
+python scripts/run_honeypots.py
+
+# Terminal 3 - Attack Simulator
+python scripts/simulate_attacks.py --count 15 --delay 0.5 --session-delay 1.0
+```
+
+---
+
 ## 🖥️ Running a Live Demonstration
 
 To run an automated live presentation for a faculty committee:

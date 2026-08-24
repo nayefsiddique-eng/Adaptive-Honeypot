@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from fastapi import FastAPI, Request
@@ -91,6 +91,56 @@ def root(request: Request):
     if "text/html" in request.headers.get("accept", ""):
         return FileResponse("frontend/index.html")
     return {"status": "Honeypot active", "version": "1.0.0"}
+
+@app.get("/health")
+def health_check():
+    import socket
+    from backend.database import engine
+    from backend.services.classifier import _rf, _xgb
+
+    # 1. Database Status
+    db_ok = False
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        db_ok = True
+    except Exception:
+        db_ok = False
+
+    # 2. ML Models Status
+    ml_ok = bool(_rf is not None and _xgb is not None)
+
+    # 3. Honeypot Ports Check (SSH 2222, HTTP 8080, Telnet 2323)
+    def check_port(port: int) -> bool:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(0.5)
+            res = s.connect_ex(('127.0.0.1', port))
+            s.close()
+            return res == 0
+        except Exception:
+            return False
+
+    honeypot_ports = {
+        "ssh_2222": check_port(2222),
+        "http_8080": check_port(8080),
+        "telnet_2323": check_port(2323)
+    }
+
+    all_systems_go = db_ok and ml_ok
+
+    return {
+        "status": "healthy" if all_systems_go else "degraded",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "subsystems": {
+            "api": "operational",
+            "database": "operational" if db_ok else "unreachable",
+            "ml_classifier": "operational" if ml_ok else "uninitialized",
+            "cmaql_rl_engine": "operational",
+            "honeypot_services": honeypot_ports
+        }
+    }
 
 # Serve Frontend Static Files (index.html, styles, api client)
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")

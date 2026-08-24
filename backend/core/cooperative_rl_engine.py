@@ -115,17 +115,32 @@ class CooperativeRLCoordinator:
 def calculate_joint_reward(session: AttackerSession, deception_score: float) -> float:
     """
     Computes unified cooperative rewards based on connection longevity,
-    penetration depth, and target deception alignment.
+    penetration depth, target deception alignment, and granular attacker actions.
+    Normalized and bounded between -20.0 and 50.0.
     """
     duration = session.session_duration or 0.0
     depth = session.interaction_depth or 1
     
-    # Joint Reward Heuristic
-    r_time = min(15.0, duration / 10.0) # Reward longer dwell times
-    r_depth = depth * 3.0              # Reward deeper interactions
-    r_deception = deception_score * 8.0 # Reward alignment with optimal profiles
+    # Base Joint Reward
+    r_time = min(15.0, duration / 10.0)      # Reward longer dwell times (max 15.0)
+    r_depth = min(15.0, depth * 3.0)          # Reward deeper interactions (max 15.0)
+    r_deception = deception_score * 8.0      # Reward alignment with optimal profiles (max 8.0)
+
+    # Positive Reward Signals
+    r_fingerprint = min(5.0, (getattr(session, "fingerprinting_attempts", 0) or 0) * 1.5)
+    r_download = min(5.0, (getattr(session, "download_attempts", 0) or 0) * 2.5)
     
-    return round(r_time + r_depth + r_deception, 4)
+    attack_types = session.attack_types or []
+    r_cred = 3.0 if "brute_force" in attack_types else 0.0
+    r_recon = 2.0 if "port_scan" in attack_types or "reconnaissance" in attack_types else 0.0
+    r_exploit = 4.0 if any(at in attack_types for at in ["command_injection", "sql_injection", "path_traversal", "malware_delivery"]) else 0.0
+
+    # Negative Penalty Signals (apply if session ended prematurely with minimal interaction)
+    penalty_immediate_drop = -5.0 if (duration < 2.0 and depth <= 1 and deception_score < 0.2) else 0.0
+
+    total_reward = r_time + r_depth + r_deception + r_fingerprint + r_download + r_cred + r_recon + r_exploit + penalty_immediate_drop
+    bounded_reward = max(-20.0, min(50.0, total_reward))
+    return round(bounded_reward, 4)
 
 def update_q_table_for_session(db: Session, session_id: str, state_str: str, action_str: str, deception_score: float) -> None:
     """

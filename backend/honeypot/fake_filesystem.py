@@ -73,14 +73,20 @@ _BASE_TREE = {
 
 
 class FakeFilesystem:
-    """Per-session virtual filesystem with cwd tracking."""
+    """Per-session virtual filesystem with cwd tracking and stateful operations."""
 
     def __init__(self):
         self.tree = copy.deepcopy(_BASE_TREE)
         self.cwd = ["root"]  # default login lands in /root, like a real root shell
 
-    def _resolve(self, path: str):
-        """Resolve a path (absolute or relative) to (parent_dict, name, node)."""
+    def _resolve_parts(self, path: str):
+        if not path or path == ".":
+            return list(self.cwd)
+        if path == "~":
+            return ["root"]
+        if path.startswith("~"):
+            path = "/home/" + path[1:].lstrip("/")
+
         if path.startswith("/"):
             parts = [p for p in path.split("/") if p and p != "."]
         else:
@@ -93,16 +99,16 @@ class FakeFilesystem:
                     resolved.pop()
             else:
                 resolved.append(part)
+        return resolved
 
+    def _node_at(self, path: str):
+        resolved = self._resolve_parts(path)
         node = self.tree
-        for part in resolved[:-1]:
+        for part in resolved:
             if not isinstance(node, dict) or part not in node:
-                return None, None, None
+                return None
             node = node[part]
-        name = resolved[-1] if resolved else None
-        parent = node
-        target = node.get(name) if name and isinstance(node, dict) else (self.tree if name is None else None)
-        return parent, name, target
+        return node
 
     def pwd(self) -> str:
         return "/" + "/".join(self.cwd) if self.cwd else "/"
@@ -111,19 +117,7 @@ class FakeFilesystem:
         if not path or path == "~":
             self.cwd = ["root"]
             return ""
-        if path.startswith("/"):
-            parts = [p for p in path.split("/") if p and p != "."]
-        else:
-            parts = self.cwd + [p for p in path.split("/") if p and p != "."]
-
-        resolved = []
-        for part in parts:
-            if part == "..":
-                if resolved:
-                    resolved.pop()
-            else:
-                resolved.append(part)
-
+        resolved = self._resolve_parts(path)
         node = self.tree
         for part in resolved:
             if not isinstance(node, dict) or part not in node or "__content__" in node[part]:
@@ -132,47 +126,110 @@ class FakeFilesystem:
         self.cwd = resolved
         return ""
 
-    def ls(self, path: str = "", show_all: bool = False) -> str:
-        _, _, target = (None, None, self._node_at(path)) if path else (None, None, self._current_node())
+    def mkdir(self, path: str) -> str:
+        if not path:
+            return "mkdir: missing operand"
+        resolved = self._resolve_parts(path)
+        if not resolved:
+            return "mkdir: cannot create directory '': File exists"
+        node = self.tree
+        for part in resolved[:-1]:
+            if not isinstance(node, dict) or part not in node or "__content__" in node[part]:
+                return f"mkdir: cannot create directory '{path}': No such file or directory"
+            node = node[part]
+        dirname = resolved[-1]
+        if dirname in node:
+            return f"mkdir: cannot create directory '{path}': File exists"
+        node[dirname] = {"__mode__": "drwxr-xr-x", "__owner__": "root root", "__ts__": datetime.utcnow().strftime("%b %d %H:%M")}
+        return ""
+
+    def touch(self, path: str) -> str:
+        if not path:
+            return "touch: missing file operand"
+        resolved = self._resolve_parts(path)
+        if not resolved:
+            return ""
+        node = self.tree
+        for part in resolved[:-1]:
+            if not isinstance(node, dict) or part not in node or "__content__" in node[part]:
+                return f"touch: cannot touch '{path}': No such file or directory"
+            node = node[part]
+        filename = resolved[-1]
+        if filename in node:
+            if isinstance(node[filename], dict) and "__content__" in node[filename]:
+                node[filename]["__ts__"] = datetime.utcnow().strftime("%b %d %H:%M")
+        else:
+            node[filename] = {"__content__": "", "__mode__": "-rw-r--r--", "__owner__": "root root", "__ts__": datetime.utcnow().strftime("%b %d %H:%M")}
+        return ""
+
+    def chmod(self, mode: str, path: str) -> str:
+        if not path:
+            return "chmod: missing operand"
+        node = self._node_at(path)
+        if node is None:
+            return f"chmod: cannot access '{path}': No such file or directory"
+        is_dir = "__content__" not in node
+        current_mode = node.get("__mode__", "drwxr-xr-x" if is_dir else "-rw-r--r--")
+        if "+x" in mode:
+            # Add executable bits
+            mode_chars = list(current_mode)
+            mode_chars[3] = 'x'
+            mode_chars[6] = 'x'
+            mode_chars[9] = 'x'
+            node["__mode__"] = "".join(mode_chars)
+        elif "-x" in mode:
+            mode_chars = list(current_mode)
+            mode_chars[3] = '-'
+            mode_chars[6] = '-'
+            mode_chars[9] = '-'
+            node["__mode__"] = "".join(mode_chars)
+        return ""
+
+    def ls(self, path: str = "", show_all: bool = False, long_format: bool = False) -> str:
+        target = self._node_at(path) if path else self._current_node()
         if target is None:
             return f"ls: cannot access '{path}': No such file or directory"
         if "__content__" in target:
+            if long_format:
+                mode = target.get("__mode__", "-rw-r--r--")
+                owner = target.get("__owner__", "root root")
+                size = len(target.get("__content__", ""))
+                ts = target.get("__ts__", "Aug 24 12:00")
+                name = path or "file"
+                return f"{mode} 1 {owner} {size:4d} {ts} {name}"
             return path or ""
-        entries = sorted(target.keys())
+        
+        entries = [e for e in sorted(target.keys()) if not e.startswith("__")]
         if not show_all:
             entries = [e for e in entries if not e.startswith(".")]
-        return "  ".join(entries)
+        
+        if not long_format:
+            return "  ".join(entries)
+
+        lines = [f"total {len(entries) * 4}"]
+        for name in entries:
+            child = target[name]
+            is_dir = isinstance(child, dict) and "__content__" not in child
+            default_mode = "drwxr-xr-x" if is_dir else "-rw-r--r--"
+            mode = child.get("__mode__", default_mode) if isinstance(child, dict) else default_mode
+            owner = child.get("__owner__", "root root") if isinstance(child, dict) else "root root"
+            size = len(child.get("__content__", "")) if isinstance(child, dict) and "__content__" in child else 4096
+            ts = child.get("__ts__", "Aug 24 12:00") if isinstance(child, dict) else "Aug 24 12:00"
+            lines.append(f"{mode} 1 {owner} {size:5d} {ts} {name}")
+        return "\n".join(lines)
 
     def _current_node(self):
         node = self.tree
         for part in self.cwd:
-            node = node.get(part, {})
-        return node
-
-    def _node_at(self, path: str):
-        if path.startswith("/"):
-            parts = [p for p in path.split("/") if p and p != "."]
-        else:
-            parts = self.cwd + [p for p in path.split("/") if p and p != "."]
-        resolved = []
-        for part in parts:
-            if part == "..":
-                if resolved:
-                    resolved.pop()
-            else:
-                resolved.append(part)
-        node = self.tree
-        for part in resolved:
-            if not isinstance(node, dict) or part not in node:
-                return None
-            node = node[part]
+            if isinstance(node, dict):
+                node = node.get(part, {})
         return node
 
     def cat(self, path: str) -> str:
         node = self._node_at(path)
         if node is None:
             return f"cat: {path}: No such file or directory"
-        if "__content__" not in node:
+        if not isinstance(node, dict) or "__content__" not in node:
             return f"cat: {path}: Is a directory"
         return node["__content__"]
 
@@ -180,5 +237,13 @@ class FakeFilesystem:
         """Used when an attacker uploads/creates a file (e.g. via wget/echo) -
         stored per-session so we capture exactly what they dropped, without
         anything touching the real host filesystem."""
+        filename = path.split("/")[-1] if "/" in path else path
         parent = self._current_node()
-        parent[path] = {"__content__": content, "__uploaded__": True, "__ts__": datetime.utcnow().isoformat()}
+        if isinstance(parent, dict):
+            parent[filename] = {
+                "__content__": content,
+                "__uploaded__": True,
+                "__mode__": "-rw-r--r--",
+                "__owner__": "root root",
+                "__ts__": datetime.utcnow().strftime("%b %d %H:%M")
+            }

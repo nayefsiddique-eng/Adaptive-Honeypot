@@ -29,5 +29,7 @@ class AttackerSession(Base):
     rl_intel_action = Column(String, nullable=True)
     rl_deception_score = Column(Float, nullable=True)
     rl_reward = Column(Float, nullable=True)
+    fingerprinting_attempts = Column(Integer, default=0)
+    download_attempts = Column(Integer, default=0)
     first_seen = Column(DateTime(timezone=True), default=datetime.utcnow, server_default=func.now())
     last_seen = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=func.now())

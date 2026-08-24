@@ -125,34 +125,47 @@ async def handle_request(request: web.Request) -> web.Response:
     }
 
     # Route-specific decoy responses and classification flags
-    if path in ["/.env", "/config.env"]:
-        metadata["event"] = "reconnaissance"
-        asyncio.create_task(report_event(client_ip, LISTEN_PORT, full_payload, metadata))
-        return web.Response(text=DECOY_ENV_TEXT, content_type="text/plain", status=200)
+    headers = {"Server": "Apache/2.4.52 (Ubuntu)"}
+    
+    suspicious_paths = [
+        "/.env", "/config.env", "/admin", "/login", "/wp-login.php",
+        "/phpmyadmin", "/actuator", "/server-status", "/wp-config.php", "/config.yaml"
+    ]
+    if any(sp in path for sp in suspicious_paths):
+        metadata["event"] = "reconnaissance" if method == "GET" else "exploit_attempt"
+        if path in ["/.env", "/config.env", "/wp-config.php", "/config.yaml"]:
+            asyncio.create_task(report_event(client_ip, LISTEN_PORT, full_payload, metadata))
+            return web.Response(text=DECOY_ENV_TEXT, content_type="text/plain", status=200, headers=headers)
+        elif path == "/server-status":
+            asyncio.create_task(report_event(client_ip, LISTEN_PORT, full_payload, metadata))
+            return web.Response(text="Apache Server Status for prod-web-03 (freeway.internal)\nServer Version: Apache/2.4.52 (Ubuntu)\nServer Built: 2024-03-12T00:00:00\nTotal accesses: 14201 - Total Traffic: 84.2 MB\nCPU Usage: u.42 s.12 cu0 cs0 - .015% CPU load\n.0454 requests/sec - 279 B/second - 6.1 kB/request\n1 requests currently being processed, 49 idle workers\nWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW\n", content_type="text/plain", status=200, headers=headers)
+        elif path == "/actuator":
+            asyncio.create_task(report_event(client_ip, LISTEN_PORT, full_payload, metadata))
+            return web.Response(text='{"_links":{"self":{"href":"http://localhost:8080/actuator","templated":false},"health":{"href":"http://localhost:8080/actuator/health","templated":false},"info":{"href":"http://localhost:8080/actuator/info","templated":false}}}', content_type="application/json", status=200, headers=headers)
 
-    elif path in ["/login", "/admin/login"] and method == "POST":
+    if path in ["/login", "/admin/login", "/admin", "/wp-login.php"] and method == "POST":
         post_data = {}
         try:
             post_data = await request.post()
         except Exception:
             pass
-        user = post_data.get("username", "")
-        pwd = post_data.get("password", "")
+        user = post_data.get("username", post_data.get("log", ""))
+        pwd = post_data.get("password", post_data.get("pwd", ""))
         metadata["event"] = "login_attempt"
         metadata["username"] = user
         metadata["password"] = pwd
         asyncio.create_task(report_event(client_ip, LISTEN_PORT, f"login:{user}:{pwd}", metadata))
         # Return realistic 401 Unauthorized decoy response
-        return web.Response(text=LOGIN_HTML.replace("Authenticate", "Invalid Credentials"), content_type="text/html", status=401)
+        return web.Response(text=LOGIN_HTML.replace("Authenticate", "Invalid Credentials"), content_type="text/html", status=401, headers=headers)
 
     elif "eval-stdin.php" in path or "phpunit" in path:
         metadata["event"] = "exploit_attempt"
         asyncio.create_task(report_event(client_ip, LISTEN_PORT, full_payload, metadata))
-        return web.Response(text="Status: OK", content_type="text/plain", status=200)
+        return web.Response(text="Status: OK", content_type="text/plain", status=200, headers=headers)
 
     else:
         asyncio.create_task(report_event(client_ip, LISTEN_PORT, full_payload, metadata))
-        return web.Response(text=LOGIN_HTML, content_type="text/html", status=200)
+        return web.Response(text=LOGIN_HTML, content_type="text/html", status=200, headers=headers)
 
 
 async def main():
