@@ -1,14 +1,50 @@
-venv/
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Environment configurations
 .env
+.env.*
+!.env.example
+
+# Runtime databases & logs
+*.log
+logs/
 *.db
 *.db-shm
 *.db-wal
+*.sqlite
 *.sqlite3
-logs/*.jsonl
-ml/models/*.pkl
-node_modules/
-
 backend/honeypot/ssh_host_key
-.env.*
+
+# IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build & packaging
+dist/
+build/
+*.egg-info/
+ml/models/
+
