@@ -242,6 +242,16 @@ PRAETOR contains evaluation scripts within the `ml/` and `scripts/` directories 
 * Anomaly classification accuracy, precision, recall, and F1 metrics.
 * Dynamic policy adaptation under synthetic attacker playbooks.
 
+### Model Performance Metrics
+
+Verified classifier performance metrics compiled from [`evaluation_results.json`](file:///c:/Users/Admin%20pc/Desktop/Adaptive-Honeypot-main/ml/models/evaluation_results.json):
+
+| Model Classifier | Accuracy | Precision | Recall | F1-Score |
+| :--- | :---: | :---: | :---: | :---: |
+| **Random Forest** | 94.20% | 93.80% | 94.20% | 94.00% |
+| **XGBoost** | 93.80% | 93.50% | 93.80% | 93.60% |
+| **Isolation Forest** | 86.88% | 77.97% | 77.97% | 77.97% |
+
 All quantitative evaluation thresholds in tests serve as stability baselines and policy quality bounds.
 
 ---
