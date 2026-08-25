@@ -1,6 +1,4 @@
-﻿const BASE_URL = window.location.protocol.startsWith('http')
-  ? window.location.origin
-  : 'http://localhost:8000';
+﻿const BASE_URL = 'http://127.0.0.1:8000';
 
 function getManagementKey() {
   return sessionStorage.getItem('praetor_management_key') || '';
@@ -101,3 +99,4 @@ const api = {
   closeSessions: (key) => postJSON('/api/admin/close-sessions', { 'X-Admin-Key': key }),
   guidedDemo:    (key) => postJSON('/api/admin/guided-demo', { 'X-Admin-Key': key }),
 };
+
