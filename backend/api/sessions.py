@@ -119,9 +119,7 @@ def get_session_recording(session_id: str, db: Session = Depends(get_db)):
                 "protocol": ev.protocol,
                 "attack_type": ev.attack_type,
                 "risk_score": ev.risk_score,
-                "payload": ev.payload,
                 "raw_payload": ev.raw_payload,
-                "is_anomalous": ev.is_anomalous,
                 "ttp_fingerprint": ev.ttp_fingerprint
             }
             for ev in events
