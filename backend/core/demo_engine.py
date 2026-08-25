@@ -170,8 +170,8 @@ class GuidedDeceptionDemo:
         ip_address = f"198.51.100.{random.randint(2, 254)}"
         
         # Initialize Attacker Session
-        from datetime import datetime
-        now_dt = datetime.utcnow()
+        from datetime import datetime, UTC
+        now_dt = datetime.now(UTC)
         session = AttackerSession(
             session_id=session_id,
             ip_address=ip_address,

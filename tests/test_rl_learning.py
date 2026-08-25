@@ -66,9 +66,14 @@ def test_rl_learning_convergence():
         rewards_history.append(reward)
         
         # 4. Perform Q-value Bellman update for this terminal step
-        old_q = get_q_value(db, state_str, action_str)
-        new_q = old_q + ALPHA * (reward - old_q)
-        set_q_value(db, state_str, action_str, new_q)
+        from backend.core.cooperative_rl_engine import CooperativeRLCoordinator
+        coordinator = CooperativeRLCoordinator(db)
+        actions_dict = {
+            "network": chosen_level,
+            "service": chosen_profile,
+            "intel": "delayed_response"
+        }
+        coordinator.update_cooperative_rewards(state_str, actions_dict, "terminal_state", reward)
         
     # 5. Calculate averages
     first_50 = rewards_history[:50]
@@ -84,6 +89,7 @@ def test_rl_learning_convergence():
     # Cleanup DB connection
     db.close()
     Base.metadata.drop_all(bind=engine)
+    engine.dispose()
     
     # Assert that learning converges: reward in last 50 must be significantly higher
     # First 50: random actions (rewards around 3-6)
@@ -108,6 +114,7 @@ def test_rl_action_keys_lookup():
     
     db.close()
     Base.metadata.drop_all(bind=engine)
+    engine.dispose()
 
 def test_rl_action_variation_regression():
     engine = create_engine("sqlite:///:memory:")
@@ -128,6 +135,7 @@ def test_rl_action_variation_regression():
     
     db.close()
     Base.metadata.drop_all(bind=engine)
+    engine.dispose()
 
 if __name__ == "__main__":
     test_rl_learning_convergence()

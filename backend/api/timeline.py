@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from backend.database import get_db
 from backend.models.attack import AttackLog
 
@@ -18,7 +18,7 @@ def get_attack_timeline(db: Session = Depends(get_db)):
     """
     Get attacks per hour (last 24 hours) and attacks per day (last 30 days) with risk trends.
     """
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     # 1. Hourly aggregation (last 24 hours)
     twenty_four_hours_ago = now - timedelta(hours=24)

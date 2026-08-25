@@ -1,6 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -34,7 +34,7 @@ async def session_reaper():
             db = SessionLocal()
             try:
                 # Find active sessions inactive for more than 15 seconds
-                time_limit = datetime.utcnow() - timedelta(seconds=15)
+                time_limit = datetime.now(UTC) - timedelta(seconds=15)
                 expired_sessions = db.query(AttackerSession).filter(
                     AttackerSession.is_active == True,
                     AttackerSession.last_seen < time_limit
@@ -175,7 +175,7 @@ def health_check():
 
     return {
         "status": "healthy" if all_systems_go else "degraded",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(UTC).isoformat() + "Z",
         "subsystems": {
             "api": "operational",
             "database": "operational" if db_ok else "unreachable",

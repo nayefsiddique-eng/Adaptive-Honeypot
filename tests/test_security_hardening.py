@@ -5,6 +5,37 @@ from backend.config import settings
 from backend.honeypot.fake_filesystem import FakeFilesystem
 from backend.honeypot.ssh_server import dispatch_command
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from backend.database import Base, get_db
+
+from sqlalchemy.pool import StaticPool
+test_engine = create_engine(
+    "sqlite:///:memory:",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool
+)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+
+@pytest.fixture(autouse=True, scope="module")
+def setup_test_db():
+    from backend.models import attack, session, reputation, policy  # noqa
+    Base.metadata.create_all(bind=test_engine)
+    
+    def override_get_db():
+        db = TestingSessionLocal()
+        try:
+            yield db
+        finally:
+            db.rollback()
+            db.close()
+            
+    app.dependency_overrides[get_db] = override_get_db
+    yield
+    app.dependency_overrides.clear()
+    Base.metadata.drop_all(bind=test_engine)
+    test_engine.dispose()
+
 client = TestClient(app)
 
 def test_hardened_path_traversal_guards():

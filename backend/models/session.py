@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from sqlalchemy import Column, Integer, String, Float, DateTime, JSON, Boolean
 from sqlalchemy.sql import func
 from backend.database import Base
@@ -31,5 +31,5 @@ class AttackerSession(Base):
     rl_reward = Column(Float, nullable=True)
     fingerprinting_attempts = Column(Integer, default=0)
     download_attempts = Column(Integer, default=0)
-    first_seen = Column(DateTime(timezone=True), default=datetime.utcnow, server_default=func.now())
-    last_seen = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=func.now())
+    first_seen = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), server_default=func.now())
+    last_seen = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=func.now())

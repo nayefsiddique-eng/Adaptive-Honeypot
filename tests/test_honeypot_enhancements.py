@@ -163,6 +163,8 @@ def test_schema_migration_old_table():
         assert row[0] == 0  # fingerprinting_attempts
         assert row[1] == 0  # download_attempts
 
+    test_engine.dispose()
+
 def test_security_self_test_isolation():
     """
     Verifies that dangerous inputs (path traversal, command injection, shell escapes)
@@ -252,3 +254,4 @@ def test_deception_transition_telemetry():
 
     db.close()
     Base.metadata.drop_all(bind=engine)
+    engine.dispose()

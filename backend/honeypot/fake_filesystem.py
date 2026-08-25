@@ -10,7 +10,7 @@ real machine.
 """
 
 import copy
-from datetime import datetime
+from datetime import datetime, UTC
 
 HOSTNAME = "prod-web-03"
 
@@ -154,7 +154,7 @@ class FakeFilesystem:
         dirname = resolved[-1]
         if dirname in node:
             return f"mkdir: cannot create directory '{path}': File exists"
-        node[dirname] = {"__mode__": "drwxr-xr-x", "__owner__": "root root", "__ts__": datetime.utcnow().strftime("%b %d %H:%M")}
+        node[dirname] = {"__mode__": "drwxr-xr-x", "__owner__": "root root", "__ts__": datetime.now(UTC).strftime("%b %d %H:%M")}
         return ""
 
     def touch(self, path: str) -> str:
@@ -171,9 +171,9 @@ class FakeFilesystem:
         filename = resolved[-1]
         if filename in node:
             if isinstance(node[filename], dict) and "__content__" in node[filename]:
-                node[filename]["__ts__"] = datetime.utcnow().strftime("%b %d %H:%M")
+                node[filename]["__ts__"] = datetime.now(UTC).strftime("%b %d %H:%M")
         else:
-            node[filename] = {"__content__": "", "__mode__": "-rw-r--r--", "__owner__": "root root", "__ts__": datetime.utcnow().strftime("%b %d %H:%M")}
+            node[filename] = {"__content__": "", "__mode__": "-rw-r--r--", "__owner__": "root root", "__ts__": datetime.now(UTC).strftime("%b %d %H:%M")}
         return ""
 
     def chmod(self, mode: str, path: str) -> str:
@@ -259,5 +259,5 @@ class FakeFilesystem:
                 "__uploaded__": True,
                 "__mode__": "-rw-r--r--",
                 "__owner__": "root root",
-                "__ts__": datetime.utcnow().strftime("%b %d %H:%M")
+                "__ts__": datetime.now(UTC).strftime("%b %d %H:%M")
             }

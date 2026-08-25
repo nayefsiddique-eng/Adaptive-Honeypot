@@ -1,6 +1,6 @@
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from backend.config import settings
 
@@ -13,14 +13,14 @@ def generate_session_id():
 def log_event(ip: str, port: int, protocol: str, payload: str = "", metadata: dict = {}):
     event = {
         "session_id": generate_session_id(),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "ip_address": ip,
         "port": port,
         "protocol": protocol,
         "payload": payload,
         "metadata": metadata
     }
-    log_file = LOG_DIR / f"traffic_{datetime.utcnow().strftime('%Y%m%d')}.jsonl"
+    log_file = LOG_DIR / f"traffic_{datetime.now(UTC).strftime('%Y%m%d')}.jsonl"
     with open(log_file, "a") as f:
         f.write(json.dumps(event) + "\n")
     return event

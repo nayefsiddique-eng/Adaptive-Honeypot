@@ -36,3 +36,13 @@ dependencies = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+filterwarnings = [
+    # Starlette TestClient deprecation: httpx -> httpx2 migration path.
+    # Triggered at import of fastapi.testclient, inside third-party code.
+    # Our application does not use httpx directly at runtime.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead:starlette.exceptions.StarletteDeprecationWarning",
+    # SQLAlchemy internal utcnow() call inside schema default compiler.
+    # The PRAETOR codebase itself has been migrated to datetime.now(UTC).
+    # This warning originates strictly inside sqlalchemy.sql.schema (third-party).
+    "ignore:datetime.datetime.utcnow\\(\\) is deprecated:DeprecationWarning:sqlalchemy.sql.schema",
+]

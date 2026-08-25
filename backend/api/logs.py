@@ -1,7 +1,7 @@
 import time
 import hashlib
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -113,14 +113,14 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
                 reputation.city = geo["city"]
                 reputation.isp = geo["isp"]
 
-        time_limit = datetime.utcnow() - timedelta(minutes=30)
+        time_limit = datetime.now(UTC) - timedelta(minutes=30)
         session = db.query(AttackerSession).filter(
             AttackerSession.ip_address == req.ip_address,
             AttackerSession.is_active == True,
             AttackerSession.last_seen >= time_limit
         ).first()
 
-        now_dt = datetime.utcnow()
+        now_dt = datetime.now(UTC)
 
         if not session:
             session_id = raw_event["session_id"]

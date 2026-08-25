@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  praetor-management:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: praetor-management-plane
+    command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    expose:
+      - "8000"
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - praetor-mgmt-data:/app/data
+      - praetor-mgmt-logs:/app/logs
+    env_file:
+      - .env.management
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=sqlite:///app/data/honeypot.db
+      - LOG_DIR=/app/logs
+    networks:
+      - management_net
+      - telemetry_net
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  praetor-honeypot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: praetor-deception-plane
+    command: ["python", "scripts/run_honeypots.py"]
+    ports:
+      - "2222:2222"
+      - "8080:8080"
+      - "2323:2323"
+    volumes:
+      - praetor-honeypot-logs:/app/logs
+    env_file:
+      - .env.honeypot
+    environment:
+      - BACKEND_INGEST_URL=http://praetor-management:8000/api/logs/ingest
+      - LOG_DIR=/app/logs
+    networks:
+      - attacker_net
+      - telemetry_net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+    restart: unless-stopped
+    healthcheck:
+      # Simple tcp check to confirm local ports are listening
+      test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/127.0.0.1/8080' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  attacker_net:
+    driver: bridge
+    internal: false
+  telemetry_net:
+    driver: bridge
+    internal: true
+  management_net:
+    driver: bridge
+    internal: true
+
+volumes:
+  praetor-mgmt-data:
+  praetor-mgmt-logs:
+  praetor-honeypot-logs:
