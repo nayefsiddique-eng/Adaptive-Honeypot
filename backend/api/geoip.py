@@ -5,7 +5,13 @@ from backend.database import get_db
 from backend.models.attack import AttackLog
 from backend.services.geoip_enricher import enrich_ip
 
-router = APIRouter(prefix="/api/geoip", tags=["GeoIP"])
+from backend.api.auth import require_management_key
+
+router = APIRouter(
+    prefix="/api/geoip",
+    tags=["GeoIP"],
+    dependencies=[Depends(require_management_key)]
+)
 
 @router.get("/lookup")
 def lookup_geoip(ip: str):

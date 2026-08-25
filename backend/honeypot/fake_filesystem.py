@@ -80,6 +80,20 @@ class FakeFilesystem:
         self.cwd = ["root"]  # default login lands in /root, like a real root shell
 
     def _resolve_parts(self, path: str):
+        # Security hardening: reject Windows/UNC/env-var/null escapes immediately
+        path_lower = path.lower()
+        if (
+            "c:\\" in path_lower or
+            "c:/" in path_lower or
+            "d:\\" in path_lower or
+            "d:/" in path_lower or
+            "\\\\" in path or
+            "%" in path or
+            "\x00" in path
+        ):
+            # Safe fail: resolve to an invalid/nonexistent path to force file not found
+            return ["nonexistent_escaped_path"]
+
         if not path or path == ".":
             return list(self.cwd)
         if path == "~":

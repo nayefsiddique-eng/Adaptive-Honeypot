@@ -4,7 +4,13 @@ from backend.database import get_db
 from backend.models.reputation import AttackerReputation
 from backend.core.threat_intel import evaluate_ip_threat
 
-router = APIRouter(prefix="/api/threat-intel", tags=["Threat Intelligence"])
+from backend.api.auth import require_management_key
+
+router = APIRouter(
+    prefix="/api/threat-intel",
+    tags=["Threat Intelligence"],
+    dependencies=[Depends(require_management_key)]
+)
 
 @router.get("/top-threats")
 def get_top_threats(limit: int = 10, db: Session = Depends(get_db)):

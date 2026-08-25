@@ -34,6 +34,7 @@ except ImportError:
     _HAS_HTTPX = False
 
 from backend.honeypot.fake_filesystem import FakeFilesystem, HOSTNAME
+from backend.config import settings
 
 logger = logging.getLogger("ssh_honeypot")
 logging.basicConfig(level=logging.INFO)
@@ -119,7 +120,7 @@ if _HAS_ASYNCSSH:
                 },
             ))
 
-            logger.info(f"[AUTH] {self.peer_ip} tried {username}:{password} -> {'ACCEPTED' if accepted else 'rejected'}")
+            logger.info(f"[AUTH] {self.peer_ip} tried {username}:[REDACTED] -> {'ACCEPTED' if accepted else 'rejected'}")
             return accepted
 
 
@@ -286,6 +287,15 @@ async def handle_session(process):
             if not line:
                 break
             line = line.rstrip("\r\n")
+
+            # Enforce max command length limits
+            if len(line) > settings.MAX_COMMAND_LENGTH:
+                asyncio.create_task(report_event(
+                    ip, LISTEN_PORT, "[OVERSIZED_COMMAND_TRUNCATED]",
+                    {"event": "oversized_command", "username": username, "length": len(line)},
+                ))
+                process.stdout.write("-bash: command too long\r\n")
+                continue
 
             # Report the raw command to the same pipeline used for login
             # attempts - this is what feeds attack_type classification

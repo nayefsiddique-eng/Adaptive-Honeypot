@@ -293,7 +293,7 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         logger.error(f"Generic internal failure during log ingestion: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Database transaction failure: {str(e)}")
+        raise HTTPException(status_code=500, detail="Database transaction failure.")
 
     return {
         "id": log.id,
@@ -310,7 +310,9 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
         "response_time_ms": response_time_ms
     }
 
-@router.get("")
+from backend.api.auth import require_management_key
+
+@router.get("", dependencies=[Depends(require_management_key)])
 def get_logs_by_ip(ip: Optional[str] = None, db: Session = Depends(get_db)):
     if ip:
         logs = db.query(AttackLog).filter(AttackLog.ip_address == ip).order_by(AttackLog.timestamp.desc()).all()
@@ -344,8 +346,10 @@ def get_logs_by_ip(ip: Optional[str] = None, db: Session = Depends(get_db)):
         })
     return res
 
-@router.get("/recent")
+@router.get("/recent", dependencies=[Depends(require_management_key)])
 def get_recent_logs(limit: int = 50, db: Session = Depends(get_db)):
+    # Limit maximum log request size to prevent resource exhaustion
+    limit = min(max(1, limit), 100)
     logs = db.query(AttackLog).order_by(AttackLog.timestamp.desc()).limit(limit).all()
     res = []
     for l in logs:
@@ -397,9 +401,10 @@ def get_recent_logs(limit: int = 50, db: Session = Depends(get_db)):
         })
     return res
 
-@router.get("/{log_id}")
+@router.get("/{log_id}", dependencies=[Depends(require_management_key)])
 def get_log(log_id: int, db: Session = Depends(get_db)):
     log = db.query(AttackLog).filter(AttackLog.id == log_id).first()
     if not log:
         raise HTTPException(status_code=404, detail="Log not found")
     return log
+

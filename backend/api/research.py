@@ -8,7 +8,13 @@ from backend.models.attack import AttackLog
 from backend.models.session import AttackerSession
 from backend.models.reputation import AttackerReputation
 
-router = APIRouter(prefix="/api/research", tags=["Research Metrics"])
+from backend.api.auth import require_management_key
+
+router = APIRouter(
+    prefix="/api/research",
+    tags=["Research Metrics"],
+    dependencies=[Depends(require_management_key)]
+)
 
 @router.get("/metrics")
 def get_research_metrics(db: Session = Depends(get_db)):

@@ -9,7 +9,13 @@ from backend.models.reputation import AttackerReputation
 from backend.models.policy import RLPolicy
 
 logger = logging.getLogger("demo_api")
-router = APIRouter(prefix="/api/demo", tags=["Demo Controller"])
+from backend.api.auth import require_management_key
+
+router = APIRouter(
+    prefix="/api/demo",
+    tags=["Demo Controller"],
+    dependencies=[Depends(require_management_key)]
+)
 
 @router.post("/start")
 async def start_demo(db: Session = Depends(get_db)):

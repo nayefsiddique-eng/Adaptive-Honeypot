@@ -5,7 +5,13 @@ from backend.database import get_db
 from backend.models.attack import AttackLog
 from backend.services.mitre_mapper import map_to_mitre
 
-router = APIRouter(prefix="/api/attacks", tags=["Attacks Telemetry"])
+from backend.api.auth import require_management_key
+
+router = APIRouter(
+    prefix="/api/attacks",
+    tags=["Attacks Telemetry"],
+    dependencies=[Depends(require_management_key)]
+)
 
 @router.get("/summary")
 def get_attacks_summary(db: Session = Depends(get_db)):

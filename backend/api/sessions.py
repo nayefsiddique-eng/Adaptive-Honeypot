@@ -7,7 +7,13 @@ from backend.models.attack import AttackLog
 import backend.services.llm_summarizer as summarizer
 from backend.services.cluster_engine import cluster_attacker_ips
 
-router = APIRouter(prefix="/api/sessions", tags=["Session Recording"])
+from backend.api.auth import require_management_key
+
+router = APIRouter(
+    prefix="/api/sessions",
+    tags=["Session Recording"],
+    dependencies=[Depends(require_management_key)]
+)
 
 @router.get("")
 def list_sessions(limit: int = 50, db: Session = Depends(get_db)):

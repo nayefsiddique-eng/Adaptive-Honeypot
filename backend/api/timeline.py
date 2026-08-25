@@ -5,7 +5,13 @@ from datetime import datetime, timedelta
 from backend.database import get_db
 from backend.models.attack import AttackLog
 
-router = APIRouter(prefix="/api/timeline", tags=["Timeline Analytics"])
+from backend.api.auth import require_management_key
+
+router = APIRouter(
+    prefix="/api/timeline",
+    tags=["Timeline Analytics"],
+    dependencies=[Depends(require_management_key)]
+)
 
 @router.get("")
 def get_attack_timeline(db: Session = Depends(get_db)):

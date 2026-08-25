@@ -1,7 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from backend.core.adaptive_engine import decide_behavior
+from backend.api.auth import require_management_key
 
-router = APIRouter(prefix="/api/adaptive", tags=["Adaptive"])
+router = APIRouter(
+    prefix="/api/adaptive",
+    tags=["Adaptive"],
+    dependencies=[Depends(require_management_key)]
+)
 
 @router.get("/simulate")
 def simulate(attack_type: str = "brute_force", confidence: float = 0.94, risk_score: float = 75.0):

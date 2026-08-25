@@ -5,7 +5,13 @@ from backend.database import get_db
 from backend.models.attack import AttackLog
 from backend.models.session import AttackerSession
 
-router = APIRouter(prefix="/api/dashboard", tags=["Dashboard Telemetry"])
+from backend.api.auth import require_management_key
+
+router = APIRouter(
+    prefix="/api/dashboard",
+    tags=["Dashboard Telemetry"],
+    dependencies=[Depends(require_management_key)]
+)
 
 @router.get("")
 def get_dashboard_data(db: Session = Depends(get_db)):

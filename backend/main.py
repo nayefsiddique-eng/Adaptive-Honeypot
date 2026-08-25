@@ -13,6 +13,17 @@ from backend.models.session import AttackerSession
 from backend.core.cooperative_rl_engine import update_q_table_for_session
 from backend.config import settings
 
+from fastapi.responses import JSONResponse
+from backend.middleware.security import (
+    SecurityHeadersMiddleware,
+    ContentSizeLimitMiddleware,
+    InMemoryRateLimiterMiddleware
+)
+import logging
+from logging.handlers import RotatingFileHandler
+
+logger = logging.getLogger("backend_main")
+
 async def session_reaper():
     """
     Background task to automatically reap (close) inactive sessions and trigger Q-learning updates.
@@ -42,14 +53,30 @@ async def session_reaper():
                 db.commit()
             except Exception as e:
                 db.rollback()
-                print(f"Error in session reaper iteration: {e}")
+                logger.error(f"Error in session reaper iteration: {e}", exc_info=True)
             finally:
                 db.close()
         except Exception as e:
-            print(f"General error in session reaper: {e}")
+            logger.error(f"General error in session reaper: {e}", exc_info=True)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Configure structured logging with rotation on startup
+    log_file = os.path.join(settings.LOG_DIR, "praetor.log")
+    os.makedirs(settings.LOG_DIR, exist_ok=True)
+    
+    file_handler = RotatingFileHandler(
+        log_file,
+        maxBytes=settings.LOG_MAX_BYTES,
+        backupCount=settings.LOG_BACKUP_COUNT
+    )
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    
+    root_logger = logging.getLogger()
+    root_logger.addHandler(file_handler)
+    root_logger.setLevel(logging.INFO)
+
     # Startup
     init_db()
     load_models()
@@ -57,7 +84,14 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown (nothing to clean up currently)
 
+import os
+
 app = FastAPI(title="Adaptive AI Honeypot", version="1.0.0", lifespan=lifespan)
+
+# Register custom security middlewares
+app.add_middleware(InMemoryRateLimiterMiddleware)
+app.add_middleware(ContentSizeLimitMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Restrict CORS to known-good local/dashboard origins. A wildcard origin on an
 # app that exposes admin/reset endpoints lets any website on the internet
@@ -67,12 +101,21 @@ app.add_middleware(
     allow_origins=settings.cors_origins_list,
     allow_credentials=False,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type", "X-Admin-Key"]
+    allow_headers=["Content-Type", "X-Admin-Key", "X-Management-Key"]
 )
+
+# Global unhandled exception handler to prevent traceback disclosures
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception on {request.method} {request.url.path}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal server error"}
+    )
 
 # Register API Routers
 app.include_router(logs.router, prefix="/api/logs", tags=["Logs"])
-app.include_router(decisions.router, prefix="/api/decisions", tags=["Decisions"])
+app.include_router(decisions.router)
 app.include_router(sessions.router)
 app.include_router(digital_twin.router)
 app.include_router(deception_diagnostics.router)
@@ -144,3 +187,4 @@ def health_check():
 
 # Serve Frontend Static Files (index.html, styles, api client)
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+

@@ -4,7 +4,13 @@ from pydantic import BaseModel
 from backend.database import get_db
 from backend.core.digital_twin import DeceptionDigitalTwin, ATTACKER_PERSONAS
 
-router = APIRouter(prefix="/api/digital-twin", tags=["Digital Twin Simulation"])
+from backend.api.auth import require_management_key
+
+router = APIRouter(
+    prefix="/api/digital-twin",
+    tags=["Digital Twin Simulation"],
+    dependencies=[Depends(require_management_key)]
+)
 
 class SimulationRequest(BaseModel):
     persona: str

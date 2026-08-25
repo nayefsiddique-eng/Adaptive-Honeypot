@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED=1 \
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies and build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
@@ -19,14 +19,28 @@ COPY requirements.txt /app/
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy codebase
+# Remove build-essential after installation to keep the runtime clean
+RUN apt-get purge -y --auto-remove build-essential && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root system user and group to run the application
+RUN groupadd -r praetor && useradd -r -g praetor -d /app -s /sbin/nologin praetor
+
+# Copy codebase (ensure .env is excluded via .dockerignore or docker run)
 COPY . /app/
 
 # Generate heuristic fallback model structure
 RUN python ml/train_classifier.py || true
 
-# Expose port
+# Change ownership of the runtime application directory to the non-root user
+RUN chown -R praetor:praetor /app
+
+# Run as non-root
+USER praetor
+
+# Expose port (default FastAPI management port)
 EXPOSE 8000
 
-# Start server
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start server using host from config/settings binding by default to localhost (127.0.0.1)
+# Note: For production container deployments, this can be configured via environment settings.
+CMD ["uvicorn", "backend.main:app", "--host", "127.0.0.1", "--port", "8000"]
+

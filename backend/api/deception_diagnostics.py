@@ -6,7 +6,13 @@ from backend.core.deception_diagnostics import DeceptionDiagnosticsEngine
 from backend.core.policy_version import PolicyVersionManager
 from backend.core.enterprise_policy import EnterprisePolicyEngine, ENTERPRISE_PROFILES
 
-router = APIRouter(prefix="/api/diagnostics", tags=["Deception Diagnostics"])
+from backend.api.auth import require_management_key
+
+router = APIRouter(
+    prefix="/api/diagnostics",
+    tags=["Deception Diagnostics"],
+    dependencies=[Depends(require_management_key)]
+)
 
 class RollbackRequest(BaseModel):
     version: str

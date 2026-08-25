@@ -8,7 +8,13 @@ from backend.models.reputation import AttackerReputation
 from backend.core.decision_engine import decide_honeypot_action, get_deception_profile, DECEPTION_PROFILES
 from backend.core.cooperative_rl_engine import choose_rl_action, serialize_state, get_history_bucket
 
-router = APIRouter()
+from backend.api.auth import require_management_key
+
+router = APIRouter(
+    prefix="/api/decisions",
+    tags=["Decisions"],
+    dependencies=[Depends(require_management_key)]
+)
 
 class DecisionRequest(BaseModel):
     attack_type: str
