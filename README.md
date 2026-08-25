@@ -161,12 +161,17 @@ Execute the following commands from the project root inside a Windows PowerShell
    pip install -e .
    ```
 
-3. **Start FastAPI Backend Server:**
+3. **Train the ML Models (Optional - falls back to heuristic-only mode if skipped):**
+   ```powershell
+   python ml/train_classifier.py
+   ```
+
+4. **Start FastAPI Backend Server:**
    ```powershell
    python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
    ```
 
-4. **Launch Honeypot Decoys (Separate Shell):**
+5. **Launch Honeypot Decoys (Separate Shell):**
    ```powershell
    $env:PYTHONPATH="."
    python scripts/run_honeypots.py
