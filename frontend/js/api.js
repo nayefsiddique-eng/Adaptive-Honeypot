@@ -1,103 +1,184 @@
 ﻿const BASE_URL = 'http://127.0.0.1:8000';
 
-function getManagementKey() {
-  return sessionStorage.getItem('praetor_management_key') || '';
-}
+let managementKey = '';
 
 function requestManagementKey() {
-  const existing = getManagementKey();
+    if (managementKey) {
+        return managementKey;
+    }
 
-  const key = window.prompt(
-    existing
-      ? 'Management API authentication failed. Enter the management API key again:'
-      : 'Enter the PRAETOR management API key:'
-  );
+    const key = window.prompt('Enter the PRAETOR management API key:');
 
-  if (!key) {
-    return '';
-  }
+    if (!key) {
+        return '';
+    }
 
-  sessionStorage.setItem('praetor_management_key', key);
-  return key;
+    managementKey = key.trim();
+    return managementKey;
 }
 
 async function getJSON(path, fallback) {
-  try {
-    let key = getManagementKey();
+    try {
+        let key = requestManagementKey();
 
-    let res = await fetch(`${BASE_URL}${path}`, {
-      headers: key ? { 'X-Management-Key': key } : {}
-    });
+        if (!key) {
+            return fallback;
+        }
 
-    if (res.status === 401) {
-      key = requestManagementKey();
+        let response = await fetch(BASE_URL + path, {
+            headers: {
+                'X-Management-Key': key
+            }
+        });
 
-      if (!key) {
+        if (response.status === 401) {
+            managementKey = '';
+            key = requestManagementKey();
+
+            if (!key) {
+                return fallback;
+            }
+
+            response = await fetch(BASE_URL + path, {
+                headers: {
+                    'X-Management-Key': key
+                }
+            });
+        }
+
+        if (!response.ok) {
+            return fallback;
+        }
+
+        return await response.json();
+
+    } catch (error) {
+        console.error('API request failed:', error);
         return fallback;
-      }
-
-      res = await fetch(`${BASE_URL}${path}`, {
-        headers: { 'X-Management-Key': key }
-      });
-
-      if (res.status === 401) {
-        sessionStorage.removeItem('praetor_management_key');
-        return fallback;
-      }
     }
-
-    if (!res.ok) return fallback;
-
-    return await res.json();
-  } catch (e) {
-    return fallback;
-  }
 }
 
 async function postJSON(path, headers = {}) {
-  const managementKey = getManagementKey();
+    let key = requestManagementKey();
 
-  const mergedHeaders = {
-    ...(managementKey ? { 'X-Management-Key': managementKey } : {}),
-    ...headers
-  };
+    if (!key) {
+        return {
+            ok: false,
+            status: 0,
+            body: null
+        };
+    }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
-    headers: mergedHeaders
-  });
+    const requestHeaders = {
+        'X-Management-Key': key,
+        ...headers
+    };
 
-  let body = null;
+    try {
+        const response = await fetch(BASE_URL + path, {
+            method: 'POST',
+            headers: requestHeaders
+        });
 
-  try {
-    body = await res.json();
-  } catch (e) {
-    // Response may intentionally contain no JSON body.
-  }
+        let body = null;
 
-  return { ok: res.ok, status: res.status, body };
+        try {
+            body = await response.json();
+        } catch (error) {
+            body = null;
+        }
+
+        if (response.status === 401) {
+            managementKey = '';
+        }
+
+        return {
+            ok: response.ok,
+            status: response.status,
+            body: body
+        };
+
+    } catch (error) {
+        console.error('API request failed:', error);
+
+        return {
+            ok: false,
+            status: 0,
+            body: null
+        };
+    }
 }
 
 const api = {
-  dashboard:     () => getJSON('/api/dashboard', null),
-  sessions:      (limit = 50) => getJSON(`/api/sessions?limit=${limit}`, []),
-  sessionOne:    (id) => getJSON(`/api/sessions/${encodeURIComponent(id)}`, null),
-  explain:       (id) => getJSON(`/api/sessions/${encodeURIComponent(id)}/explain`, null),
-  logs:          (ip = '') => getJSON(
-    ip ? `/api/logs?ip=${encodeURIComponent(ip)}` : '/api/logs',
-    []
-  ),
-  recentLogs:    (limit = 40) => getJSON(`/api/logs/recent?limit=${limit}`, []),
-  attackSummary: () => getJSON('/api/attacks/summary', null),
-  topIPs:        () => getJSON('/api/attacks/top-ips', []),
-  topThreats:    () => getJSON('/api/threat-intel/top-threats', []),
-  research:      () => getJSON('/api/research/metrics', null),
-  learningCurve: () => getJSON('/api/research/learning-curve', []),
-  benchmark:     () => getJSON('/api/research/benchmark', null),
+    dashboard: function () {
+        return getJSON('/api/dashboard', null);
+    },
 
-  resetDemo:     (key) => postJSON('/api/admin/reset-demo', { 'X-Admin-Key': key }),
-  closeSessions: (key) => postJSON('/api/admin/close-sessions', { 'X-Admin-Key': key }),
-  guidedDemo:    (key) => postJSON('/api/admin/guided-demo', { 'X-Admin-Key': key }),
+    sessions: function (limit = 50) {
+        return getJSON('/api/sessions?limit=' + limit, []);
+    },
+
+    sessionOne: function (id) {
+        return getJSON('/api/sessions/' + encodeURIComponent(id), null);
+    },
+
+    explain: function (id) {
+        return getJSON('/api/sessions/' + encodeURIComponent(id) + '/explain', null);
+    },
+
+    logs: function (ip = '') {
+        const path = ip
+            ? '/api/logs?ip=' + encodeURIComponent(ip)
+            : '/api/logs';
+
+        return getJSON(path, []);
+    },
+
+    recentLogs: function (limit = 40) {
+        return getJSON('/api/logs/recent?limit=' + limit, []);
+    },
+
+    attackSummary: function () {
+        return getJSON('/api/attacks/summary', null);
+    },
+
+    topIPs: function () {
+        return getJSON('/api/attacks/top-ips', []);
+    },
+
+    topThreats: function () {
+        return getJSON('/api/threat-intel/top-threats', []);
+    },
+
+    research: function () {
+        return getJSON('/api/research/metrics', null);
+    },
+
+    learningCurve: function () {
+        return getJSON('/api/research/learning-curve', []);
+    },
+
+    benchmark: function () {
+        return getJSON('/api/research/benchmark', null);
+    },
+
+    resetDemo: function (key) {
+        return postJSON('/api/admin/reset-demo', {
+            'X-Admin-Key': key
+        });
+    },
+
+    closeSessions: function (key) {
+        return postJSON('/api/admin/close-sessions', {
+            'X-Admin-Key': key
+        });
+    },
+
+    guidedDemo: function (key) {
+        return postJSON('/api/admin/guided-demo', {
+            'X-Admin-Key': key
+        });
+    }
 };
 
 window.api = api;
