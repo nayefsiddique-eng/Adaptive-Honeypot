@@ -200,15 +200,12 @@ def get_learning_curve(db: Session = Depends(get_db)):
 @router.get("/benchmark")
 def get_research_benchmark(db: Session = Depends(get_db)):
     """
-    Executes baseline comparisons, ablation studies, scalability runs,
-    and twin pre-training validations to provide peer-review statistics.
+    Executes a live scalability/latency measurement against the platform's
+    real decision path.
     """
     from backend.core.research_framework import PRAETORResearchFramework
     framework = PRAETORResearchFramework(db)
     return {
         "status": "success",
-        "baselines": framework.execute_baseline_comparison(runs=30),
-        "ablation_study": framework.execute_ablation_study(runs=20),
-        "scalability_performance": framework.run_scalability_stress_test(session_count=100),
-        "digital_twin_transfer": framework.validate_twin_transfer()
+        "scalability_performance": framework.run_scalability_stress_test(session_count=100)
     }

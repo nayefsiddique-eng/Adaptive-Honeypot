@@ -9,8 +9,6 @@ import platform
 # Ensure backend directory is in the path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-os.environ["DISABLE_ML_MODELS"] = "1"
-
 from fastapi.testclient import TestClient
 from backend.main import app
 
@@ -56,27 +54,21 @@ def main():
     
     try:
         framework = PRAETORResearchFramework(db)
-        baselines = framework.execute_baseline_comparison(runs=30)
-        ablation = framework.execute_ablation_study(runs=20)
         scalability = framework.run_scalability_stress_test(session_count=100)
-        
+
         # Write benchmark_results.json
         with open("validation/benchmark_results.json", "w") as f:
             json.dump({
-                "baselines": baselines,
-                "ablation": ablation,
                 "scalability": scalability
             }, f, indent=2)
-            
+
         # Write benchmark_results.csv
         with open("validation/benchmark_results.csv", "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["Metric Group", "Key", "Mean", "Median", "Std Dev"])
-            for name, m in baselines.items():
-                writer.writerow(["Baseline", name, m["mean_dwell_time_seconds"], m["median_dwell_time_seconds"], m["std_deviation"]])
-            for name, m in ablation.items():
-                writer.writerow(["Ablation", name, m["mean_intelligence_points"], "", m["performance_degradation_pct"]])
-                
+            writer.writerow(["Metric", "Value"])
+            for key, value in scalability.items():
+                writer.writerow([key, value])
+
     finally:
         db.close()
         
