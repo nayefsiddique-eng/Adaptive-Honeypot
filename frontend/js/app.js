@@ -1,4 +1,4 @@
-﻿const REFRESH_MS = 5000;
+const REFRESH_MS = 5000;
 let currentView = 'overview';
 let pollTimer = null;
 let feedSeen = new Set();
@@ -232,6 +232,12 @@ async function loadFeed() {
 async function loadSessions() {
   const sessions = await api.sessions(60);
   const tbody = $('#sessionsBody');
+
+  // Attack Specimen replaced the legacy sessions table.
+  // Skip the legacy renderer when the old table is absent.
+  if (!tbody) {
+    return;
+  }
   if (!sessions || !sessions.length) {
     tbody.innerHTML = `<tr><td colspan="8"><div class="empty">No attacker sessions recorded yet.</div></td></tr>`;
     return;
@@ -390,6 +396,12 @@ function wireFeedFilter() {
     if (!ip) { loadSessions(); return; }
     const logs = await api.logs(ip);
     const tbody = $('#sessionsBody');
+
+  // Attack Specimen replaced the legacy sessions table.
+  // Skip the legacy renderer when the old table is absent.
+  if (!tbody) {
+    return;
+  }
     if (!logs.length) {
       tbody.innerHTML = `<tr><td colspan="8"><div class="empty">No logs found for ${escapeHtml(ip)}.</div></td></tr>`;
       return;

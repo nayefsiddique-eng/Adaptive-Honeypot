@@ -3,234 +3,1075 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>PRAETOR — Adaptive Deception Engine</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
 <link rel="stylesheet" href="css/console.css">
+<link rel="stylesheet" href="css/attack-specimen.css">
 </head>
+
 <body>
+
+<!-- =========================================================
+     TOP BAR
+     ========================================================= -->
 
 <header class="topbar">
   <div class="shell topbar-inner">
+
     <div class="brand">
       <span class="brand-mark">
-        <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M13 2c5 3 9 4 9 4v7c0 6-4 9-9 11-5-2-9-5-9-11V6s4-1 9-4Z" stroke="#e8a13a" stroke-width="1.3" fill="rgba(232,161,58,0.08)"/>
-          <circle cx="13" cy="12.5" r="2.6" fill="#f7c463"/>
+        <svg
+          viewBox="0 0 26 26"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M13 2c5 3 9 4 9 4v7c0 6-4 9-9 11-5-2-9-5-9-11V6s4-1 9-4Z"
+            stroke="#e8a13a"
+            stroke-width="1.3"
+            fill="rgba(232,161,58,0.08)"
+          />
+
+          <circle
+            cx="13"
+            cy="12.5"
+            r="2.6"
+            fill="#f7c463"
+          />
         </svg>
       </span>
+
       <span class="brand-name">PRAETOR</span>
       <span class="brand-tag">deception engine</span>
     </div>
+
     <nav class="nav">
-      <button class="nav-btn active" data-view="overview"><span class="dot"></span>Overview</button>
-      <button class="nav-btn" data-view="feed"><span class="dot"></span>Live Capture</button>
-      <button class="nav-btn" data-view="sessions"><span class="dot"></span>Specimens</button>
-      <button class="nav-btn" data-view="intel"><span class="dot"></span>Intelligence</button>
-      <button class="nav-btn" data-view="admin"><span class="dot"></span>Admin</button>
+
+      <button
+        class="nav-btn active"
+        data-view="overview"
+      >
+        <span class="dot"></span>
+        Overview
+      </button>
+
+      <button
+        class="nav-btn"
+        data-view="feed"
+      >
+        <span class="dot"></span>
+        Live Capture
+      </button>
+
+      <button
+        class="nav-btn"
+        data-view="sessions"
+      >
+        <span class="dot"></span>
+        Attack Specimen
+      </button>
+
+      <button
+        class="nav-btn"
+        data-view="intel"
+      >
+        <span class="dot"></span>
+        Intelligence
+      </button>
+
+      <button
+        class="nav-btn"
+        data-view="admin"
+      >
+        <span class="dot"></span>
+        Admin
+      </button>
+
     </nav>
+
     <div class="gauge-wrap">
       <div class="gauge">
-        <svg class="gauge-dial" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="11" cy="11" r="9.5" stroke="#3a2a17" stroke-width="1.4" fill="none"/>
-          <path d="M4 15 A 9 9 0 0 1 18 15" stroke="#3a2a17" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-          <line id="gaugeNeedle" class="needle" x1="11" y1="11" x2="11" y2="4" stroke="#e8a13a" stroke-width="1.6" stroke-linecap="round" style="transform:rotate(-90deg)"/>
-          <circle cx="11" cy="11" r="1.4" fill="#f7c463"/>
+
+        <svg
+          class="gauge-dial"
+          viewBox="0 0 22 22"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle
+            cx="11"
+            cy="11"
+            r="9.5"
+            stroke="#3a2a17"
+            stroke-width="1.4"
+            fill="none"
+          />
+
+          <path
+            d="M4 15 A 9 9 0 0 1 18 15"
+            stroke="#3a2a17"
+            stroke-width="1.4"
+            fill="none"
+            stroke-linecap="round"
+          />
+
+          <line
+            id="gaugeNeedle"
+            class="needle"
+            x1="11"
+            y1="11"
+            x2="11"
+            y2="4"
+            stroke="#e8a13a"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            style="transform:rotate(-90deg)"
+          />
+
+          <circle
+            cx="11"
+            cy="11"
+            r="1.4"
+            fill="#f7c463"
+          />
         </svg>
-        <span id="gaugeLed" class="gauge-led"></span>
-        <span id="gaugeLabel">connecting…</span>
+
+        <span
+          id="gaugeLed"
+          class="gauge-led"
+        ></span>
+
+        <span id="gaugeLabel">
+          connecting…
+        </span>
+
       </div>
     </div>
+
   </div>
 </header>
 
+
+<!-- =========================================================
+     MAIN
+     ========================================================= -->
+
 <main class="shell">
 
-  <!-- OVERVIEW -->
-  <section id="view-overview" class="view active">
-    <div class="page-head">
-      <div>
-        <p class="page-eyebrow">// field station status</p>
-        <h1 class="page-title">The trap, at a glance</h1>
-        <p class="page-sub">PRAETOR watches every probe that touches the honeypot, classifies it, and reshapes the fake surface underneath the attacker's feet in real time. Every figure below is read live from the API — nothing is precomputed.</p>
-      </div>
+
+<!-- =========================================================
+     OVERVIEW
+     ========================================================= -->
+
+<section
+  id="view-overview"
+  class="view active"
+>
+
+  <div class="page-head">
+
+    <div>
+
+      <p class="page-eyebrow">
+        // field station status
+      </p>
+
+      <h1 class="page-title">
+        The trap, at a glance
+      </h1>
+
+      <p class="page-sub">
+        PRAETOR watches every probe that touches the honeypot,
+        classifies it, and reshapes the fake surface underneath
+        the attacker's feet in real time. Every figure below is
+        read live from the API — nothing is precomputed.
+      </p>
+
     </div>
 
-    <div class="grid grid-4" id="ovStats">
-      <div class="card stat-card pinned">
-        <p class="stat-label">Specimens captured</p>
-        <p class="stat-value amber" id="statTotal">—</p>
-      </div>
-      <div class="card stat-card pinned">
-        <p class="stat-label">Distinct origins</p>
-        <p class="stat-value" id="statIPs">—</p>
-      </div>
-      <div class="card stat-card pinned">
-        <p class="stat-label">Mean risk pressure</p>
-        <p class="stat-value rust" id="statRisk">—</p>
-      </div>
-      <div class="card stat-card pinned">
-        <p class="stat-label">Mean deception yield</p>
-        <p class="stat-value moss" id="statDeception">—</p>
-      </div>
+  </div>
+
+
+  <div
+    class="grid grid-4"
+    id="ovStats"
+  >
+
+    <div class="card stat-card pinned">
+      <p class="stat-label">
+        Specimens captured
+      </p>
+
+      <p
+        class="stat-value amber"
+        id="statTotal"
+      >
+        —
+      </p>
     </div>
 
-    <div class="card section-gap">
-      <div class="card-head"><p class="card-title">Capture rate — last few minutes</p></div>
-      <canvas id="traceCanvas" class="trace-canvas"></canvas>
+
+    <div class="card stat-card pinned">
+
+      <p class="stat-label">
+        Distinct origins
+      </p>
+
+      <p
+        class="stat-value"
+        id="statIPs"
+      >
+        —
+      </p>
+
     </div>
 
-    <div class="card section-gap">
-      <div class="card-head"><p class="card-title">Detection → deception cycle</p></div>
-      <div class="pipeline">
-        <div class="pipe-step on"><div class="pipe-node">1</div><div class="pipe-label">Ingest</div><div class="pipe-desc">Raw connection logged with payload &amp; metadata</div></div>
-        <div class="pipe-step on"><div class="pipe-node">2</div><div class="pipe-label">Classify</div><div class="pipe-desc">Model tags the technique being attempted</div></div>
-        <div class="pipe-step on"><div class="pipe-node">3</div><div class="pipe-label">Enrich</div><div class="pipe-desc">GeoIP and reputation feeds are checked</div></div>
-        <div class="pipe-step on"><div class="pipe-node">4</div><div class="pipe-label">Decide</div><div class="pipe-desc">Policy selects a deception strategy</div></div>
-        <div class="pipe-step on"><div class="pipe-node">5</div><div class="pipe-label">Deceive</div><div class="pipe-desc">Fake services, banners &amp; delays applied</div></div>
-        <div class="pipe-step on"><div class="pipe-node">6</div><div class="pipe-label">Learn</div><div class="pipe-desc">Outcome updates the policy for next time</div></div>
-      </div>
+
+    <div class="card stat-card pinned">
+
+      <p class="stat-label">
+        Mean risk pressure
+      </p>
+
+      <p
+        class="stat-value rust"
+        id="statRisk"
+      >
+        —
+      </p>
+
     </div>
 
-    <div class="grid grid-2 section-gap">
-      <div class="card">
-        <div class="card-head"><p class="card-title">Severity breakdown</p></div>
-        <div id="sevBreakdown" class="sev-list"></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><p class="card-title">Highest-risk origins</p></div>
-        <div id="topIpsList" class="sev-list"></div>
-      </div>
+
+    <div class="card stat-card pinned">
+
+      <p class="stat-label">
+        Mean deception yield
+      </p>
+
+      <p
+        class="stat-value moss"
+        id="statDeception"
+      >
+        —
+      </p>
+
     </div>
 
-    <div class="card section-gap">
-      <div class="card-head"><p class="card-title">Technique breakdown</p></div>
-      <div id="typeBreakdown" class="sev-list"></div>
+  </div>
+
+
+  <div class="card section-gap">
+
+    <div class="card-head">
+      <p class="card-title">
+        Capture rate — last few minutes
+      </p>
     </div>
 
-    <div class="notice section-gap">
-      <span>ⓘ</span>
-      <span>Traffic shown here is whatever is currently pointed at the ingest endpoint on this deployment — lab traffic, a scripted exercise, or live exposure if this instance is reachable from the internet. Read these numbers as a picture of this station's current capture, not a fixed benchmark.</span>
-    </div>
-  </section>
+    <canvas
+      id="traceCanvas"
+      class="trace-canvas"
+    ></canvas>
 
-  <!-- LIVE CAPTURE -->
-  <section id="view-feed" class="view">
-    <div class="page-head">
-      <div>
-        <p class="page-eyebrow">// realtime</p>
-        <h1 class="page-title">Live capture</h1>
-        <p class="page-sub">Polls <span class="mono">/api/logs/recent</span> every 5 seconds. Most recent probe first.</p>
-      </div>
-    </div>
-    <div class="card">
-      <div id="feedList" class="feed"></div>
-    </div>
-  </section>
+  </div>
 
-  <!-- SPECIMENS (sessions) -->
-  <section id="view-sessions" class="view">
-    <div class="page-head">
-      <div>
-        <p class="page-eyebrow">// held for study</p>
-        <h1 class="page-title">Specimens &amp; deception state</h1>
-        <p class="page-sub">Each row is one attacker session, grouped by origin IP and a 30-minute activity window.</p>
-      </div>
-      <div class="btn-row">
-        <input class="field" id="ipFilter" placeholder="Filter by IP, press Enter…" style="width:220px">
-      </div>
-    </div>
-    <div class="card">
-      <div class="table-wrap">
-        <table>
-          <thead><tr>
-            <th>Origin</th><th>Status</th><th>Techniques</th><th>Count</th>
-            <th>Risk</th><th>Honeypot state</th><th>Deception avg</th><th>Last seen</th>
-          </tr></thead>
-          <tbody id="sessionsBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
 
-  <!-- INTELLIGENCE -->
-  <section id="view-intel" class="view">
-    <div class="page-head">
-      <div>
-        <p class="page-eyebrow">// fusion</p>
-        <h1 class="page-title">Threat intelligence</h1>
-        <p class="page-sub">ATT&amp;CK technique coverage, capture radar by origin, and fused reputation scoring.</p>
-      </div>
+  <div class="card section-gap">
+
+    <div class="card-head">
+      <p class="card-title">
+        Detection → deception cycle
+      </p>
     </div>
 
-    <div class="card">
-      <div class="card-head"><p class="card-title">Capture radar</p></div>
-      <div class="radar-wrap">
-        <svg id="radarSvg" class="radar-svg" width="280" height="280" viewBox="0 0 280 280"></svg>
-        <div class="radar-legend">
-          <div class="radar-legend-row"><span class="radar-dot" style="background:var(--rust)"></span>Critical risk</div>
-          <div class="radar-legend-row"><span class="radar-dot" style="background:var(--amber-bright)"></span>High risk</div>
-          <div class="radar-legend-row"><span class="radar-dot" style="background:var(--brass)"></span>Medium risk</div>
-          <div class="radar-legend-row"><span class="radar-dot" style="background:var(--moss)"></span>Low risk</div>
-          <p class="stat-foot">Each mark is one active origin. Distance from center falls as risk score rises — the closer in, the hotter the specimen.</p>
+    <div class="pipeline">
+
+      <div class="pipe-step on">
+        <div class="pipe-node">1</div>
+        <div class="pipe-label">Ingest</div>
+        <div class="pipe-desc">
+          Raw connection logged with payload &amp; metadata
         </div>
       </div>
+
+      <div class="pipe-step on">
+        <div class="pipe-node">2</div>
+        <div class="pipe-label">Classify</div>
+        <div class="pipe-desc">
+          Model tags the technique being attempted
+        </div>
+      </div>
+
+      <div class="pipe-step on">
+        <div class="pipe-node">3</div>
+        <div class="pipe-label">Enrich</div>
+        <div class="pipe-desc">
+          GeoIP and reputation feeds are checked
+        </div>
+      </div>
+
+      <div class="pipe-step on">
+        <div class="pipe-node">4</div>
+        <div class="pipe-label">Decide</div>
+        <div class="pipe-desc">
+          Policy selects a deception strategy
+        </div>
+      </div>
+
+      <div class="pipe-step on">
+        <div class="pipe-node">5</div>
+        <div class="pipe-label">Deceive</div>
+        <div class="pipe-desc">
+          Fake services, banners &amp; delays applied
+        </div>
+      </div>
+
+      <div class="pipe-step on">
+        <div class="pipe-node">6</div>
+        <div class="pipe-label">Learn</div>
+        <div class="pipe-desc">
+          Outcome updates the policy for next time
+        </div>
+      </div>
+
     </div>
 
-    <div class="grid grid-3 section-gap">
-      <div class="card">
-        <div class="card-head"><p class="card-title">ATT&amp;CK techniques</p></div>
-        <div id="mitreList" class="sev-list"></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><p class="card-title">Top origins</p></div>
-        <div id="intelTopIps" class="sev-list"></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><p class="card-title">Fused threat scores</p></div>
-        <div id="topThreats" class="sev-list"></div>
-      </div>
-    </div>
-  </section>
+  </div>
 
-  <!-- ADMIN -->
-  <section id="view-admin" class="view">
-    <div class="page-head">
-      <div>
-        <p class="page-eyebrow">// operator controls</p>
-        <h1 class="page-title">Admin</h1>
-        <p class="page-sub">Destructive operations. Requires the <span class="mono">X-Admin-Key</span> configured on the backend (<span class="mono">ADMIN_API_KEY</span> in your <span class="mono">.env</span>).</p>
+
+  <div class="grid grid-2 section-gap">
+
+    <div class="card">
+
+      <div class="card-head">
+        <p class="card-title">
+          Severity breakdown
+        </p>
       </div>
+
+      <div
+        id="sevBreakdown"
+        class="sev-list"
+      ></div>
+
     </div>
-    <div class="card" style="max-width:520px">
-      <div class="card-head"><p class="card-title">Admin key</p></div>
-      <input class="field" id="adminKey" type="password" placeholder="X-Admin-Key value" style="width:100%" autocomplete="off">
-      <div class="btn-row section-gap">
-        <button class="btn" id="btnGuidedDemo">Run scripted scenario</button>
-        <button class="btn" id="btnCloseSessions">Close active sessions</button>
-        <button class="btn btn-danger" id="btnResetDemo">Clear all captured data</button>
+
+
+    <div class="card">
+
+      <div class="card-head">
+        <p class="card-title">
+          Highest-risk origins
+        </p>
       </div>
-      <p class="stat-foot" style="margin-top:14px">Kept only in this tab's session storage — never sent anywhere but this backend, never logged.</p>
+
+      <div
+        id="topIpsList"
+        class="sev-list"
+      ></div>
+
     </div>
-  </section>
+
+  </div>
+
+
+  <div class="card section-gap">
+
+    <div class="card-head">
+      <p class="card-title">
+        Technique breakdown
+      </p>
+    </div>
+
+    <div
+      id="typeBreakdown"
+      class="sev-list"
+    ></div>
+
+  </div>
+
+
+  <div class="notice section-gap">
+
+    <span>ⓘ</span>
+
+    <span>
+      Traffic shown here is whatever is currently pointed at the
+      ingest endpoint on this deployment — lab traffic, a scripted
+      exercise, or live exposure if this instance is reachable from
+      the internet. Read these numbers as a picture of this station's
+      current capture, not a fixed benchmark.
+    </span>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     LIVE CAPTURE
+     Raw realtime event stream
+     ========================================================= -->
+
+<section
+  id="view-feed"
+  class="view"
+>
+
+  <div class="page-head">
+
+    <div>
+
+      <p class="page-eyebrow">
+        // realtime
+      </p>
+
+      <h1 class="page-title">
+        Live capture
+      </h1>
+
+      <p class="page-sub">
+        Polls
+        <span class="mono">
+          /api/logs/recent
+        </span>
+        every 5 seconds. Most recent probe first.
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <div
+      id="feedList"
+      class="feed"
+    ></div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     ATTACK SPECIMEN
+     Correlated investigation workspace
+     ========================================================= -->
+
+<section
+  id="view-sessions"
+  class="view"
+>
+
+  <div id="attack-specimen-root">
+
+    <div class="as-dashboard">
+
+      <div class="as-head">
+
+        <div>
+
+          <p class="page-eyebrow">
+            // investigation
+          </p>
+
+          <h1 class="page-title">
+            Attack Specimen
+          </h1>
+
+          <p class="page-sub">
+            Correlated attacker behavior, session progression,
+            and adaptive response.
+          </p>
+
+        </div>
+
+
+        <button
+          id="as-refresh"
+          class="as-refresh"
+          type="button"
+        >
+          Refresh
+        </button>
+
+      </div>
+
+
+      <div class="as-grid">
+
+
+        <!-- SPECIMEN IDENTITY -->
+
+        <div class="as-card as-identity">
+
+          <div class="as-label">
+            SPECIMEN IDENTITY
+          </div>
+
+          <div
+            class="as-ip"
+            id="as-ip"
+          >
+            —
+          </div>
+
+          <div class="as-details">
+
+            <div>
+              <span>Session</span>
+              <strong id="as-session">—</strong>
+            </div>
+
+            <div>
+              <span>Service</span>
+              <strong id="as-service">—</strong>
+            </div>
+
+            <div>
+              <span>Duration</span>
+              <strong id="as-duration">—</strong>
+            </div>
+
+            <div>
+              <span>Interactions</span>
+              <strong id="as-interactions">—</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- THREAT POSTURE -->
+
+        <div class="as-card as-risk-card">
+
+          <div class="as-label">
+            THREAT POSTURE
+          </div>
+
+          <div
+            class="as-risk-value"
+            id="as-risk"
+          >
+            —
+          </div>
+
+          <div
+            class="as-risk-label"
+            id="as-risk-label"
+          >
+            NO DATA
+          </div>
+
+          <div class="as-risk-bar">
+
+            <div
+              id="as-risk-fill"
+            ></div>
+
+          </div>
+
+        </div>
+
+
+        <!-- BEHAVIOR -->
+
+        <div class="as-card as-behavior">
+
+          <div class="as-label">
+            BEHAVIORAL ACTIVITY
+          </div>
+
+
+          <div class="as-behavior-row">
+
+            <span>
+              Reconnaissance
+            </span>
+
+            <div>
+              <i id="as-recon"></i>
+            </div>
+
+            <b id="as-recon-value">
+              —
+            </b>
+
+          </div>
+
+
+          <div class="as-behavior-row">
+
+            <span>
+              Credential probing
+            </span>
+
+            <div>
+              <i id="as-cred"></i>
+            </div>
+
+            <b id="as-cred-value">
+              —
+            </b>
+
+          </div>
+
+
+          <div class="as-behavior-row">
+
+            <span>
+              Path enumeration
+            </span>
+
+            <div>
+              <i id="as-path"></i>
+            </div>
+
+            <b id="as-path-value">
+              —
+            </b>
+
+          </div>
+
+
+          <div class="as-behavior-row">
+
+            <span>
+              Payload activity
+            </span>
+
+            <div>
+              <i id="as-payload"></i>
+            </div>
+
+            <b id="as-payload-value">
+              —
+            </b>
+
+          </div>
+
+        </div>
+
+
+        <!-- ATTACK PROGRESSION -->
+
+        <div class="as-card as-progression">
+
+          <div class="as-label">
+            ATTACK PROGRESSION
+          </div>
+
+          <div class="as-flow">
+
+            <span>ACCESS</span>
+
+            <b>→</b>
+
+            <span>RECON</span>
+
+            <b>→</b>
+
+            <span>ENUMERATION</span>
+
+            <b>→</b>
+
+            <span>EXPLOIT</span>
+
+            <b>→</b>
+
+            <span>ADAPT</span>
+
+          </div>
+
+        </div>
+
+
+        <!-- PRAETOR RESPONSE -->
+
+        <div class="as-card as-response">
+
+          <div class="as-label">
+            PRAETOR ADAPTIVE RESPONSE
+          </div>
+
+          <div class="as-response-grid">
+
+            <div>
+              <span>Risk</span>
+              <strong id="as-response-risk">
+                —
+              </strong>
+            </div>
+
+            <div>
+              <span>Profile</span>
+              <strong id="as-profile">
+                —
+              </strong>
+            </div>
+
+            <div>
+              <span>Transitions</span>
+              <strong id="as-transitions">
+                —
+              </strong>
+            </div>
+
+            <div>
+              <span>Reward</span>
+              <strong id="as-reward">
+                —
+              </strong>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- TIMELINE -->
+
+        <div class="as-card as-timeline">
+
+          <div class="as-label">
+            SESSION TIMELINE
+          </div>
+
+          <div id="as-timeline">
+
+            <div class="as-empty">
+              Waiting for attacker activity...
+            </div>
+
+          </div>
+
+        </div>
+
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     INTELLIGENCE
+     ========================================================= -->
+
+<section
+  id="view-intel"
+  class="view"
+>
+
+  <div class="page-head">
+
+    <div>
+
+      <p class="page-eyebrow">
+        // fusion
+      </p>
+
+      <h1 class="page-title">
+        Threat intelligence
+      </h1>
+
+      <p class="page-sub">
+        ATT&amp;CK technique coverage, capture radar by origin,
+        and fused reputation scoring.
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <div class="card-head">
+      <p class="card-title">
+        Capture radar
+      </p>
+    </div>
+
+    <div class="radar-wrap">
+
+      <svg
+        id="radarSvg"
+        class="radar-svg"
+        width="280"
+        height="280"
+        viewBox="0 0 280 280"
+      ></svg>
+
+
+      <div class="radar-legend">
+
+        <div class="radar-legend-row">
+          <span
+            class="radar-dot"
+            style="background:var(--rust)"
+          ></span>
+          Critical risk
+        </div>
+
+        <div class="radar-legend-row">
+          <span
+            class="radar-dot"
+            style="background:var(--amber-bright)"
+          ></span>
+          High risk
+        </div>
+
+        <div class="radar-legend-row">
+          <span
+            class="radar-dot"
+            style="background:var(--brass)"
+          ></span>
+          Medium risk
+        </div>
+
+        <div class="radar-legend-row">
+          <span
+            class="radar-dot"
+            style="background:var(--moss)"
+          ></span>
+          Low risk
+        </div>
+
+        <p class="stat-foot">
+          Each mark is one active origin. Distance from center
+          falls as risk score rises — the closer in, the hotter
+          the specimen.
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="grid grid-3 section-gap">
+
+
+    <div class="card">
+
+      <div class="card-head">
+        <p class="card-title">
+          ATT&amp;CK techniques
+        </p>
+      </div>
+
+      <div
+        id="mitreList"
+        class="sev-list"
+      ></div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="card-head">
+        <p class="card-title">
+          Top origins
+        </p>
+      </div>
+
+      <div
+        id="intelTopIps"
+        class="sev-list"
+      ></div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="card-head">
+        <p class="card-title">
+          Fused threat scores
+        </p>
+      </div>
+
+      <div
+        id="topThreats"
+        class="sev-list"
+      ></div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     ADMIN
+     ========================================================= -->
+
+<section
+  id="view-admin"
+  class="view"
+>
+
+  <div class="page-head">
+
+    <div>
+
+      <p class="page-eyebrow">
+        // operator controls
+      </p>
+
+      <h1 class="page-title">
+        Admin
+      </h1>
+
+      <p class="page-sub">
+        Destructive operations. Requires the
+        <span class="mono">
+          X-Admin-Key
+        </span>
+        configured on the backend
+        (<span class="mono">ADMIN_API_KEY</span>
+        in your <span class="mono">.env</span>).
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <div
+    class="card"
+    style="max-width:520px"
+  >
+
+    <div class="card-head">
+      <p class="card-title">
+        Admin key
+      </p>
+    </div>
+
+
+    <input
+      class="field"
+      id="adminKey"
+      type="password"
+      placeholder="X-Admin-Key value"
+      style="width:100%"
+      autocomplete="off"
+    >
+
+
+    <div class="btn-row section-gap">
+
+      <button
+        class="btn"
+        id="btnGuidedDemo"
+      >
+        Run scripted scenario
+      </button>
+
+      <button
+        class="btn"
+        id="btnCloseSessions"
+      >
+        Close active sessions
+      </button>
+
+      <button
+        class="btn btn-danger"
+        id="btnResetDemo"
+      >
+        Clear all captured data
+      </button>
+
+    </div>
+
+
+    <p
+      class="stat-foot"
+      style="margin-top:14px"
+    >
+      Kept only in this tab's session storage — never sent
+      anywhere but this backend, never logged.
+    </p>
+
+  </div>
+
+</section>
 
 </main>
 
+
+<!-- =========================================================
+     FOOTER
+     ========================================================= -->
+
 <footer class="shell-foot">
-  <div class="shell" style="display:flex;justify-content:space-between;width:100%;flex-wrap:wrap;gap:8px">
-    <span>PRAETOR adaptive deception engine</span>
+
+  <div
+    class="shell"
+    style="
+      display:flex;
+      justify-content:space-between;
+      width:100%;
+      flex-wrap:wrap;
+      gap:8px;
+    "
+  >
+
+    <span>
+      PRAETOR adaptive deception engine
+    </span>
+
     <span id="footClock"></span>
+
   </div>
+
 </footer>
 
-<div class="toast-host" id="toastHost"></div>
+
+<!-- =========================================================
+     TOASTS
+     ========================================================= -->
+
+<div
+  class="toast-host"
+  id="toastHost"
+></div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
 
 <script src="js/api.js"></script>
 <script src="js/app.js"></script>
+<script src="js/attack-specimen.js"></script>
+
 <script>
   setInterval(() => {
-    document.getElementById('footClock').textContent = new Date().toLocaleString();
+    const clock = document.getElementById("footClock");
+
+    if (clock) {
+      clock.textContent =
+        new Date().toLocaleString();
+    }
   }, 1000);
 </script>
+
 </body>
 </html>

@@ -100,3 +100,4 @@ const api = {
   guidedDemo:    (key) => postJSON('/api/admin/guided-demo', { 'X-Admin-Key': key }),
 };
 
+window.api = api;
