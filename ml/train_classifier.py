@@ -1,10 +1,15 @@
 """
 TRAINING DATASET DISCLOSURE AND PROVENANCE:
-This module generates a synthetically engineered dataset (N=5000 samples per class) 
-using procedural rules and hand-specified feature distributions. It is intended 
-primarily as a prototype validation tool. The features and classes are trivially 
-separable by construction. This training dataset is synthetic and has not been 
+This module generates a synthetically engineered dataset (N=1500 samples per class)
+using procedural rules and hand-specified feature distributions. It is intended
+primarily as a prototype validation tool. The features and classes are trivially
+separable by construction. This training dataset is synthetic and has not been
 derived from or validated against real-world captures (e.g., CICIDS2017).
+
+NOTE: N and n_jobs are reduced from the original (5000, n_jobs=-1) to keep
+memory usage low on constrained hardware (~1GB RAM). n_jobs=-1 spawns one
+process per CPU core, each holding its own copy of the training data, which
+is the most likely cause of an out-of-memory crash on such machines.
 """
 
 import pandas as pd
@@ -18,7 +23,7 @@ from sklearn.preprocessing import LabelEncoder
 from xgboost import XGBClassifier
 
 np.random.seed(42)
-N = 5000
+N = 1500  # reduced from 5000 for low-RAM training
 
 def make_samples(attack_type, n, overrides):
     base = {
@@ -121,21 +126,21 @@ y_enc = le.fit_transform(y)
 X_train, X_test, y_train, y_test = train_test_split(X, y_enc, test_size=0.2, random_state=42)
 
 print("Training Random Forest...")
-rf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+rf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=1)
 rf.fit(X_train, y_train)
 rf_preds = rf.predict(X_test)
 print("Random Forest Results:")
 print(classification_report(y_test, rf_preds, target_names=le.classes_))
 
 print("Training XGBoost...")
-xgb = XGBClassifier(n_estimators=100, random_state=42, eval_metric="mlogloss", verbosity=0)
+xgb = XGBClassifier(n_estimators=100, random_state=42, eval_metric="mlogloss", verbosity=0, n_jobs=1)
 xgb.fit(X_train, y_train)
 xgb_preds = xgb.predict(X_test)
 print("XGBoost Results:")
 print(classification_report(y_test, xgb_preds, target_names=le.classes_))
 
 print("Training Isolation Forest (anomaly detection)...")
-iso = IsolationForest(contamination=0.125, random_state=42)
+iso = IsolationForest(contamination=0.125, random_state=42, n_jobs=1)
 iso.fit(X_train)
 
 os.makedirs("ml/models", exist_ok=True)
