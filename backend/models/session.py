@@ -31,5 +31,5 @@ class AttackerSession(Base):
     rl_reward = Column(Float, nullable=True)
     fingerprinting_attempts = Column(Integer, default=0)
     download_attempts = Column(Integer, default=0)
-    first_seen = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), server_default=func.now())
-    last_seen = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=func.now())
+    first_seen = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC).replace(tzinfo=None), server_default=func.now())
+    last_seen = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC).replace(tzinfo=None), onupdate=func.now())

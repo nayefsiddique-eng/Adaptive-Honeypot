@@ -113,7 +113,7 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
                 reputation.city = geo["city"]
                 reputation.isp = geo["isp"]
 
-        time_limit = datetime.now(UTC) - timedelta(minutes=30)
+        time_limit = datetime.now(UTC).replace(tzinfo=None) - timedelta(minutes=30)
         session = db.query(AttackerSession).filter(
             AttackerSession.ip_address == req.ip_address,
             AttackerSession.is_active == True,

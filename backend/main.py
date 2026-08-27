@@ -34,7 +34,7 @@ async def session_reaper():
             db = SessionLocal()
             try:
                 # Find active sessions inactive for more than 15 seconds
-                time_limit = datetime.now(UTC) - timedelta(seconds=15)
+                time_limit = datetime.now(UTC).replace(tzinfo=None) - timedelta(seconds=15)
                 expired_sessions = db.query(AttackerSession).filter(
                     AttackerSession.is_active == True,
                     AttackerSession.last_seen < time_limit

@@ -1,6 +1,6 @@
 ﻿const BASE_URL = 'http://127.0.0.1:8000';
 
-let managementKey = '';
+let managementKey = sessionStorage.getItem('praetor_mgmt_key') || '';
 
 function requestManagementKey() {
     if (managementKey) {
@@ -14,6 +14,7 @@ function requestManagementKey() {
     }
 
     managementKey = key.trim();
+    sessionStorage.setItem('praetor_mgmt_key', managementKey);
     return managementKey;
 }
 
@@ -32,7 +33,7 @@ async function getJSON(path, fallback) {
         });
 
         if (response.status === 401) {
-            managementKey = '';
+            managementKey = ''; sessionStorage.removeItem('praetor_mgmt_key');
             key = requestManagementKey();
 
             if (!key) {
