@@ -171,7 +171,7 @@ class GuidedDeceptionDemo:
         
         # Initialize Attacker Session
         from datetime import datetime, UTC
-        now_dt = datetime.now(UTC)
+        now_dt = datetime.now(UTC).replace(tzinfo=None)
         session = AttackerSession(
             session_id=session_id,
             ip_address=ip_address,

@@ -43,11 +43,11 @@ def get_research_metrics(db: Session = Depends(get_db)):
         AttackerSession.interaction_depth > 1
     ).count()
     
-    adaptation_effectiveness = round(min(92.4, (active_deception_sessions / total_sessions * 92.4)), 2) if total_sessions > 0 else 0.0
+    adaptation_effectiveness = round(min(100.0, (active_deception_sessions / total_sessions * 100.0)), 2) if total_sessions > 0 else 0.0
 
     # 5. Detection Rate
     classified_attacks = db.query(AttackLog).filter(AttackLog.confidence >= 0.50).count()
-    detection_rate = round(min(93.8, (classified_attacks / total_attacks * 93.8)), 2) if total_attacks > 0 else 0.0
+    detection_rate = round(min(100.0, (classified_attacks / total_attacks * 100.0)), 2) if total_attacks > 0 else 0.0
 
     # 6. Load Model Comparison
     model_comparison = {}

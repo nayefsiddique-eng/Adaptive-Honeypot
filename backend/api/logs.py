@@ -120,7 +120,7 @@ async def ingest_log(req: LogRequest, db: Session = Depends(get_db)):
             AttackerSession.last_seen >= time_limit
         ).first()
 
-        now_dt = datetime.now(UTC)
+        now_dt = datetime.now(UTC).replace(tzinfo=None).replace(tzinfo=None)
 
         if not session:
             session_id = raw_event["session_id"]

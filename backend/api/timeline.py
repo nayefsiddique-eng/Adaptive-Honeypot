@@ -18,7 +18,7 @@ def get_attack_timeline(db: Session = Depends(get_db)):
     """
     Get attacks per hour (last 24 hours) and attacks per day (last 30 days) with risk trends.
     """
-    now = datetime.now(UTC)
+    now = datetime.now(UTC).replace(tzinfo=None)
 
     # 1. Hourly aggregation (last 24 hours)
     twenty_four_hours_ago = now - timedelta(hours=24)
