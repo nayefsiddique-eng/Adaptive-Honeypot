@@ -77,17 +77,26 @@ async function checkPulse() {
   const led = $('#gaugeLed');
   const label = $('#gaugeLabel');
   const needle = $('#gaugeNeedle');
+  const globalDot = $('#globalStatusDot');
+  const globalLabel = $('#globalStatusLabel');
+  const globalBadge = $('#globalStatus');
   if (data) {
-    led.classList.add('live'); led.classList.remove('down');
-    label.textContent = 'trap active';
+    if (led) { led.classList.add('live'); led.classList.remove('down'); }
+    if (label) label.textContent = 'trap active';
+    if (globalDot) { globalDot.classList.add('live'); globalDot.classList.remove('down'); }
+    if (globalLabel) globalLabel.textContent = 'live';
+    if (globalBadge) globalBadge.classList.remove('down');
     const risk = Math.max(0, Math.min(100, data.avg_risk_score || 0));
     // needle sweeps from -90deg (0 risk) to +90deg (100 risk)
     const deg = -90 + (risk / 100) * 180;
-    needle.style.transform = `rotate(${deg}deg)`;
+    if (needle) needle.style.transform = `rotate(${deg}deg)`;
     recordTrace(data.total_attacks);
   } else {
-    led.classList.remove('live'); led.classList.add('down');
-    label.textContent = 'unreachable';
+    if (led) { led.classList.remove('live'); led.classList.add('down'); }
+    if (label) label.textContent = 'unreachable';
+    if (globalDot) { globalDot.classList.remove('live'); globalDot.classList.add('down'); }
+    if (globalLabel) globalLabel.textContent = 'backend unreachable';
+    if (globalBadge) globalBadge.classList.add('down');
   }
   return data;
 }
@@ -366,6 +375,10 @@ async function runAdminAction(fn, label) {
 function startPolling() {
   clearInterval(pollTimer);
   pollTimer = setInterval(() => {
+    // Global connection badge updates regardless of which tab is active.
+    // Overview already calls checkPulse via loadOverview, so skip the
+    // duplicate call there to avoid firing /api/dashboard twice per tick.
+    if (currentView !== 'overview') checkPulse();
     // Admin is deliberately excluded — it has nothing to live-refresh,
     // and re-running its loader on a timer is what caused the key field
     // to get overwritten while someone was typing into it.
