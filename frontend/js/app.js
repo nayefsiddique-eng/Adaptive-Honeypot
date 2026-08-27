@@ -304,9 +304,18 @@ function drawRadar(sessions) {
 }
 
 async function loadIntel() {
-  const [summary, topIps, threats, sessions] = await Promise.all([
-    api.attackSummary(), api.topIPs(), api.topThreats(), api.sessions(60)
+  const [summary, topIps, threats, sessions, geoStatus] = await Promise.all([
+    api.attackSummary(), api.topIPs(), api.topThreats(), api.sessions(60), api.geoipStatus()
   ]);
+
+  const geoNote = $('#geoipModeNote');
+  if (geoNote) {
+    if (geoStatus && geoStatus.mode === 'live') {
+      geoNote.innerHTML = '<span class="mono" style="color:var(--moss)">● GeoIP: live lookups (ip-api.com)</span>';
+    } else {
+      geoNote.innerHTML = '<span class="mono" style="color:var(--amber)">● GeoIP: simulated fallback — live provider unreachable</span>';
+    }
+  }
 
   const mitreEl = $('#mitreList');
   if (summary && summary.mitre_techniques && Object.keys(summary.mitre_techniques).length) {

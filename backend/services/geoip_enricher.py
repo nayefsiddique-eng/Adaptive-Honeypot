@@ -1,9 +1,10 @@
-import os
+﻿import os
 import hashlib
+import time
+import httpx
 from typing import Dict, Any
 from backend.config import settings
 
-# List of realistic attack source profiles for the fallback engine
 LOCATIONS = [
     {"country": "United States", "city": "Washington", "isp": "Amazon Technologies", "latitude": 38.9072, "longitude": -77.0369},
     {"country": "China", "city": "Beijing", "isp": "China Telecom", "latitude": 39.9042, "longitude": 116.4074},
@@ -17,53 +18,69 @@ LOCATIONS = [
     {"country": "United Kingdom", "city": "London", "isp": "Linode LLC", "latitude": 51.5074, "longitude": -0.1278}
 ]
 
+_geoip_cache: Dict[str, tuple] = {}
+_CACHE_TTL_SECONDS = 21600
+
+def _is_private_or_local(ip_address: str) -> bool:
+    if ip_address in ("127.0.0.1", "localhost", "::1"):
+        return True
+    return ip_address.startswith(("10.", "172.16.", "172.17.", "172.18.", "172.19.",
+                                   "172.2", "172.30.", "172.31.", "192.168."))
+
+def _live_lookup(ip_address: str) -> Dict[str, Any]:
+    resp = httpx.get(
+        f"http://ip-api.com/json/{ip_address}",
+        params={"fields": "status,country,city,isp,lat,lon"},
+        timeout=2.5,
+    )
+    data = resp.json()
+    if data.get("status") != "success":
+        raise ValueError("ip-api lookup unsuccessful")
+    return {
+        "country": data.get("country") or "Unknown Country",
+        "city": data.get("city") or "Unknown City",
+        "isp": data.get("isp") or "Unknown ISP",
+        "latitude": data.get("lat", 0.0),
+        "longitude": data.get("lon", 0.0),
+        "source": "live",
+    }
+
 def enrich_ip(ip_address: str) -> Dict[str, Any]:
     """
-    Enriches an IP address with GeoIP details (Country, City, ISP, Latitude, Longitude).
-    Attempts to use MaxMind database; falls back to deterministic mock mapping.
+    Real, free GeoIP lookup via ip-api.com, cached per-IP for 6 hours.
+    Falls back to a deterministic mock only if the live lookup fails.
+    Always includes a "source" key: "live", "local", or "simulated".
     """
-    # 127.0.0.1 or localhost check
-    if ip_address in ("127.0.0.1", "localhost", "::1"):
+    if _is_private_or_local(ip_address):
         return {
             "country": "Localhost",
             "city": "Internal Network",
             "isp": "Local Loopback",
             "latitude": 0.0,
-            "longitude": 0.0
+            "longitude": 0.0,
+            "source": "local",
         }
 
-    # Attempt to use real MaxMind database if it exists
-    if os.path.exists(settings.GEOIP_DB_PATH):
-        try:
-            import geoip2.database
-            with geoip2.database.Reader(settings.GEOIP_DB_PATH) as reader:
-                response = reader.city(ip_address)
-                # Try to get ISP from another DB or fallback
-                isp = "Unknown ISP"
-                try:
-                    # If we had MaxMind ASN database, we'd check here.
-                    # We can use a simple lookup if possible.
-                    pass
-                except Exception:
-                    pass
-                return {
-                    "country": response.country.name or "Unknown Country",
-                    "city": response.city.name or "Unknown City",
-                    "isp": isp,
-                    "latitude": response.location.latitude or 0.0,
-                    "longitude": response.location.longitude or 0.0
-                }
-        except Exception as e:
-            # Fallback on errors reading the database
-            pass
+    cached = _geoip_cache.get(ip_address)
+    if cached and (time.time() - cached[1]) < _CACHE_TTL_SECONDS:
+        return cached[0]
 
-    # Deterministic fallback based on IP hashing
+    try:
+        result = _live_lookup(ip_address)
+        _geoip_cache[ip_address] = (result, time.time())
+        return result
+    except Exception:
+        pass
+
     ip_hash = int(hashlib.md5(ip_address.encode()).hexdigest(), 16)
     loc = LOCATIONS[ip_hash % len(LOCATIONS)]
-    return {
+    result = {
         "country": loc["country"],
         "city": loc["city"],
         "isp": loc["isp"],
         "latitude": loc["latitude"],
-        "longitude": loc["longitude"]
+        "longitude": loc["longitude"],
+        "source": "simulated",
     }
+    _geoip_cache[ip_address] = (result, time.time())
+    return result

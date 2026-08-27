@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+﻿from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend.database import get_db
@@ -13,19 +13,20 @@ router = APIRouter(
     dependencies=[Depends(require_management_key)]
 )
 
+@router.get("/status")
+def geoip_status():
+    try:
+        result = enrich_ip("8.8.8.8")
+        return {"mode": result.get("source", "simulated")}
+    except Exception:
+        return {"mode": "simulated"}
+
 @router.get("/lookup")
 def lookup_geoip(ip: str):
-    """
-    Look up GeoIP details for a specific IP.
-    """
     return enrich_ip(ip)
 
 @router.get("/attack-map")
 def get_attack_map_data(db: Session = Depends(get_db)):
-    """
-    Get aggregated geolocation coordinates and attack counts for mapping.
-    """
-    # Group by country, city, latitude, and longitude
     results = db.query(
         AttackLog.country,
         AttackLog.city,
@@ -44,7 +45,6 @@ def get_attack_map_data(db: Session = Depends(get_db)):
 
     map_data = []
     for r in results:
-        # Ignore local or zero coords if they skew the visual map
         if r.latitude == 0.0 and r.longitude == 0.0:
             continue
         map_data.append({
@@ -58,9 +58,6 @@ def get_attack_map_data(db: Session = Depends(get_db)):
 
 @router.get("/countries")
 def get_top_countries(limit: int = 5, db: Session = Depends(get_db)):
-    """
-    Get top countries by attack volume.
-    """
     results = db.query(
         AttackLog.country,
         func.count(AttackLog.id).label("count")

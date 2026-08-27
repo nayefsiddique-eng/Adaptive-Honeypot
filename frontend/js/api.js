@@ -151,6 +151,10 @@ const api = {
         return getJSON('/api/threat-intel/top-threats', []);
     },
 
+    geoipStatus: function () {
+        return getJSON('/api/geoip/status', { mode: 'simulated' });
+    },
+
     research: function () {
         return getJSON('/api/research/metrics', null);
     },
