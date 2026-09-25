@@ -1,4 +1,4 @@
-﻿# PRAETOR â€” Research & Mathematical Specifications
+# PRAETOR Ã¢â‚¬â€ Research & Mathematical Specifications
 
 ---
 
@@ -69,4 +69,3 @@ $$R_{min} \le R_{joint}(s) \le R_{max}$$
 * Under **mismatched deception alignment** (attacker disconnects immediately):
   $$R_{min} = 1.0 \cdot \min(15.0, 0.1) + 3.0 \cdot (1 \cdot 3.0) + 8.0 \cdot (0.1 \cdot 8.0) = 0.1 + 3.0 + 0.8 = 3.9$$
 These coefficients were selected during development experiments and validated using the included evaluation framework to maintain balanced contributions across cooperative agents.
-

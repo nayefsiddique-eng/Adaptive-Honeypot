@@ -1,4 +1,4 @@
-﻿# PRAETOR â€” Artifact Evaluation & Replication Guide
+# PRAETOR Ã¢â‚¬â€ Artifact Evaluation & Replication Guide
 
 ---
 
@@ -73,3 +73,19 @@ python scripts/run_benchmarks.py
 cat docs/BENCHMARK_REPORT.md
 ```
 
+## Current ML Benchmark
+
+The current benchmark uses a synthetic, probabilistic security-telemetry
+dataset with 16000 samples and 15
+features. Evaluation uses a 25% stratified held-out
+test split with random seed 20260825. Duplicate rows are removed
+before splitting and target-derived features are explicitly rejected.
+
+Current measured macro-F1:
+
+- Random Forest: 66.02%
+- XGBoost: 67.31%
+- Isolation Forest F1: 82.21%
+
+These figures are simulation-based benchmark results and are not
+equivalent to real-world attacker detection performance.

@@ -1,10 +1,10 @@
-﻿# PRAETOR Security Architecture and Production Deployment Guide
+# PRAETOR Security Architecture and Production Deployment Guide
 
 This document describes the security trust boundaries, network topologies, privilege segregation, and hardening requirements for running the PRAETOR / Adaptive-Honeypot platform in production-grade environments.
 
 ---
 
-## ðŸ›¡ï¸ Trust Boundaries and Threat Model
+## Ã°Å¸â€ºÂ¡Ã¯Â¸Â Trust Boundaries and Threat Model
 
 PRAETOR operates two highly distinct environments with completely opposing trust profiles. These environments **must never** be co-located in the same network context or run with shared system privileges.
 
@@ -44,7 +44,7 @@ graph TD
 
 ---
 
-## ðŸŒ Outbound Network Policy
+## Ã°Å¸Å’Â Outbound Network Policy
 
 The application must follow a strict outbound network allowlist:
 
@@ -58,7 +58,7 @@ The application must follow a strict outbound network allowlist:
 
 ---
 
-## ðŸ”‘ Credential Separation
+## Ã°Å¸â€â€˜ Credential Separation
 
 Real administrative secrets and fake deception credentials must be configured separately.
 
@@ -73,7 +73,7 @@ Real administrative secrets and fake deception credentials must be configured se
 
 ---
 
-## ðŸ³ Container and VM Hardening
+## Ã°Å¸ÂÂ³ Container and VM Hardening
 
 When deploying via Docker or virtual machines, enforce the following controls:
 
@@ -84,9 +84,8 @@ When deploying via Docker or virtual machines, enforce the following controls:
 
 ---
 
-## ðŸ’¾ Incident Response and Backup Policy
+## Ã°Å¸â€™Â¾ Incident Response and Backup Policy
 
 - **Log Rotation**: Logs are automatically rotated (max 10MB per file, keeping up to 5 backups) to prevent disk space exhaustion attacks.
 - **SQLite Database**: Backup the SQLite database (`honeypot.db`) daily. Store backups in a secure, external, read-only location.
 - **Database Access**: Keep the database file outside the publicly served `/frontend` static file structure.
-

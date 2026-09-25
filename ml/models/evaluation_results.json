@@ -1,20 +1,407 @@
 {
+  "benchmark_metadata": {
+    "dataset": "benchmark_dataset.csv",
+    "seed": 20260825,
+    "total_samples": 16000,
+    "duplicates_removed": 0,
+    "features": [
+      "requests",
+      "unique_paths",
+      "failed_auth",
+      "payload_entropy",
+      "avg_payload_length",
+      "request_rate",
+      "source_port_entropy",
+      "destination_port_entropy",
+      "path_depth",
+      "special_character_ratio",
+      "response_error_ratio",
+      "session_duration",
+      "command_count",
+      "distinct_user_agents",
+      "geo_variance"
+    ],
+    "feature_count": 15,
+    "classes": [
+      "benign",
+      "brute_force",
+      "command_injection",
+      "malware_delivery",
+      "path_traversal",
+      "port_scan",
+      "sql_injection",
+      "unknown",
+      "xss"
+    ],
+    "test_size": 0.25,
+    "train_samples": 12000,
+    "test_samples": 4000,
+    "evaluation_type": "held-out stratified test set",
+    "target_leakage_check": "passed",
+    "synthetic_data": true
+  },
+  "models": {
     "random_forest": {
-        "accuracy": 1.0,
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1_score": 1.0
+      "accuracy": 0.694,
+      "balanced_accuracy": 0.659,
+      "precision_macro": 0.6652,
+      "recall_macro": 0.659,
+      "f1_macro": 0.6602,
+      "confusion_matrix": [
+        [
+          940,
+          11,
+          13,
+          63,
+          31,
+          2,
+          41,
+          20,
+          76
+        ],
+        [
+          18,
+          325,
+          0,
+          1,
+          4,
+          12,
+          1,
+          18,
+          7
+        ],
+        [
+          18,
+          1,
+          201,
+          16,
+          4,
+          3,
+          22,
+          2,
+          55
+        ],
+        [
+          44,
+          1,
+          10,
+          222,
+          2,
+          1,
+          38,
+          3,
+          14
+        ],
+        [
+          27,
+          1,
+          4,
+          3,
+          207,
+          7,
+          22,
+          12,
+          41
+        ],
+        [
+          4,
+          7,
+          0,
+          1,
+          3,
+          339,
+          2,
+          39,
+          7
+        ],
+        [
+          36,
+          5,
+          20,
+          42,
+          12,
+          1,
+          137,
+          6,
+          53
+        ],
+        [
+          28,
+          21,
+          3,
+          10,
+          8,
+          49,
+          8,
+          264,
+          21
+        ],
+        [
+          39,
+          2,
+          28,
+          13,
+          20,
+          2,
+          36,
+          29,
+          141
+        ]
+      ],
+      "classification_report": {
+        "benign": {
+          "precision": 0.8145580589254766,
+          "recall": 0.7852965747702589,
+          "f1-score": 0.7996597192683964,
+          "support": 1197.0
+        },
+        "brute_force": {
+          "precision": 0.8689839572192514,
+          "recall": 0.8419689119170984,
+          "f1-score": 0.8552631578947368,
+          "support": 386.0
+        },
+        "command_injection": {
+          "precision": 0.7204301075268817,
+          "recall": 0.6242236024844721,
+          "f1-score": 0.6688851913477537,
+          "support": 322.0
+        },
+        "malware_delivery": {
+          "precision": 0.5983827493261455,
+          "recall": 0.6626865671641791,
+          "f1-score": 0.6288951841359773,
+          "support": 335.0
+        },
+        "path_traversal": {
+          "precision": 0.711340206185567,
+          "recall": 0.6388888888888888,
+          "f1-score": 0.6731707317073171,
+          "support": 324.0
+        },
+        "port_scan": {
+          "precision": 0.8149038461538461,
+          "recall": 0.8432835820895522,
+          "f1-score": 0.8288508557457213,
+          "support": 402.0
+        },
+        "sql_injection": {
+          "precision": 0.44625407166123776,
+          "recall": 0.4391025641025641,
+          "f1-score": 0.44264943457189015,
+          "support": 312.0
+        },
+        "unknown": {
+          "precision": 0.6717557251908397,
+          "recall": 0.6407766990291263,
+          "f1-score": 0.6559006211180124,
+          "support": 412.0
+        },
+        "xss": {
+          "precision": 0.3397590361445783,
+          "recall": 0.45483870967741935,
+          "f1-score": 0.3889655172413793,
+          "support": 310.0
+        },
+        "accuracy": 0.694,
+        "macro avg": {
+          "precision": 0.6651519731482026,
+          "recall": 0.6590073444581733,
+          "f1-score": 0.6602489347812427,
+          "support": 4000.0
+        },
+        "weighted avg": {
+          "precision": 0.7055690057420158,
+          "recall": 0.694,
+          "f1-score": 0.6984018830314993,
+          "support": 4000.0
+        }
+      }
     },
     "xgboost": {
-        "accuracy": 1.0,
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1_score": 1.0
+      "accuracy": 0.719,
+      "balanced_accuracy": 0.6614,
+      "precision_macro": 0.691,
+      "recall_macro": 0.6614,
+      "f1_macro": 0.6731,
+      "confusion_matrix": [
+        [
+          1059,
+          8,
+          14,
+          36,
+          25,
+          2,
+          25,
+          12,
+          16
+        ],
+        [
+          19,
+          339,
+          0,
+          1,
+          1,
+          8,
+          0,
+          15,
+          3
+        ],
+        [
+          34,
+          2,
+          212,
+          15,
+          4,
+          3,
+          26,
+          3,
+          23
+        ],
+        [
+          77,
+          2,
+          11,
+          201,
+          2,
+          1,
+          29,
+          2,
+          10
+        ],
+        [
+          60,
+          1,
+          2,
+          3,
+          207,
+          7,
+          16,
+          9,
+          19
+        ],
+        [
+          6,
+          7,
+          0,
+          1,
+          6,
+          345,
+          2,
+          32,
+          3
+        ],
+        [
+          65,
+          5,
+          27,
+          37,
+          11,
+          2,
+          134,
+          5,
+          26
+        ],
+        [
+          35,
+          23,
+          3,
+          9,
+          6,
+          47,
+          6,
+          273,
+          10
+        ],
+        [
+          77,
+          3,
+          36,
+          9,
+          25,
+          1,
+          30,
+          23,
+          106
+        ]
+      ],
+      "classification_report": {
+        "benign": {
+          "precision": 0.7395251396648045,
+          "recall": 0.8847117794486216,
+          "f1-score": 0.805629516926588,
+          "support": 1197.0
+        },
+        "brute_force": {
+          "precision": 0.8692307692307693,
+          "recall": 0.8782383419689119,
+          "f1-score": 0.8737113402061856,
+          "support": 386.0
+        },
+        "command_injection": {
+          "precision": 0.6950819672131148,
+          "recall": 0.6583850931677019,
+          "f1-score": 0.6762360446570973,
+          "support": 322.0
+        },
+        "malware_delivery": {
+          "precision": 0.6442307692307693,
+          "recall": 0.6,
+          "f1-score": 0.6213292117465224,
+          "support": 335.0
+        },
+        "path_traversal": {
+          "precision": 0.7212543554006968,
+          "recall": 0.6388888888888888,
+          "f1-score": 0.6775777414075287,
+          "support": 324.0
+        },
+        "port_scan": {
+          "precision": 0.8293269230769231,
+          "recall": 0.8582089552238806,
+          "f1-score": 0.843520782396088,
+          "support": 402.0
+        },
+        "sql_injection": {
+          "precision": 0.5,
+          "recall": 0.42948717948717946,
+          "f1-score": 0.46206896551724136,
+          "support": 312.0
+        },
+        "unknown": {
+          "precision": 0.7299465240641712,
+          "recall": 0.662621359223301,
+          "f1-score": 0.6946564885496184,
+          "support": 412.0
+        },
+        "xss": {
+          "precision": 0.49074074074074076,
+          "recall": 0.3419354838709677,
+          "f1-score": 0.40304182509505704,
+          "support": 310.0
+        },
+        "accuracy": 0.719,
+        "macro avg": {
+          "precision": 0.6910374654024433,
+          "recall": 0.6613863423643838,
+          "f1-score": 0.6730857685002141,
+          "support": 4000.0
+        },
+        "weighted avg": {
+          "precision": 0.7090779505018988,
+          "recall": 0.719,
+          "f1-score": 0.710355475109485,
+          "support": 4000.0
+        }
+      }
     },
     "isolation_forest": {
-        "accuracy": 0.9708,
-        "precision": 0.883,
-        "recall": 0.883,
-        "f1_score": 0.883
+      "accuracy": 0.7708,
+      "precision": 0.9009,
+      "recall": 0.756,
+      "f1_score": 0.8221,
+      "normal_class": "benign",
+      "anomaly_definition": "all non-benign traffic"
     }
+  }
 }

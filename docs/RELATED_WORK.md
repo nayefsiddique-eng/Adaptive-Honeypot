@@ -1,4 +1,4 @@
-﻿# Related Work & Comparative Analysis
+# Related Work & Comparative Analysis
 
 This document places PRAETOR within the context of prior research in adaptive/reinforcement learning-based honeypots and software-defined Moving Target Defense (MTD) systems.
 

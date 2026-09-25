@@ -1,4 +1,4 @@
-﻿# PRAETOR
+# PRAETOR
 
 PRAETOR is an autonomous, multi-protocol cyber deception platform that combines real-time machine learning classification with Cooperative Multi-Agent Reinforcement Learning (CMARL) to dynamically adapt honeypot environments in response to active threat actors.
 
@@ -68,29 +68,29 @@ PRAETOR addresses the limitations of static honeypots by dynamically mutating ne
 
 ```
   Attacker
-    Ã¢â€â€š
-    Ã¢â€“Â¼
+    ''
+    ''
   Honeypot (SSH, HTTP, Telnet)
-    Ã¢â€â€š
-    Ã¢â€“Â¼
+    ''
+    ''
   Telemetry Dispatch
-    Ã¢â€â€š
-    Ã¢â€“Â¼
+    ''
+    ''
   Feature Extraction (Entropy, payload parsing)
-    Ã¢â€â€š
-    Ã¢â€“Â¼
+    ''
+    ''
   Risk Assessment & ML Persona Prediction
-    Ã¢â€â€š
-    Ã¢â€“Â¼
+    ''
+    ''
   Adaptive CMARL Decision Choice
-    Ã¢â€â€š
-    Ã¢â€“Â¼
+    ''
+    ''
   Deception Action (Emulation shift, latency delay)
-    Ã¢â€â€š
-    Ã¢â€“Â¼
+    ''
+    ''
   Session & Reward Tracking
-    Ã¢â€â€š
-    Ã¢â€“Â¼
+    ''
+    ''
   Dashboard & Research Metrics Updates
 ```
 
@@ -114,26 +114,26 @@ PRAETOR addresses the limitations of static honeypots by dynamically mutating ne
 
 ```
 adaptive-honeypot/
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ backend/                  # Application core
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ api/                  # FastAPI routers and route endpoints
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ core/                 # CMARL decision core and feature extractors
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ honeypot/             # SSH, HTTP, and Telnet honeypot servers
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ middleware/           # Rate limiting and security headers
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ models/               # SQLAlchemy schema definitions
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ services/             # Integrations (GeoIP, feeds)
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ config.py             # Settings and validation
-Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ main.py               # Uvicorn entrypoint
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ docs/                     # Documentation files
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ ARCHITECTURE.md       # Component design documentation
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ PRODUCTION_DEPLOYMENT.md # Production environment setup
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ RELATED_WORK.md       # Prior work comparisons
-Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ SECURITY.md           # Security architecture guide
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ frontend/                 # Cyber-HUD client interface
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ ml/                       # Machine learning classifiers and training
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ scripts/                  # Simulation and isolation validation utilities
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ tests/                    # Test suite and regression tests
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ pyproject.toml            # Project configuration
-Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ requirements.txt          # Python dependencies
+'...'' backend/                  # Application core
+''   '...'' api/                  # FastAPI routers and route endpoints
+''   '...'' core/                 # CMARL decision core and feature extractors
+''   '...'' honeypot/             # SSH, HTTP, and Telnet honeypot servers
+''   '...'' middleware/           # Rate limiting and security headers
+''   '...'' models/               # SQLAlchemy schema definitions
+''   '...'' services/             # Integrations (GeoIP, feeds)
+''   '...'' config.py             # Settings and validation
+''   '''' main.py               # Uvicorn entrypoint
+'...'' docs/                     # Documentation files
+''   '...'' ARCHITECTURE.md       # Component design documentation
+''   '...'' PRODUCTION_DEPLOYMENT.md # Production environment setup
+''   '...'' RELATED_WORK.md       # Prior work comparisons
+''   '''' SECURITY.md           # Security architecture guide
+'...'' frontend/                 # Cyber-HUD client interface
+'...'' ml/                       # Machine learning classifiers and training
+'...'' scripts/                  # Simulation and isolation validation utilities
+'...'' tests/                    # Test suite and regression tests
+'...'' pyproject.toml            # Project configuration
+'''' requirements.txt          # Python dependencies
 ```
 
 ---
@@ -246,13 +246,17 @@ PRAETOR contains evaluation scripts within the `ml/` and `scripts/` directories 
 
 Classifier performance metrics calculated directly from [`evaluation_results.json`](ml/models/evaluation_results.json):
 
-| Model Classifier | Accuracy | Precision | Recall | F1-Score |
-| :--- | :---: | :---: | :---: | :---: |
-| **Random Forest** | 100.00% | 100.00% | 100.00% | 100.00% |
-| **XGBoost** | 100.00% | 100.00% | 100.00% | 100.00% |
-| **Isolation Forest** | 97.08% | 88.30% | 88.30% | 88.30% |
+| Model | Accuracy | Balanced Accuracy | Macro Precision | Macro Recall | Macro F1 |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| Random Forest | 69.40% | 65.90% | 66.52% | 65.90% | 66.02% |
+| XGBoost | 71.90% | 66.14% | 69.10% | 66.14% | 67.31% |
 
-These metrics come from the included synthetic evaluation dataset and are intended as reproducible pipeline benchmarks, not as real-world attacker-classification accuracy.
+**Anomaly detection**
+
+| Model | Accuracy | Precision | Recall | F1 |
+| :--- | ---: | ---: | ---: | ---: |
+| Isolation Forest | 77.08% | 90.09% | 75.60% | 82.21% |
+These metrics are calculated from the repository's synthetic security-telemetry benchmark using a stratified held-out test set. The dataset uses overlapping probabilistic feature distributions and explicitly checks for target leakage. These results demonstrate reproducible pipeline behavior and should not be interpreted as real-world attacker-classification accuracy.
 
 ---
 

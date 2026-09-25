@@ -1,10 +1,10 @@
-﻿# System Architecture Reference
+# System Architecture Reference
 
 This document provides a detailed overview of PRAETOR's technical architecture, component breakdown, data flow, and security boundary controls.
 
 ---
 
-## ðŸ›ï¸ Component Overview
+## Ã°Å¸Ââ€ºÃ¯Â¸Â Component Overview
 
 PRAETOR is structured around a three-plane architectural model that isolates untrusted execution components from secure analytics and administrative controls.
 
@@ -43,7 +43,7 @@ flowchart TD
 
 ---
 
-## ðŸ›°ï¸ Architecture Planes
+## Ã°Å¸â€ºÂ°Ã¯Â¸Â Architecture Planes
 
 ### 1. Attacker Plane (DMZ / Untrusted)
 * **SSH Honeypot (`backend/honeypot/ssh_server.py`):** Multi-stage shell emulator simulating a low-privilege environment with mock interactive commands, keystroke tracking, and state-preserving session progression.
@@ -63,7 +63,7 @@ flowchart TD
 
 ---
 
-## ðŸ”„ End-to-End Deception Flow
+## Ã°Å¸â€â€ž End-to-End Deception Flow
 
 1. **Traffic Ingestion:** The attacker interacts with one of the honeypots (e.g., executing a command via SSH).
 2. **Telemetry Dispatch:** The honeypot logs the metadata and sends an unauthenticated JSON log stream to `/api/logs/ingest`.
@@ -71,4 +71,3 @@ flowchart TD
 4. **Cooperative Strategy Selection:** The CMARL decision engine checks the current Q-policy matrix and selects a coordinated action across the Network (port state, delay), Service (emulated filesystem, bait credentials), and Intel planes.
 5. **Adaptive Action execution:** The honeypot profile changes dynamically. The response is returned to the attacker (e.g., mock command output or delayed connection).
 6. **Reward and Policy Optimization:** Upon session teardown or timeout, a background thread calculates the cumulative session reward (duration, command depth, deception score) and triggers Bellman Q-value updates for all cooperative agents in the database.
-
