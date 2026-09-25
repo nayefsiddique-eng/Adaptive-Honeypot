@@ -13,6 +13,11 @@ def test_rl_learning_convergence():
     Simulates 250 decision cycles and verifies that the Q-learning policy converges
     to select the matching deception action, yielding a higher average reward over time.
     """
+    import random
+    import numpy as np
+    random.seed(42)
+    np.random.seed(42)
+
     # 1. Setup in-memory SQLite database for testing
     engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

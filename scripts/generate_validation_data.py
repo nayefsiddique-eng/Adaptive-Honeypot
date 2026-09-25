@@ -9,6 +9,8 @@ import platform
 # Ensure backend directory is in the path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+os.environ["DISABLE_ML_MODELS"] = "1"
+
 from fastapi.testclient import TestClient
 from backend.main import app
 

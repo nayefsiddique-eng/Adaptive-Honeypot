@@ -11,4 +11,4 @@ Microsoft Windows 10 Pro  10.0.19045
 RAM info:
 Total Physical Memory:     1,996 MB
 
-Python: Python 3.12.8
+Python: Python 3.14.5

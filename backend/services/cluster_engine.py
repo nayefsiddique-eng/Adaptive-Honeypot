@@ -1,7 +1,6 @@
 import numpy as np
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from sklearn.cluster import KMeans
 from typing import Dict, Any, List
 from backend.models.attack import AttackLog
 
@@ -10,6 +9,7 @@ def cluster_attacker_ips(db: Session) -> Dict[str, Any]:
     Retrieves attacker profiles from the database and clusters them into 4 categories
     using K-Means clustering based on behavioral features.
     """
+    from sklearn.cluster import KMeans
     # Query distinct IP addresses
     ips = db.query(AttackLog.ip_address).distinct().all()
     ips = [ip[0] for ip in ips]

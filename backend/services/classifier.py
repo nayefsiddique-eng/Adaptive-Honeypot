@@ -12,6 +12,9 @@ _features = None
 
 def load_models():
     global _rf, _xgb, _iso, _le, _features
+    if os.environ.get("DISABLE_ML_MODELS") == "1":
+        print("ML model loading disabled via environment — running in heuristic-only mode")
+        return
     try:
         _rf = joblib.load(f"{MODEL_DIR}/random_forest.pkl")
         _xgb = joblib.load(f"{MODEL_DIR}/xgboost.pkl")
