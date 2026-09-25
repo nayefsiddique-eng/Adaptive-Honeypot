@@ -1,4 +1,4 @@
-# Related Work & Comparative Analysis
+﻿# Related Work & Comparative Analysis
 
 This document places PRAETOR within the context of prior research in adaptive/reinforcement learning-based honeypots and software-defined Moving Target Defense (MTD) systems.
 
@@ -34,7 +34,7 @@ The table below contrasts PRAETOR against representative baseline architectures:
 | **Static Cowrie** | None (Fixed emulation) | No | Yes | <1.0ms | N/A (Static configurations) |
 | **Game-Theoretic** | Equilibrium calculation | No | No (Mathematical models) | 100ms - 500ms | High (Analytical payoffs) |
 | **Rule-Based Heuristic** | Signature state machine | No | Yes | <1.0ms | High (Explicit signatures) |
-| **PRAETOR (Ours)** | **Cooperative CMARL (Joint Reward)** | **Yes** | **Yes** | **1.2ms - 1.8ms** | **High (X-AD Decision Trees & counterfactuals)** |
+| **PRAETOR (Ours)** | **Cooperative CMARL (Joint Reward)** | **Yes** | **Yes** | **26.3ms*** | **High (X-AD Decision Trees & counterfactuals)** |
 
 ---
 
@@ -45,4 +45,12 @@ PRAETOR bridges the gap between network-level Moving Target Defense and applicat
 2. **Service Agent (SA):** Emulates decoy structures, modifies active credentials dynamically, and resolves virtual filesystems.
 3. **Intelligence Agent (IA):** Evaluates campaign similarity and adjusts forensic metadata collections.
 
-By partitioning the action space, PRAETOR prevents state-space explosion, accelerating policy convergence while retaining low decision latency (<2.0ms). This multi-agent structure is further paired with our Explainable Adaptive Decision (X-AD) engine, which parses reinforcement learning outcomes into plain-English reasoning and counterfactuals, resolving the "black box" limitation that hinders the industrial deployment of autonomous deception platforms.
+By partitioning the action space, PRAETOR prevents state-space explosion, accelerating policy convergence while retaining low decision latency under the evaluated simulation workload. This multi-agent structure is further paired with our Explainable Adaptive Decision (X-AD) engine, which parses reinforcement learning outcomes into plain-English reasoning and counterfactuals, resolving the "black box" limitation that hinders the industrial deployment of autonomous deception platforms.
+
+---
+
+### Latency measurement note
+
+\* 26.3ms refers to the mean end-to-end decision latency reported by the
+current simulation benchmark. It should not be interpreted as a universal
+latency guarantee across deployment environments or workloads.

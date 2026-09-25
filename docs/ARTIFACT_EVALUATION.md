@@ -1,4 +1,4 @@
-# PRAETOR — Artifact Evaluation & Replication Guide
+﻿# PRAETOR â€” Artifact Evaluation & Replication Guide
 
 ---
 
@@ -8,7 +8,7 @@ The table below documents the hyperparameter values used in the CMARL (Cooperati
 
 | Parameter | Symbol | Value | Optimization / Selection Method |
 | :--- | :---: | :---: | :--- |
-| **Learning Rate** | $\alpha$ | `0.10` | Calibrated via grid-search to prevent policy oscillation. |
+| **Learning Rate** | $\alpha$ | `0.10` | Selected during development experiments and validated using the included evaluation framework. |
 | **Discount Factor** | $\gamma$ | `0.90` | Selected to balance immediate and long-term reward values. |
 | **Initial Exploration** | $\epsilon_{\text{start}}$ | `0.30` | Configured to ensure sufficient initial exploration. |
 | **End Exploration** | $\epsilon_{\text{end}}$ | `0.05` | Sets the minimum exploration floor. |
@@ -21,7 +21,7 @@ The table below documents the hyperparameter values used in the CMARL (Cooperati
 
 ## 2. Experimental Protocols
 
-To replicate the evaluations presented in the benchmark report (note: all metrics represent internal simulation-based benchmarks, see Section 5 of [docs/BENCHMARK_REPORT.md](file:///c:/Users/Admin%20pc/Desktop/AI-Based%20HoneyPot/adaptive-honeypot/docs/BENCHMARK_REPORT.md) for details/limitations), follow these protocols:
+To replicate the evaluations presented in the benchmark report (note: all metrics represent internal simulation-based benchmarks, see Section 5 of [docs/BENCHMARK_REPORT.md](docs/BENCHMARK_REPORT.md) for details/limitations), follow these protocols:
 
 ### Protocol A: Attacker Persona Simulation (Baseline Validation)
 1. **Goal:** Verify the mean and median attacker dwell times across different deception setups.
@@ -72,3 +72,4 @@ python scripts/run_benchmarks.py
 # 4. Inspect the generated report
 cat docs/BENCHMARK_REPORT.md
 ```
+

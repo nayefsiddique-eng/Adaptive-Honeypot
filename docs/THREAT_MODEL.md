@@ -1,4 +1,4 @@
-# PRAETOR — Attacker Threat Model & Fingerprinting Risk Analysis
+﻿# PRAETOR â€” Attacker Threat Model & Fingerprinting Risk Analysis
 
 ---
 
@@ -25,3 +25,4 @@ The following attack vectors are explicitly out of scope for the current design:
 A critical limitation in the current CMARL implementation is the **deterministic decay of epsilon** as a function of the overall session count:
 $$\epsilon = \max\left(\epsilon_{\text{end}}, \epsilon_{\text{start}} - \frac{\text{Session Count}}{\text{Decay Steps}} \cdot (\epsilon_{\text{start}} - \epsilon_{\text{end}})\right)$$
 Because exploration rates decrease deterministically, an advanced adversary querying the honeypot over a long sequence can statistically detect the transition from high-entropy (exploratory) actions to low-entropy (converged) actions. This predictability constitutes a fingerprinting signal that could allow an attacker to identify the environment as a honeypot. Acknowledging this design tradeoff is essential for deployment considerations.
+

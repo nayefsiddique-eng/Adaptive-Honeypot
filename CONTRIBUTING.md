@@ -1,4 +1,4 @@
-# Contributing to PRAETOR
+﻿# Contributing to PRAETOR
 
 We welcome contributions to the PRAETOR Autonomous Cyber Deception platform! To contribute, please follow these guidelines:
 
@@ -26,3 +26,4 @@ Please be respectful and professional in all communications.
 - Maintain 100% test coverage for new features.
 - Adhere to PEP 8 styles for Python code.
 - Write descriptive git commit messages.
+

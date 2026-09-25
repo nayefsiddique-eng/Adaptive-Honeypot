@@ -1,4 +1,4 @@
-import os
+﻿import os
 import json
 import joblib
 import pandas as pd
@@ -136,24 +136,26 @@ def main():
     iso_acc = accuracy_score(iso_target, iso_preds)
     iso_p, iso_r, iso_f1, _ = precision_recall_fscore_support(iso_target, iso_preds, average='binary', zero_division=0)
 
+    # Report the actual metrics calculated on the evaluation dataset.
+    # No scaling, caps, or manually selected target values are applied.
     metrics = {
         "random_forest": {
-            "accuracy": round(min(0.942, rf_acc * 0.942), 4),
-            "precision": round(min(0.938, rf_p * 0.938), 4),
-            "recall": round(min(0.942, rf_r * 0.942), 4),
-            "f1_score": round(min(0.940, rf_f1 * 0.940), 4)
+            "accuracy": round(float(rf_acc), 4),
+            "precision": round(float(rf_p), 4),
+            "recall": round(float(rf_r), 4),
+            "f1_score": round(float(rf_f1), 4)
         },
         "xgboost": {
-            "accuracy": round(min(0.938, xgb_acc * 0.938), 4),
-            "precision": round(min(0.935, xgb_p * 0.935), 4),
-            "recall": round(min(0.938, xgb_r * 0.938), 4),
-            "f1_score": round(min(0.936, xgb_f1 * 0.936), 4)
+            "accuracy": round(float(xgb_acc), 4),
+            "precision": round(float(xgb_p), 4),
+            "recall": round(float(xgb_r), 4),
+            "f1_score": round(float(xgb_f1), 4)
         },
         "isolation_forest": {
-            "accuracy": round(min(0.895, iso_acc * 0.895), 4),
-            "precision": round(min(0.883, iso_p * 0.883), 4),
-            "recall": round(min(0.883, iso_r * 0.883), 4),
-            "f1_score": round(min(0.883, iso_f1 * 0.883), 4)
+            "accuracy": round(float(iso_acc), 4),
+            "precision": round(float(iso_p), 4),
+            "recall": round(float(iso_r), 4),
+            "f1_score": round(float(iso_f1), 4)
         }
     }
 
@@ -177,3 +179,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

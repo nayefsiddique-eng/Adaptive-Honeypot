@@ -1,4 +1,4 @@
-# PRAETOR
+﻿# PRAETOR
 
 PRAETOR is an autonomous, multi-protocol cyber deception platform that combines real-time machine learning classification with Cooperative Multi-Agent Reinforcement Learning (CMARL) to dynamically adapt honeypot environments in response to active threat actors.
 
@@ -68,29 +68,29 @@ PRAETOR addresses the limitations of static honeypots by dynamically mutating ne
 
 ```
   Attacker
-    │
-    ▼
+    Ã¢â€â€š
+    Ã¢â€“Â¼
   Honeypot (SSH, HTTP, Telnet)
-    │
-    ▼
+    Ã¢â€â€š
+    Ã¢â€“Â¼
   Telemetry Dispatch
-    │
-    ▼
+    Ã¢â€â€š
+    Ã¢â€“Â¼
   Feature Extraction (Entropy, payload parsing)
-    │
-    ▼
+    Ã¢â€â€š
+    Ã¢â€“Â¼
   Risk Assessment & ML Persona Prediction
-    │
-    ▼
+    Ã¢â€â€š
+    Ã¢â€“Â¼
   Adaptive CMARL Decision Choice
-    │
-    ▼
+    Ã¢â€â€š
+    Ã¢â€“Â¼
   Deception Action (Emulation shift, latency delay)
-    │
-    ▼
+    Ã¢â€â€š
+    Ã¢â€“Â¼
   Session & Reward Tracking
-    │
-    ▼
+    Ã¢â€â€š
+    Ã¢â€“Â¼
   Dashboard & Research Metrics Updates
 ```
 
@@ -114,26 +114,26 @@ PRAETOR addresses the limitations of static honeypots by dynamically mutating ne
 
 ```
 adaptive-honeypot/
-├── backend/                  # Application core
-│   ├── api/                  # FastAPI routers and route endpoints
-│   ├── core/                 # CMARL decision core and feature extractors
-│   ├── honeypot/             # SSH, HTTP, and Telnet honeypot servers
-│   ├── middleware/           # Rate limiting and security headers
-│   ├── models/               # SQLAlchemy schema definitions
-│   ├── services/             # Integrations (GeoIP, feeds)
-│   ├── config.py             # Settings and validation
-│   └── main.py               # Uvicorn entrypoint
-├── docs/                     # Documentation files
-│   ├── ARCHITECTURE.md       # Component design documentation
-│   ├── PRODUCTION_DEPLOYMENT.md # Production environment setup
-│   ├── RELATED_WORK.md       # Prior work comparisons
-│   └── SECURITY.md           # Security architecture guide
-├── frontend/                 # Cyber-HUD client interface
-├── ml/                       # Machine learning classifiers and training
-├── scripts/                  # Simulation and isolation validation utilities
-├── tests/                    # Test suite and regression tests
-├── pyproject.toml            # Project configuration
-└── requirements.txt          # Python dependencies
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ backend/                  # Application core
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ api/                  # FastAPI routers and route endpoints
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ core/                 # CMARL decision core and feature extractors
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ honeypot/             # SSH, HTTP, and Telnet honeypot servers
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ middleware/           # Rate limiting and security headers
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ models/               # SQLAlchemy schema definitions
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ services/             # Integrations (GeoIP, feeds)
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ config.py             # Settings and validation
+Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ main.py               # Uvicorn entrypoint
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ docs/                     # Documentation files
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ ARCHITECTURE.md       # Component design documentation
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ PRODUCTION_DEPLOYMENT.md # Production environment setup
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ RELATED_WORK.md       # Prior work comparisons
+Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ SECURITY.md           # Security architecture guide
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ frontend/                 # Cyber-HUD client interface
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ ml/                       # Machine learning classifiers and training
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ scripts/                  # Simulation and isolation validation utilities
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ tests/                    # Test suite and regression tests
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ pyproject.toml            # Project configuration
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ requirements.txt          # Python dependencies
 ```
 
 ---
@@ -193,7 +193,7 @@ Execute the following commands from the project root inside a Windows PowerShell
 
 ## Production Deployment
 
-Refer to [PRODUCTION_DEPLOYMENT.md](file:///c:/Users/Admin%20pc/Desktop/Adaptive-Honeypot-main/docs/PRODUCTION_DEPLOYMENT.md) for full orchestration templates.
+Refer to [PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md) for full orchestration templates.
 
 Production environments rely on isolated network planes where:
 * The attacker subnet cannot communicate with internal assets.
@@ -203,7 +203,7 @@ Production environments rely on isolated network planes where:
 
 ## Security
 
-Refer to [SECURITY.md](file:///c:/Users/Admin%20pc/Desktop/Adaptive-Honeypot-main/docs/SECURITY.md) for vulnerability reporting guidelines, security controls, and trust boundary breakdowns.
+Refer to [SECURITY.md](docs/SECURITY.md) for vulnerability reporting guidelines, security controls, and trust boundary breakdowns.
 
 ---
 
@@ -244,15 +244,15 @@ PRAETOR contains evaluation scripts within the `ml/` and `scripts/` directories 
 
 ### Model Performance Metrics
 
-Verified classifier performance metrics compiled from [`evaluation_results.json`](file:///c:/Users/Admin%20pc/Desktop/Adaptive-Honeypot-main/ml/models/evaluation_results.json):
+Classifier performance metrics calculated directly from [`evaluation_results.json`](ml/models/evaluation_results.json):
 
 | Model Classifier | Accuracy | Precision | Recall | F1-Score |
 | :--- | :---: | :---: | :---: | :---: |
-| **Random Forest** | 94.20% | 93.80% | 94.20% | 94.00% |
-| **XGBoost** | 93.80% | 93.50% | 93.80% | 93.60% |
-| **Isolation Forest** | 86.88% | 77.97% | 77.97% | 77.97% |
+| **Random Forest** | 100.00% | 100.00% | 100.00% | 100.00% |
+| **XGBoost** | 100.00% | 100.00% | 100.00% | 100.00% |
+| **Isolation Forest** | 97.08% | 88.30% | 88.30% | 88.30% |
 
-All quantitative evaluation thresholds in tests serve as stability baselines and policy quality bounds.
+These metrics come from the included synthetic evaluation dataset and are intended as reproducible pipeline benchmarks, not as real-world attacker-classification accuracy.
 
 ---
 
@@ -268,10 +268,24 @@ All quantitative evaluation thresholds in tests serve as stability baselines and
 
 ## License
 
-Distributed under the MIT License. See [LICENSE](file:///c:/Users/Admin%20pc/Desktop/Adaptive-Honeypot-main/LICENSE) for more information.
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 
 ---
 
 ## Disclaimer
 
 PRAETOR is intended for authorized defensive research, threat intelligence collection, and controlled educational deployments. Do not expose this software to untrusted networks without adequate isolation, containment policies, and firewalls.
+
+
+### Evaluation Interpretation
+
+The included ML and adaptive-deception results are reproducible simulation
+benchmarks generated from synthetic datasets and configured attacker
+playbooks. They demonstrate the behavior of the implemented pipeline but
+should not be interpreted as validation against live Internet attackers,
+production traffic, or independent red-team activity.
+
+Production isolation also depends on deployment infrastructure. Host
+firewalls, cloud security groups, VM/network segmentation, outbound egress
+policy, and secret management must be configured according to the
+production deployment guide.

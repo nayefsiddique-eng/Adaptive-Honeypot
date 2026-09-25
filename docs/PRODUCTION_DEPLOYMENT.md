@@ -1,4 +1,4 @@
-# PRAETOR Production Deployment Guide
+﻿# PRAETOR Production Deployment Guide
 
 This document describes the recommended topologies, host constraints, network configurations, and host-level firewall policies required to run the PRAETOR platform in a production-isolated environment.
 
@@ -26,23 +26,23 @@ This architecture provides the strongest virtualization-level isolation against 
 
 ```
        [ PUBLIC INTERNET ]
-               │
+               â”‚
       (Port 2222, 8080, 2323)
-               │
-               ▼
-   ┌───────────────────────┐
-   │      Honeypot VM      │
-   │  (No secrets/DB file) │
-   └───────────┬───────────┘
-               │
+               â”‚
+               â–¼
+   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+   â”‚      Honeypot VM      â”‚
+   â”‚  (No secrets/DB file) â”‚
+   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+               â”‚
       (Telemetry Egress ONLY)
       (Port 8000 Ingestion)
-               │
-               ▼
-   ┌───────────────────────┐
-   │     Management VM     │
-   │  (API/DB/ML, Private) │
-   └───────────────────────┘
+               â”‚
+               â–¼
+   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+   â”‚     Management VM     â”‚
+   â”‚  (API/DB/ML, Private) â”‚
+   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 * **Honeypot VM:** Exposed to the internet. Runs only the decoy containers.
@@ -55,32 +55,32 @@ Utilizes strict Docker bridge networks to segment interfaces, bound to different
 
 ```
                   PUBLIC INTERNET
-                         │
+                         â”‚
                   Docker Publish
-                         │
-             ┌───────────▼───────────┐
-             │     attacker_net      │
-             └───────────┬───────────┘
-                         │
-             ┌───────────▼───────────┐
-             │   praetor-honeypot    │
-             └───────────┬───────────┘
-                         │ (Read-only, tmpfs, cap_drop ALL)
-             ┌───────────▼───────────┐
-             │     telemetry_net     │
-             └───────────┬───────────┘
-                         │
-             ┌───────────▼───────────┐
-             │  praetor-management   │
-             └───────────┬───────────┘
-                         │
-             ┌───────────▼───────────┐
-             │    management_net     │
-             └───────────┬───────────┘
-                         │
-             ┌───────────▼───────────┐
-             │       Database        │ (sqlite, inside management plane only)
-             └───────────────────────┘
+                         â”‚
+             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+             â”‚     attacker_net      â”‚
+             â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                         â”‚
+             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+             â”‚   praetor-honeypot    â”‚
+             â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                         â”‚ (Read-only, tmpfs, cap_drop ALL)
+             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+             â”‚     telemetry_net     â”‚
+             â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                         â”‚
+             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+             â”‚  praetor-management   â”‚
+             â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                         â”‚
+             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+             â”‚    management_net     â”‚
+             â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                         â”‚
+             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+             â”‚       Database        â”‚ (sqlite, inside management plane only)
+             â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---
@@ -131,3 +131,4 @@ iptables -A FORWARD -d 169.254.169.254 -j DROP
 Honeypots must explicitly be blocked from reaching cloud instance metadata directories.
 * **AWS/GCP/OpenStack Metadata IP:** `169.254.169.254`
 * Ensure the Docker bridge configuration blocks this route or configure an outbound routing rule in your Cloud Security Group.
+

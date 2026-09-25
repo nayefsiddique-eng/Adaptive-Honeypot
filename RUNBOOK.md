@@ -1,4 +1,4 @@
-# PRAETOR Adaptive Honeypot Runbook
+﻿# PRAETOR Adaptive Honeypot Runbook
 
 This guide contains the exact commands required to set up, train, run, and verify the PRAETOR Adaptive Honeypot system.
 
@@ -100,3 +100,4 @@ To run the automated reinforcement learning convergence test (verifies policy im
   ```bash
   PYTHONPATH=. pytest tests/test_rl_learning.py -s
   ```
+

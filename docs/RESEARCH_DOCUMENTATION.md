@@ -1,4 +1,4 @@
-# PRAETOR — Research & Mathematical Specifications
+﻿# PRAETOR â€” Research & Mathematical Specifications
 
 ---
 
@@ -44,7 +44,7 @@ PRAETOR is subject to the following structural limitations:
 * **Zero-Interaction Probes:** Attackers executing fast, single-packet scans (e.g. `nmap -sS` without TCP handshakes) limit the duration parameters, reducing the reward feedback loop's gradient.
 * **Encrypted Command Streams:** Payloads dropped over end-to-end encrypted tunnels (e.g., custom SSH configurations) prevent deep feature inspection, falling back to network-only metadata logs.
 * **Supply-Chain & Physical Exploits:** Compromises targeting base dependencies or physical access bypass the software-defined redirect structures entirely.
-* **Self-Simulated Benchmark Evaluation:** All current experimental metrics are generated internally via our digital-twin simulator. These results reflect theoretical performance under configured adversary models and have not been validated against real-world attacker traffic, production deployments, or independent red teams. See Section 5 of [docs/BENCHMARK_REPORT.md](file:///c:/Users/Admin%20pc/Desktop/AI-Based%20HoneyPot/adaptive-honeypot/docs/BENCHMARK_REPORT.md) for details.
+* **Self-Simulated Benchmark Evaluation:** All current experimental metrics are generated internally via the digital-twin simulator. These results reflect simulated performance under the configured adversary models and have not been validated against real-world attacker traffic, production deployments, or independent red teams. See Section 5 of [docs/BENCHMARK_REPORT.md](docs/BENCHMARK_REPORT.md) for details.
 
 ---
 
@@ -68,4 +68,5 @@ $$R_{min} \le R_{joint}(s) \le R_{max}$$
   $$R_{max} = 1.0 \cdot \min(15.0, 4.5) + 3.0 \cdot (3 \cdot 3.0) + 8.0 \cdot (0.9 \cdot 8.0) = 4.5 + 9.0 + 7.2 = 20.7$$
 * Under **mismatched deception alignment** (attacker disconnects immediately):
   $$R_{min} = 1.0 \cdot \min(15.0, 0.1) + 3.0 \cdot (1 \cdot 3.0) + 8.0 \cdot (0.1 \cdot 8.0) = 0.1 + 3.0 + 0.8 = 3.9$$
-These coefficients were calibrated using grid-search validation in pre-training runs to prevent service agent decisions from dominating network latency updates.
+These coefficients were selected during development experiments and validated using the included evaluation framework to maintain balanced contributions across cooperative agents.
+

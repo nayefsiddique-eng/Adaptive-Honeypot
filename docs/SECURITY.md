@@ -1,10 +1,10 @@
-# PRAETOR Security Architecture and Production Deployment Guide
+﻿# PRAETOR Security Architecture and Production Deployment Guide
 
 This document describes the security trust boundaries, network topologies, privilege segregation, and hardening requirements for running the PRAETOR / Adaptive-Honeypot platform in production-grade environments.
 
 ---
 
-## 🛡️ Trust Boundaries and Threat Model
+## ðŸ›¡ï¸ Trust Boundaries and Threat Model
 
 PRAETOR operates two highly distinct environments with completely opposing trust profiles. These environments **must never** be co-located in the same network context or run with shared system privileges.
 
@@ -44,21 +44,21 @@ graph TD
 
 ---
 
-## 🌐 Outbound Network Policy
+## ðŸŒ Outbound Network Policy
 
 The application must follow a strict outbound network allowlist:
 
 | Zone/Service | Outbound Target | Rationale | Policy |
 | :--- | :--- | :--- | :--- |
 | **Honeypot Listeners** | Management API `/api/logs/ingest` | Reporting intrusion traffic in real-time. | Allowed (Internal destination only) |
-| **Honeypot Listeners** | Any external Internet address | Prevents attackers using honeypot for pivoting/DDoS. | **DENIED** |
+| **Honeypot outbound traffic** | External Internet destinations | Must be restricted by production firewall/cloud network policy to prevent pivoting and abuse. | **Deployment-controlled** |
 | **Management API** | AbuseIPDB / AlienVault OTX APIs | External Threat Intelligence Enrichment. | Allowed (Explicit Allowlist IP/DNS only) |
 | **Management API** | Google Gemini API Endpoint | Incident Briefing / LLM summaries. | Allowed (Explicit API host only) |
 | **Management API** | Any other destination | Prevents Server-Side Request Forgery (SSRF). | **DENIED** |
 
 ---
 
-## 🔑 Credential Separation
+## ðŸ”‘ Credential Separation
 
 Real administrative secrets and fake deception credentials must be configured separately.
 
@@ -73,7 +73,7 @@ Real administrative secrets and fake deception credentials must be configured se
 
 ---
 
-## 🐳 Container and VM Hardening
+## ðŸ³ Container and VM Hardening
 
 When deploying via Docker or virtual machines, enforce the following controls:
 
@@ -84,8 +84,9 @@ When deploying via Docker or virtual machines, enforce the following controls:
 
 ---
 
-## 💾 Incident Response and Backup Policy
+## ðŸ’¾ Incident Response and Backup Policy
 
 - **Log Rotation**: Logs are automatically rotated (max 10MB per file, keeping up to 5 backups) to prevent disk space exhaustion attacks.
 - **SQLite Database**: Backup the SQLite database (`honeypot.db`) daily. Store backups in a secure, external, read-only location.
 - **Database Access**: Keep the database file outside the publicly served `/frontend` static file structure.
+
