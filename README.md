@@ -115,3 +115,10 @@ python scripts/validate_production_isolation.py
 ## 📜 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Local regression tests
+
+Run `python -m pytest tests/` from the repository root. The API management rate
+limiter tracks clients within each worker and expires idle client history.
+Configure ingress limits for deployments with multiple replicas. Run the
+honeypot's protocol listeners in an isolated network segment.
