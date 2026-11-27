@@ -89,7 +89,7 @@ pip install -r requirements.txt
 ### 2. Running API Server
 
 ```bash
-uvicorn app.main:app --reload --port 8000
+uvicorn backend.main:app --reload --port 8000
 ```
 *Access management docs at `http://127.0.0.1:8000/docs`.*
 
@@ -122,3 +122,7 @@ Run `python -m pytest tests/` from the repository root. The API management rate
 limiter tracks clients within each worker and expires idle client history.
 Configure ingress limits for deployments with multiple replicas. Run the
 honeypot's protocol listeners in an isolated network segment.
+
+For a stable SSH decoy fingerprint, mount a deployment-specific private host
+key and set `SSH_HOST_KEY_PATH` to its container path. The default without a
+mounted or locally generated key is a fresh in-memory key per listener startup.

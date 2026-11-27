@@ -36,3 +36,5 @@ Thumbs.db
 
 validation/system_information.txt
 validation/validation_log.txt
+
+backend/honeypot/ssh_host_key*
