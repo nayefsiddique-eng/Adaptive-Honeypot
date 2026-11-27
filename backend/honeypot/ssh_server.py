@@ -319,7 +319,7 @@ async def handle_session(process):
         process.exit(0)
 
 
-async def start_server():
+async def start_server(bind_host=None):
     if not _HAS_ASYNCSSH:
         raise ImportError("asyncssh is required to run the SSH honeypot server. Install it with: pip install asyncssh")
 
@@ -331,16 +331,17 @@ async def start_server():
     else:
         host_key = asyncssh.generate_private_key("ssh-ed25519")
 
-    await asyncssh.create_server(
+    host = bind_host or os.environ.get("HONEYPOT_BIND_HOST", "127.0.0.1")
+    server = await asyncssh.create_server(
         HoneypotSSHServer,
-        host="",
+        host=host,
         port=LISTEN_PORT,
         server_host_keys=[host_key],
         process_factory=handle_session,
-        session_factory=handle_session,
         server_version="SSH-2.0-OpenSSH_8.9p1",  # matches a real Ubuntu 22.04 banner
     )
-    logger.info(f"PRAETOR SSH honeypot listening on 0.0.0.0:{LISTEN_PORT}")
+    logger.info("PRAETOR SSH honeypot listening on %s:%s", host, LISTEN_PORT)
+    return server
 
 
 def main():

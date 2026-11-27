@@ -12,7 +12,9 @@ All services report live captured events to the PRAETOR backend at http://127.0.
 import asyncio
 import logging
 import os
+import signal
 import sys
+from contextlib import AsyncExitStack
 
 # Configure logging
 logging.basicConfig(
@@ -23,8 +25,7 @@ logger = logging.getLogger("honeypot_runner")
 
 # Imports for individual honeypots
 try:
-    import asyncssh
-    from backend.honeypot.ssh_server import HoneypotSSHServer, LISTEN_PORT as SSH_PORT, HOST_KEY_PATH
+    from backend.honeypot.ssh_server import start_server as start_ssh_service
     from backend.honeypot.http_decoy import handle_request as http_handler, LISTEN_PORT as HTTP_PORT
     from backend.honeypot.telnet_server import handle_telnet_client, LISTEN_PORT as TELNET_PORT
     from aiohttp import web
@@ -33,74 +34,41 @@ except ImportError as e:
     sys.exit(1)
 
 
-async def start_ssh_service():
-    """Start SSH honeypot listener on port 2222."""
-    if not os.path.exists(HOST_KEY_PATH):
-        logger.info(f"Generating SSH host key at {HOST_KEY_PATH}...")
-        key = asyncssh.generate_private_key("ssh-rsa")
-        key.write_private_key(HOST_KEY_PATH)
-
-    logger.info(f"[+] Starting SSH Honeypot Service on port {SSH_PORT}...")
-    from backend.honeypot.ssh_server import handle_session
-    try:
-        await asyncssh.create_server(
-            HoneypotSSHServer,
-            "0.0.0.0",
-            SSH_PORT,
-            server_host_keys=[HOST_KEY_PATH],
-            process_factory=handle_session,
-            session_factory=handle_session,
-            server_version="SSH-2.0-OpenSSH_8.9p1"
-        )
-    except Exception as e:
-        logger.error(f"[!] Failed to start SSH Honeypot on port {SSH_PORT}: {e}. (Is port occupied?)")
-        raise e
-
-
-async def start_http_service():
-    """Start HTTP Decoy listener on port 8080."""
-    logger.info(f"[+] Starting HTTP Decoy Service on port {HTTP_PORT}...")
-    try:
-        app = web.Application()
-        app.router.add_route("*", "/{tail:.*}", http_handler)
-        runner = web.AppRunner(app)
-        await runner.setup()
-        site = web.TCPSite(runner, "0.0.0.0", HTTP_PORT)
-        await site.start()
-    except Exception as e:
-        logger.error(f"[!] Failed to start HTTP Decoy Service on port {HTTP_PORT}: {e}. (Is port occupied?)")
-        raise e
-
-
-async def start_telnet_service():
-    """Start Telnet honeypot listener on port 2323."""
-    logger.info(f"[+] Starting Telnet Honeypot Service on port {TELNET_PORT}...")
-    try:
-        server = await asyncio.start_server(handle_telnet_client, "0.0.0.0", TELNET_PORT)
-        await server.start_serving()
-    except Exception as e:
-        logger.error(f"[!] Failed to start Telnet Honeypot on port {TELNET_PORT}: {e}. (Is port occupied?)")
-        raise e
-
-
 async def main():
-    logger.info("=====================================================")
-    logger.info("  PRAETOR / MIRAGE Multi-Service Honeypot Platform   ")
-    logger.info("=====================================================")
-    
-    try:
-        await start_ssh_service()
-        await start_http_service()
-        await start_telnet_service()
-    except Exception as e:
-        logger.critical(f"FATAL: One or more honeypot services failed to initialize: {e}")
-        sys.exit(1)
+    bind_host = os.environ.get("HONEYPOT_BIND_HOST", "127.0.0.1")
+    stopped = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    registered = []
+    for signum in (signal.SIGTERM, signal.SIGINT):
+        try:
+            loop.add_signal_handler(signum, stopped.set)
+            registered.append(signum)
+        except NotImplementedError:
+            pass
 
-    logger.info("[*] All honeypot services active. Listening for intruder interactions...")
-    
-    # Run forever
-    while True:
-        await asyncio.sleep(3600)
+    async def close_server(server):
+        server.close()
+        await server.wait_closed()
+
+    try:
+        async with AsyncExitStack() as stack:
+            ssh = await start_ssh_service(bind_host)
+            stack.push_async_callback(close_server, ssh)
+
+            app = web.Application()
+            app.router.add_route("*", "/{tail:.*}", http_handler)
+            runner = web.AppRunner(app)
+            await runner.setup()
+            stack.push_async_callback(runner.cleanup)
+            await web.TCPSite(runner, bind_host, HTTP_PORT).start()
+
+            telnet = await asyncio.start_server(handle_telnet_client, bind_host, TELNET_PORT)
+            stack.push_async_callback(close_server, telnet)
+            logger.info("SSH, HTTP and Telnet listeners started on %s", bind_host)
+            await stopped.wait()
+    finally:
+        for signum in registered:
+            loop.remove_signal_handler(signum)
 
 
 if __name__ == "__main__":

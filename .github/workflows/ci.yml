@@ -34,3 +34,16 @@ jobs:
     - name: Run Integration Test
       run: |
         python ml/test_api.py
+
+    - name: Exercise listeners on loopback
+      run: python scripts/verify_loopback.py
+
+  container-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify disposable management and deception planes
+        run: bash scripts/verify_container_isolation.sh

@@ -126,3 +126,20 @@ honeypot's protocol listeners in an isolated network segment.
 For a stable SSH decoy fingerprint, mount a deployment-specific private host
 key and set `SSH_HOST_KEY_PATH` to its container path. The default without a
 mounted or locally generated key is a fresh in-memory key per listener startup.
+
+### Reproduce the isolated experiment
+
+Install the requirements in a clean virtual environment and run
+`python scripts/verify_loopback.py`. It launches the management API and all
+three protocol listeners on loopback with a disposable SQLite database. It
+uses harmless commands and a deployment-specific test key. Record the
+commit, dependency versions, sample types, counts and observed results before
+reporting any detection or performance metric.
+
+The production Compose networks are internal, and published ports default to
+loopback. Validate connectivity for the intended Docker host and deployment
+before changing that address. For an isolated Docker check, use a disposable
+checkout and run `bash scripts/verify_container_isolation.sh`. It creates its
+own environment files, volumes and unrelated probe network, and removes them
+when finished. The rule-based API works without a trained model. Provide a
+separately evaluated model when testing model-backed behavior.
