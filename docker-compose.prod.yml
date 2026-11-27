@@ -41,7 +41,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: praetor-deception-plane
-    command: ["python", "scripts/run_honeypots.py"]
+    command: ["python", "-m", "scripts.run_honeypots"]
     ports:
       - "${PRAETOR_PUBLISH_ADDRESS:-127.0.0.1}:2222:2222"
       - "${PRAETOR_PUBLISH_ADDRESS:-127.0.0.1}:8080:8080"

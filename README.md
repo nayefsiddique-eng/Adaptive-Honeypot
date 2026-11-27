@@ -143,3 +143,9 @@ checkout and run `bash scripts/verify_container_isolation.sh`. It creates its
 own environment files, volumes and unrelated probe network, and removes them
 when finished. The rule-based API works without a trained model. Provide a
 separately evaluated model when testing model-backed behavior.
+
+GeoIP uses marked simulated data by default. An operator can configure
+`GEOIP_LOOKUP_BASE_URL` with an authorized HTTPS endpoint that accepts an IP
+as its last path component and returns the supported GeoIP response fields.
+Keep it unset in isolated experiments. Simulated locations are not evidence
+of the origin of an interaction.

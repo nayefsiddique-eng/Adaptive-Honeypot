@@ -26,7 +26,7 @@ umask 077
 {
   for key in SECRET_KEY ADMIN_API_KEY MANAGEMENT_API_KEY; do
     value="$(openssl rand -hex 32)"
-    printf '::add-mask::%s\n' "$value" >&2
+    if [[ ${GITHUB_ACTIONS:-} == true ]]; then printf '::add-mask::%s\n' "$value" >&2; fi
     printf '%s=%s\n' "$key" "$value"
   done
 } > .env.management
@@ -38,14 +38,24 @@ services:
   praetor-honeypot:
     ports: !reset []
 YAML
-compose up --build --detach --wait --wait-timeout 150
+if ! compose up --build --detach --wait --wait-timeout 150; then
+  compose ps --all
+  if [[ ${GITHUB_ACTIONS:-} == true ]]; then
+    compose logs --tail 30 | grep -E 'PermissionError|ModuleNotFoundError|Failed to import|Traceback|Health|Error' || true
+  fi
+  exit 1
+fi
 container="$(compose ps -q praetor-honeypot)"
 test "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' "$container")" = true
-docker inspect --format '{{json .Mounts}}' "$container" | python -c 'import json, sys; mounts=json.load(sys.stdin); assert all(m["Type"]=="volume" for m in mounts)'
+docker inspect --format '{{json .Mounts}}' "$container" | python -c 'import json, sys; mounts=json.load(sys.stdin); assert all(m["Type"]=="volume" or (m["Type"]=="tmpfs" and m["Destination"] in ("/tmp","/run")) for m in mounts)'
 docker network create --internal "$probe" >/dev/null
 docker run -d --name "$probe" --network "$probe" python:3.12-slim python -m http.server 8009 >/dev/null
 probe_ip="$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$probe")"
-docker exec "$probe" python -c 'from urllib.request import urlopen; urlopen("http://127.0.0.1:8009",timeout=3).close()'
+for attempt in $(seq 1 10); do
+  if docker exec "$probe" python -c 'from urllib.request import urlopen; urlopen("http://127.0.0.1:8009",timeout=3).close()'; then break; fi
+  if [[ $attempt == 10 ]]; then exit 1; fi
+  sleep 1
+done
 compose exec -T -e "VERIFY_PROBE_IP=$probe_ip" praetor-honeypot python - <<'PY'
 import os
 from pathlib import Path
