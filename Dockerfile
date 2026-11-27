@@ -28,14 +28,8 @@ RUN groupadd -r praetor && useradd -r -g praetor -d /app -s /sbin/nologin praeto
 # Copy codebase (ensure .env is excluded via .dockerignore or docker run)
 COPY . /app/
 
-# Generate heuristic fallback model structure
-RUN python ml/train_classifier.py || true
-
-# Pre-generate SSH host key for read-only filesystem support
-RUN python -c 'import os, asyncssh; key = asyncssh.generate_private_key("ssh-rsa"); os.makedirs("backend/honeypot", exist_ok=True); key.write_private_key("backend/honeypot/ssh_host_key")' || true
-
-# Change ownership of the runtime application directory to the non-root user
-RUN chown -R praetor:praetor /app
+# Set ownership before an empty named volume is initialized from the image.
+RUN mkdir -p /app/data /app/logs && chown -R praetor:praetor /app
 
 # Run as non-root
 USER praetor

@@ -1,8 +1,9 @@
 import time
 import logging
-from collections import defaultdict
+from collections import deque
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
+from starlette.datastructures import Headers
 from starlette.middleware.base import BaseHTTPMiddleware
 from backend.config import settings
 
@@ -23,48 +24,89 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 response.headers["Cache-Control"] = "no-store, max-age=0, must-revalidate"
         return response
 
-class ContentSizeLimitMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        # Enforce maximum body size limits
-        if request.method == "POST":
-            content_length = request.headers.get("content-length")
-            if content_length:
-                try:
-                    if int(content_length) > settings.MAX_REQUEST_BODY_BYTES:
-                        logger.warning(f"Rejected payload exceeding size limit from {request.client.host if request.client else 'unknown'}")
-                        return JSONResponse(
-                            status_code=413,
-                            content={"error": "Request entity too large"}
-                        )
-                except ValueError:
-                    return JSONResponse(
-                        status_code=400,
-                        content={"error": "Invalid Content-Length header"}
-                    )
-        return await call_next(request)
+class ContentSizeLimitMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or scope["method"] != "POST":
+            await self.app(scope, receive, send)
+            return
+
+        limit = settings.MAX_REQUEST_BODY_BYTES
+        too_large = JSONResponse({"error": "Request entity too large"}, status_code=413)
+        declared_length = Headers(scope=scope).get("content-length")
+        if declared_length is not None:
+            try:
+                size = int(declared_length)
+                if size < 0:
+                    raise ValueError("Negative body size")
+            except ValueError:
+                response = JSONResponse({"error": "Invalid Content-Length header"}, status_code=400)
+                await response(scope, receive, send)
+                return
+            if size > limit:
+                await too_large(scope, receive, send)
+                return
+
+        body = bytearray()
+        while True:
+            message = await receive()
+            if message["type"] == "http.disconnect":
+                return
+            chunk = message.get("body", b"")
+            if len(body) + len(chunk) > limit:
+                await too_large(scope, receive, send)
+                return
+            body.extend(chunk)
+            if not message.get("more_body", False):
+                break
+
+        first_message = {"type": "http.request", "body": bytes(body), "more_body": False}
+        del body
+
+        async def replay_receive():
+            nonlocal first_message
+            if first_message is not None:
+                message, first_message = first_message, None
+                return message
+            return await receive()
+
+        await self.app(scope, replay_receive, send)
+
 
 class InMemoryRateLimiterMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
-        # Store requests as: ip -> list of timestamps
-        self.history = defaultdict(list)
+        self.history: dict[str, deque[float]] = {}
+        self.next_cleanup = 0.0
 
     async def dispatch(self, request: Request, call_next):
-        ip = request.client.host if request.client else "127.0.0.1"
-        now = time.time()
-        
-        # Clean history for this IP
-        window_start = now - settings.API_RATE_WINDOW_SECONDS
-        self.history[ip] = [t for t in self.history[ip] if t > window_start]
-        
-        # Check rate limits for management endpoints only
-        if request.url.path.startswith("/api") and not request.url.path.endswith("/logs/ingest"):
-            if len(self.history[ip]) >= settings.API_RATE_LIMIT:
-                logger.warning(f"Rate limit exceeded for IP {ip} on path {request.url.path}")
-                return JSONResponse(
-                    status_code=429,
-                    content={"error": "Too many requests. Please try again later."}
-                )
-            self.history[ip].append(now)
+        path = request.url.path
+        if not path.startswith("/api") or path.endswith("/logs/ingest"):
+            return await call_next(request)
 
+        ip = request.client.host if request.client else "127.0.0.1"
+        now = time.monotonic()
+        window = settings.API_RATE_WINDOW_SECONDS
+        window_start = now - window
+        if now >= self.next_cleanup:
+            self.history = {
+                source: timestamps
+                for source, timestamps in self.history.items()
+                if timestamps and timestamps[-1] > window_start
+            }
+            self.next_cleanup = now + window
+
+        timestamps = self.history.setdefault(ip, deque())
+        while timestamps and timestamps[0] <= window_start:
+            timestamps.popleft()
+        if len(timestamps) >= settings.API_RATE_LIMIT:
+            logger.warning("Rate limit exceeded for IP %s on path %s", ip, path)
+            return JSONResponse(
+                status_code=429,
+                content={"error": "Too many requests. Please try again later."},
+            )
+
+        timestamps.append(now)
         return await call_next(request)

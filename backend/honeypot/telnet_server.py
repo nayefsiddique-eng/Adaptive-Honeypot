@@ -150,7 +150,7 @@ async def handle_telnet_client(reader: asyncio.StreamReader, writer: asyncio.Str
 
 
 async def main():
-    server = await asyncio.start_server(handle_telnet_client, "0.0.0.0", LISTEN_PORT)
+    server = await asyncio.start_server(handle_telnet_client, os.environ.get("HONEYPOT_BIND_HOST", "127.0.0.1"), LISTEN_PORT)
     logger.info(f"[*] Starting Real Telnet Honeypot on port {LISTEN_PORT}...")
     async with server:
         await server.serve_forever()

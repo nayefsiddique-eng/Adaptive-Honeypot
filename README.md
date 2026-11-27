@@ -89,7 +89,7 @@ pip install -r requirements.txt
 ### 2. Running API Server
 
 ```bash
-uvicorn app.main:app --reload --port 8000
+uvicorn backend.main:app --reload --port 8000
 ```
 *Access management docs at `http://127.0.0.1:8000/docs`.*
 
@@ -115,3 +115,37 @@ python scripts/validate_production_isolation.py
 ## 📜 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Local regression tests
+
+Run `python -m pytest tests/` from the repository root. The API management rate
+limiter tracks clients within each worker and expires idle client history.
+Configure ingress limits for deployments with multiple replicas. Run the
+honeypot's protocol listeners in an isolated network segment.
+
+For a stable SSH decoy fingerprint, mount a deployment-specific private host
+key and set `SSH_HOST_KEY_PATH` to its container path. The default without a
+mounted or locally generated key is a fresh in-memory key per listener startup.
+
+### Reproduce the isolated experiment
+
+Install the requirements in a clean virtual environment and run
+`python scripts/verify_loopback.py`. It launches the management API and all
+three protocol listeners on loopback with a disposable SQLite database. It
+uses harmless commands and a deployment-specific test key. Record the
+commit, dependency versions, sample types, counts and observed results before
+reporting any detection or performance metric.
+
+The production Compose networks are internal, and published ports default to
+loopback. Validate connectivity for the intended Docker host and deployment
+before changing that address. For an isolated Docker check, use a disposable
+checkout and run `bash scripts/verify_container_isolation.sh`. It creates its
+own environment files, volumes and unrelated probe network, and removes them
+when finished. The rule-based API works without a trained model. Provide a
+separately evaluated model when testing model-backed behavior.
+
+GeoIP uses marked simulated data by default. An operator can configure
+`GEOIP_LOOKUP_BASE_URL` with an authorized HTTPS endpoint that accepts an IP
+as its last path component and returns the supported GeoIP response fields.
+Keep it unset in isolated experiments. Simulated locations are not evidence
+of the origin of an interaction.

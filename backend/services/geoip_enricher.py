@@ -1,4 +1,5 @@
-﻿import os
+from ipaddress import ip_address as parse_ip
+from urllib.parse import urlsplit
 import hashlib
 import time
 import httpx
@@ -28,11 +29,18 @@ def _is_private_or_local(ip_address: str) -> bool:
                                    "172.2", "172.30.", "172.31.", "192.168."))
 
 def _live_lookup(ip_address: str) -> Dict[str, Any]:
+    endpoint = urlsplit(settings.GEOIP_LOOKUP_BASE_URL)
+    if endpoint.scheme != "https" or not endpoint.hostname or endpoint.username or endpoint.password or endpoint.query or endpoint.fragment:
+        raise ValueError("An HTTPS GeoIP endpoint base is required.")
+    address = parse_ip(ip_address)
+    if not address.is_global:
+        raise ValueError("External lookup is limited to public IP addresses.")
     resp = httpx.get(
-        f"http://ip-api.com/json/{ip_address}",
+        f"{endpoint.geturl().rstrip('/')}/{address}",
         params={"fields": "status,country,city,isp,lat,lon"},
         timeout=2.5,
     )
+    resp.raise_for_status()
     data = resp.json()
     if data.get("status") != "success":
         raise ValueError("ip-api lookup unsuccessful")
@@ -47,8 +55,8 @@ def _live_lookup(ip_address: str) -> Dict[str, Any]:
 
 def enrich_ip(ip_address: str) -> Dict[str, Any]:
     """
-    Real, free GeoIP lookup via ip-api.com, cached per-IP for 6 hours.
-    Falls back to a deterministic mock only if the live lookup fails.
+    Optional HTTPS GeoIP lookup, cached per-IP for 6 hours.
+    Uses a deterministic simulated location when no result is available.
     Always includes a "source" key: "live", "local", or "simulated".
     """
     if _is_private_or_local(ip_address):

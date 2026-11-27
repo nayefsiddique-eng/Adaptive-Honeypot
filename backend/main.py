@@ -1,5 +1,5 @@
 import asyncio
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timedelta, UTC
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -74,15 +74,25 @@ async def lifespan(app: FastAPI):
     file_handler.setFormatter(formatter)
     
     root_logger = logging.getLogger()
+    previous_log_level = root_logger.level
     root_logger.addHandler(file_handler)
     root_logger.setLevel(logging.INFO)
 
     # Startup
-    init_db()
-    load_models()
-    asyncio.create_task(session_reaper())
-    yield
-    # Shutdown (nothing to clean up currently)
+    try:
+        init_db()
+        load_models()
+        reaper = asyncio.create_task(session_reaper())
+        try:
+            yield
+        finally:
+            reaper.cancel()
+            with suppress(asyncio.CancelledError):
+                await reaper
+    finally:
+        root_logger.removeHandler(file_handler)
+        root_logger.setLevel(previous_log_level)
+        file_handler.close()
 
 import os
 
