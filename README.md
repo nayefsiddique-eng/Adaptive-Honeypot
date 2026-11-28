@@ -37,35 +37,16 @@ flowchart TB
 
 ---
 
-## 📊 Scientific Benchmark & Empirical Evaluation
+## Research evaluation
 
-### 1. Deception Baseline Comparison
+The [benchmark report](docs/BENCHMARK_REPORT.md) records internal
+digital-twin experiments and a synthetic classifier dataset. The
+published figures describe those experiments. Real-world deception
+effectiveness, classifier accuracy on live traffic, and public
+deployment capacity remain unmeasured.
 
-| Environment Profile | Mean Dwell Time (s) | Median Dwell Time (s) | Std Dev | 95% CI |
-|---|:---:|:---:|:---:|:---:|
-| Static Honeypot | 17.12 | 17.35 | 4.33 | (15.56, 18.67) |
-| Random Deception | 27.61 | 25.50 | 10.15 | (23.98, 31.24) |
-| No Deception | 2.70 | 2.49 | 1.37 | (2.21, 3.19) |
-| **PRAETOR (CMARL)** | **122.83** | **124.36** | **31.84** | **(111.43, 134.22)** |
-
-### 2. Platform Ablation Metrics
-
-| Configured Stack | Mean Threat Intel Points Captured | Degradation Ratio |
-|---|:---:|:---:|
-| **Full Architecture** | **68.35** | **0.0%** |
-| Without Behavior Graph | 47.25 | 30.87% |
-| Without Threat Intelligence | 38.65 | 43.45% |
-| Without CMARL Engine | 20.80 | 69.57% |
-
-### 3. ML Classifier Efficacy
-
-Trained on a synthetic benchmark dataset (16,000 samples; 9 attack classes; 75/25 train-test split):
-
-| Model | Accuracy | Precision (macro) | Recall (macro) | F1 Score (macro) |
-|---|:---:|:---:|:---:|:---:|
-| **XGBoost** | **71.9%** | **69.1%** | **66.1%** | **67.3%** |
-| Random Forest | 69.4% | 66.5% | 65.9% | 66.0% |
-| Isolation Forest (Anomaly) | 77.1% | 90.1% | 75.6% | 82.2% |
+CI exercises SSH, HTTP and Telnet on loopback, stable host keys,
+management access, persistence and disposable container separation.
 
 ---
 

@@ -21,7 +21,7 @@ The table below documents the hyperparameter values used in the CMARL (Cooperati
 
 ## 2. Experimental Protocols
 
-To replicate the evaluations presented in the benchmark report (note: all metrics represent internal simulation-based benchmarks, see Section 5 of [docs/BENCHMARK_REPORT.md](docs/BENCHMARK_REPORT.md) for details/limitations), follow these protocols:
+To replicate the evaluations presented in the benchmark report (note: all metrics represent internal simulation-based benchmarks, see Section 5 of [docs/BENCHMARK_REPORT.md](BENCHMARK_REPORT.md) for details/limitations), follow these protocols:
 
 ### Protocol A: Attacker Persona Simulation (Baseline Validation)
 1. **Goal:** Verify the mean and median attacker dwell times across different deception setups.
@@ -89,3 +89,23 @@ Current measured macro-F1:
 
 These figures are simulation-based benchmark results and are not
 equivalent to real-world attacker detection performance.
+
+### Bounded loopback performance
+
+On Linux with the repository requirements installed, run:
+
+```sh
+python scripts/benchmark_loopback.py
+```
+
+The driver starts fresh management and listener processes on loopback with a
+temporary SQLite store, key and log directory. It warms up once, then runs three
+trials each at 1, 4 and 8 workers. Each worker performs three rounds of an HTTP
+GET, SSH shell session and Telnet shell session. The JSON reports completed
+operations per second, median and p95 client latency, peak combined process RSS
+sampled every 50 ms, and combined process CPU time as a percentage of one core.
+Trial percentiles use linear interpolation.
+
+Record the machine and container limits with each run. Shared page accounting
+can increase summed RSS, and small trial sizes make p95 sensitive to individual
+sessions. These measurements describe local synthetic traffic only.
